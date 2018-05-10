@@ -1,0 +1,34 @@
+﻿<Application
+    x:Class="BivrostHeatmapViewer.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:BivrostHeatmapViewer"
+    RequestedTheme="Light">
+
+	<Application.Resources>
+		<ResourceDictionary>
+			<ResourceDictionary.ThemeDictionaries>
+				<ResourceDictionary x:Key="Default">
+					<AcrylicBrush x:Key="SidePanelAcrylicBrush"
+						BackgroundSource="HostBackdrop"
+						TintColor="#FFCCCCCC"
+						TintOpacity="0.8"
+						FallbackColor="#FFCCCCCC"/>
+					<AcrylicBrush x:Key="MainPanelAcrylicBrush"
+						BackgroundSource="HostBackdrop"
+						TintColor="#FFEEEEEE"
+						TintOpacity="0.9"
+						FallbackColor="#FFEEEEEE"/>
+					<AcrylicBrush x:Key="LoadingIndicatorAcrylicBrush"
+						BackgroundSource="Backdrop"
+						TintColor="#FFEEEEEE"
+						TintOpacity="0.3"
+						FallbackColor="#FFEEEEEE"/>
+				</ResourceDictionary>
+
+			</ResourceDictionary.ThemeDictionaries>
+		</ResourceDictionary>
+	</Application.Resources>
+
+	
+</Application>

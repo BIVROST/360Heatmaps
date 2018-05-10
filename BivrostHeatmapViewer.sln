@@ -1,0 +1,63 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27130.2020
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BivrostHeatmapViewer", "BivrostHeatmapViewer\BivrostHeatmapViewer.csproj", "{58B670D2-0D17-46A5-AAD9-E0C8BAC528F3}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HeatmapLib", "HeatmapLib\HeatmapLib.vcxproj", "{FA534544-3223-4400-A760-9ADACEFF6794}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|ARM = Debug|ARM
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|ARM = Release|ARM
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{58B670D2-0D17-46A5-AAD9-E0C8BAC528F3}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{58B670D2-0D17-46A5-AAD9-E0C8BAC528F3}.Debug|ARM.ActiveCfg = Debug|ARM
+		{58B670D2-0D17-46A5-AAD9-E0C8BAC528F3}.Debug|ARM.Build.0 = Debug|ARM
+		{58B670D2-0D17-46A5-AAD9-E0C8BAC528F3}.Debug|ARM.Deploy.0 = Debug|ARM
+		{58B670D2-0D17-46A5-AAD9-E0C8BAC528F3}.Debug|x64.ActiveCfg = Debug|x64
+		{58B670D2-0D17-46A5-AAD9-E0C8BAC528F3}.Debug|x64.Build.0 = Debug|x64
+		{58B670D2-0D17-46A5-AAD9-E0C8BAC528F3}.Debug|x64.Deploy.0 = Debug|x64
+		{58B670D2-0D17-46A5-AAD9-E0C8BAC528F3}.Debug|x86.ActiveCfg = Debug|x86
+		{58B670D2-0D17-46A5-AAD9-E0C8BAC528F3}.Debug|x86.Build.0 = Debug|x86
+		{58B670D2-0D17-46A5-AAD9-E0C8BAC528F3}.Debug|x86.Deploy.0 = Debug|x86
+		{58B670D2-0D17-46A5-AAD9-E0C8BAC528F3}.Release|Any CPU.ActiveCfg = Release|x86
+		{58B670D2-0D17-46A5-AAD9-E0C8BAC528F3}.Release|ARM.ActiveCfg = Release|ARM
+		{58B670D2-0D17-46A5-AAD9-E0C8BAC528F3}.Release|ARM.Build.0 = Release|ARM
+		{58B670D2-0D17-46A5-AAD9-E0C8BAC528F3}.Release|ARM.Deploy.0 = Release|ARM
+		{58B670D2-0D17-46A5-AAD9-E0C8BAC528F3}.Release|x64.ActiveCfg = Release|x64
+		{58B670D2-0D17-46A5-AAD9-E0C8BAC528F3}.Release|x64.Build.0 = Release|x64
+		{58B670D2-0D17-46A5-AAD9-E0C8BAC528F3}.Release|x64.Deploy.0 = Release|x64
+		{58B670D2-0D17-46A5-AAD9-E0C8BAC528F3}.Release|x86.ActiveCfg = Release|x86
+		{58B670D2-0D17-46A5-AAD9-E0C8BAC528F3}.Release|x86.Build.0 = Release|x86
+		{58B670D2-0D17-46A5-AAD9-E0C8BAC528F3}.Release|x86.Deploy.0 = Release|x86
+		{FA534544-3223-4400-A760-9ADACEFF6794}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{FA534544-3223-4400-A760-9ADACEFF6794}.Debug|ARM.ActiveCfg = Debug|ARM
+		{FA534544-3223-4400-A760-9ADACEFF6794}.Debug|ARM.Build.0 = Debug|ARM
+		{FA534544-3223-4400-A760-9ADACEFF6794}.Debug|x64.ActiveCfg = Debug|x64
+		{FA534544-3223-4400-A760-9ADACEFF6794}.Debug|x64.Build.0 = Debug|x64
+		{FA534544-3223-4400-A760-9ADACEFF6794}.Debug|x86.ActiveCfg = Debug|Win32
+		{FA534544-3223-4400-A760-9ADACEFF6794}.Debug|x86.Build.0 = Debug|Win32
+		{FA534544-3223-4400-A760-9ADACEFF6794}.Release|Any CPU.ActiveCfg = Release|Win32
+		{FA534544-3223-4400-A760-9ADACEFF6794}.Release|ARM.ActiveCfg = Release|ARM
+		{FA534544-3223-4400-A760-9ADACEFF6794}.Release|ARM.Build.0 = Release|ARM
+		{FA534544-3223-4400-A760-9ADACEFF6794}.Release|x64.ActiveCfg = Release|x64
+		{FA534544-3223-4400-A760-9ADACEFF6794}.Release|x64.Build.0 = Release|x64
+		{FA534544-3223-4400-A760-9ADACEFF6794}.Release|x86.ActiveCfg = Release|Win32
+		{FA534544-3223-4400-A760-9ADACEFF6794}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6AFFB6D8-68DC-46E1-AB2A-8A6BC1B226D4}
+	EndGlobalSection
+EndGlobal
