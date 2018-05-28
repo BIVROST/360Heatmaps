@@ -29,7 +29,7 @@
 
 				<TextBlock Margin="4">Selected video</TextBlock>
 				<StackPanel Orientation="Horizontal" AllowDrop="True" DragOver="SelectedVideo_DragOver" Drop="SelectedVideo_Drop">
-					<Button x:Name="pickFolderButton" Width="40" Height="40" Margin="8" Style="{ThemeResource ButtonRevealStyle}">
+					<Button x:Name="pickFolderButton" Width="40" Height="40" Margin="8" Style="{ThemeResource ButtonRevealStyle}" Click="pickFolderButton_Click">
 						<SymbolIcon Symbol="Add" />
 					</Button>
 					<TextBlock FontSize="24" VerticalAlignment="Center" x:Name="selectedVideoFileTextBlock">(...)</TextBlock>
@@ -60,32 +60,17 @@
 				</StackPanel>
 			</StackPanel>
 
-			<ListView SelectionMode="Single" x:Name="heatmapSessionsListView" ScrollViewer.VerticalScrollMode="Enabled" Grid.Row="1" 
-					  AllowDrop="True" Drop="heatmapSessionsListView_Drop" DragOver="heatmapSessionsListView_DragOver"
-					  >
-				<ListViewItem>
-					<StackPanel Orientation="Vertical">
-						<TextBlock FontSize="20">Asdasdasd asd asd</TextBlock>
-						<TextBlock FontSize="12">Asdasdasd asd asd</TextBlock>
-					</StackPanel>
-				</ListViewItem>
-				<ListViewItem>abcd 1</ListViewItem>
-				<ListViewItem>abcd 2</ListViewItem>
-				<ListViewItem>abcd 3</ListViewItem>
-				<ListViewItem>abcd 4</ListViewItem>
-				<ListViewItem>abcd 5</ListViewItem>
-				<ListViewItem>abcd 6</ListViewItem>
-				<ListViewItem>abcd 7</ListViewItem>
-				<ListViewItem>abcd 8</ListViewItem>
-				<ListViewItem>abcd 9</ListViewItem>
+			<ListView x:Name="heatmapSessionsListView" ItemsSource="{x:Bind Items }" SelectionMode="Single" ScrollViewer.VerticalScrollMode="Enabled" Grid.Row="1" 
+					  AllowDrop="True" Drop="heatmapSessionsListView_Drop" DragOver="heatmapSessionsListView_DragOver" >
 			</ListView>
 
+			
 			<Grid x:Name="heatmapListLoadingScreenGrid" Grid.Row="1" Visibility="Collapsed">
 				<ProgressRing x:Name="heatmapListLoadingIndicator"  IsActive="False" Width="64" Height="64"/>
 			</Grid>
 
 
-			<Button HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="12" Width="200" Height="40" Style="{ThemeResource ButtonRevealStyle}" Grid.Row="2">Generate video</Button>
+			<Button HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="12" Width="200" Height="40" Style="{ThemeResource ButtonRevealStyle}" Grid.Row="2" Click="VideoGenTest">Generate video</Button>
 
 			<Rectangle Grid.RowSpan="3" Width="20" HorizontalAlignment="Right" IsHitTestVisible="False" Margin="0,-12,0,-12" Opacity="0.2">
 				<Rectangle.Fill>
@@ -106,47 +91,87 @@
 				<RowDefinition Height="Auto" />
 			</Grid.RowDefinitions>
 
-			<TextBlock Margin="16" Grid.Row="0">Preview</TextBlock>
+			<TextBlock Margin="16" Grid.Row="0" x:Name="debugInfo">Preview</TextBlock>
 
 
 			<Viewbox Stretch="Uniform" x:Name="previewViewBox" Grid.Row="1" Margin="64,32">
 				<Grid Padding="0" Margin="0">
 					<Canvas x:Name="mainPanel" Margin="-16"
-							Width="{Binding ElementName=mediaPlayer, Path=ActualWidth}"
-							Height="{Binding ElementName=mediaPlayer, Path=ActualHeight}"
+							Width="{Binding ElementName=mediaPlayerElement, Path=ActualWidth}"
+							Height="{Binding ElementName=mediaPlayerElement, Path=ActualHeight}"
 							/>
 					<Rectangle Fill="White" x:Name="previewImage" 
-							   Width="{Binding ElementName=mediaPlayer, Path=ActualWidth}"
-							   Height="{Binding ElementName=mediaPlayer, Path=ActualHeight}"
+							   Width="{Binding ElementName=mediaPlayerElement, Path=ActualWidth}"
+							   Height="{Binding ElementName=mediaPlayerElement, Path=ActualHeight}"
 							   />
-					<MediaPlayerElement x:Name="mediaPlayer" MinWidth="1280" Height="720">
-					</MediaPlayerElement>
 
-					<Image x:Name="heatImage" Stretch="Fill" Opacity="0.5">
+					<MediaPlayerElement x:Name="mediaPlayerElement" 
+										AllowDrop="True" Drop="SelectedVideo_Drop" 
+										DragOver="SelectedVideo_DragOver"  
+										MinWidth="1280" Height="720" 
+										AreTransportControlsEnabled="True"
+										Loading="mediaPlayerElement_Loading">
+
+					</MediaPlayerElement>
+					<ProgressBar Width="500" Value="0" Visibility="Collapsed" x:Name="videoLoading" />
+					<ProgressRing x:Name="heatmapLoadingIndicator"  IsActive="False" Width="64" Height="64"/>
+					<Image x:Name="heatImage" Stretch="Fill" Opacity="0.5" IsHitTestVisible="False">
 
 					</Image>
+					<Image x:Name="horizonImage" Source="ms-appx:///Assets/horizon3840x2160.png" Visibility="Collapsed" Stretch="Fill"
+						   Width="{Binding ElementName=mediaPlayerElement, Path=ActualWidth}"
+							Height="{Binding ElementName=mediaPlayerElement, Path=ActualHeight}"
+						   />
 
 				</Grid>
 			</Viewbox>
 
-			<Rectangle Grid.Row="1" AllowDrop="True" Drop="SelectedVideo_Drop" DragOver="SelectedVideo_DragOver" IsHitTestVisible="True" Fill="Transparent" Opacity="0.3"/>
+			<!--<Rectangle Grid.Row="1" AllowDrop="True" Drop="SelectedVideo_Drop" DragOver="SelectedVideo_DragOver" IsHitTestVisible="False" Fill="Transparent" Opacity="0.3"/>-->
 
 
-			<StackPanel Grid.Column="1" Padding="32" Grid.Row="2">
+			<Grid Grid.Column="1" Padding="32" Grid.Row="2">
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="*"/>
+					<ColumnDefinition Width="*"/>
+				</Grid.ColumnDefinitions>
+				
+				<StackPanel Grid.Column="0" HorizontalAlignment="Center">
+					<TextBlock x:Name="fpsLabel"></TextBlock>
+					<!--<Button x:Name="playButton" HorizontalAlignment="Center" VerticalAlignment="Bottom" Click="playButton_Click" Width="200" Height="40">
+						<SymbolIcon Symbol="Play" />
+					</Button>-->
 
-				<TextBlock x:Name="fpsLabel"></TextBlock>
-				<Button x:Name="playButton" HorizontalAlignment="Center" VerticalAlignment="Bottom" Click="playButton_Click" Width="200" Height="40">
-					<SymbolIcon Symbol="Play" />
-				</Button>
-
-				<StackPanel Width="300">
-					<TextBlock>heatmap opacity</TextBlock>
-					<Slider Minimum="0" Maximum="100" Value="50" TickPlacement="Inline" TickFrequency="5"/>
-					<TextBlock>video opacity</TextBlock>
-					<Slider Minimum="0" Maximum="100" Value="100" TickPlacement="Inline" TickFrequency="5"/>
-					<Button Style="{ThemeResource ButtonRevealStyle}" x:Name="previewButton" Width="200" Height="40" HorizontalAlignment="Center">Preview</Button>
+					<StackPanel Width="300">
+						<TextBlock>heatmap opacity</TextBlock>
+						<Slider x:Name="heatmapOpacity" Minimum="0" Maximum="100" Value="50" TickPlacement="Inline" TickFrequency="5"/>
+						<TextBlock>video opacity</TextBlock>
+						<Slider Minimum="0" Maximum="100" Value="50" TickPlacement="Inline" TickFrequency="5"/>
+						<Button Style="{ThemeResource ButtonRevealStyle}" x:Name="previewButton" Width="200" Height="40" HorizontalAlignment="Center" Click="GenerateStaticHeatmap">Generate Heatmap Image</Button>
+					</StackPanel>
 				</StackPanel>
-			</StackPanel>
+
+				<StackPanel Grid.Column="1" HorizontalAlignment="Center" Width="300">
+					<TextBlock/>
+					<Button x:Name="videoBackgroundColorButton" Style="{ThemeResource ButtonRevealStyle}" Width="200" Height="40" HorizontalAlignment="Center" Content="Background Color">
+						<Button.Flyout>
+							<Flyout>
+								<ColorPicker x:Name="videoBackgroundPicker" ColorChanged="videoBackgroundPicker_ColorChanged"
+						Height="auto"
+						IsColorSliderVisible="True"
+						IsColorChannelTextInputVisible="False"
+						IsHexInputVisible="False"
+						IsAlphaEnabled="False"
+						IsAlphaSliderVisible="False"
+						IsAlphaTextInputVisible="False" />
+							</Flyout>
+						</Button.Flyout>
+					</Button>
+					<TextBlock/>
+					<Rectangle x:Name="colorRect" Width="{Binding ElementName=videoBackgroundColorButton, Path=ActualWidth}" Height="40" Fill="White"/>
+					<TextBlock/>
+					<CheckBox HorizontalAlignment="Center" Content="Enable Horizon" Checked="CheckBox_Checked" Unchecked="CheckBox_Unchecked"/>
+				</StackPanel>
+			</Grid>
 
 
 

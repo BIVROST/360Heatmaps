@@ -6,6 +6,9 @@ namespace BivrostHeatmapViewer
 {
 	public struct Session
 	{
+		[JsonIgnore]
+		static int i = 0;
+
 		public string version;
 		public Guid guid;
 		public string uri;
@@ -26,7 +29,14 @@ namespace BivrostHeatmapViewer
         {
             return JsonConvert.SerializeObject(this);
         }
-    }
+
+		public override string ToString()
+		{
+			i++;
+			return uri.Substring(uri.LastIndexOf('\\') + 1) + "\nSession " + i;
+		}
+
+	}
 
 	public struct SessionCollection
 	{

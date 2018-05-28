@@ -20,7 +20,6 @@ namespace BivrostHeatmapViewer
 		public static List<Coord> CoordsDeserialize(string serialized)
 		{
 			var coords = new List<Coord>();
-
 			int fov = 0;
 			int i = 0;
 
@@ -127,7 +126,7 @@ namespace BivrostHeatmapViewer
 //				var row = hm[y] = new Array(64);
 				for (var x = 0; x < 64; x++)
 					//hm[y,x] = 0;
-					hm[x*64+y] = 0;
+					hm[y*64+x] = 0;
 			}
 
 			// generate fov tables	
@@ -184,7 +183,8 @@ namespace BivrostHeatmapViewer
 					{
 						var ft_x = (128 + p.yaw - x) % 64;
 						//hm[y,x] += fov_tables[ft_y,y,ft_x];
-						hm[x * 64 + y] += fov_tables[ft_y * 64 * 64 + y * 64 + ft_x];
+						//hm[x * 64 + y] += fov_tables[ft_y * 64 * 64 + y * 64 + ft_x];
+						hm[y * 64 + x] += fov_tables[ft_y * 64 * 64 + y * 64 + ft_x];
 					}
 				}
 			}
@@ -213,7 +213,7 @@ namespace BivrostHeatmapViewer
 				for (var x = 0; x < 64; x++)
 				{
 					//var cell = hm[y,x];
-					var cell = hm[x*64+y];
+					var cell = hm[y*64+x];
 					if (cell < hm_min) hm_min = cell;
 					if (cell > hm_max) hm_max = cell;
 				}
@@ -232,7 +232,7 @@ namespace BivrostHeatmapViewer
 				for (var x = 0; x < 64; x++)
 				{
 					//hm[y,x] = (hm[y,x] - hm_min) * rev_hm_max_minus_hm_min;
-					hm[x*64+y] = (hm[x * 64 + y] - hm_min) * rev_hm_max_minus_hm_min;
+					hm[y*64+x] = (hm[y * 64 + x] - hm_min) * rev_hm_max_minus_hm_min;
 				}
 			}
 			return hm;

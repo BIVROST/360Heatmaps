@@ -26,6 +26,7 @@ using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 using Windows.UI.Xaml.Shapes;
+using System.Drawing;
 
 
 //camera capture
@@ -37,6 +38,11 @@ using Windows.Graphics.Display;
 using Windows.UI.Core;
 using Windows.UI.Xaml.Media.Imaging;
 using System.Diagnostics;
+using System.Threading;
+using Windows.Media.Editing;
+using Windows.Graphics.Imaging;
+using Windows.Media.Playback;
+using System.Collections.ObjectModel;
 
 
 
@@ -44,14 +50,28 @@ using System.Diagnostics;
 
 namespace BivrostHeatmapViewer
 {
-    /// <summary>
-    /// An empty page that can be used on its own or navigated to within a Frame.
-    /// </summary>
-    public sealed partial class MainPage : Page
-    {
+	/// <summary>
+	/// An empty page that can be used on its own or navigated to within a Frame.
+	/// </summary>
+	public sealed partial class MainPage : Page
+	{
 		StorageFile videoFile;
 		WriteableBitmap wb;
+		private MediaComposition composition;
+		private MediaStreamSource mediaStreamSource;
+		private MediaPlayer mediaPlayer;
+		private Rect rect = new Rect(0, 0, 1280, 720);
 
+		private ObservableCollection<Session> _items = new ObservableCollection<Session>();
+
+		public ObservableCollection<Session> Items
+		{
+			get { return this._items; }
+		}
+
+
+
+		/*
 		public async void Preview(byte[] pixels, int width, int height)
 		{
 			await heatImage.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, async () => {
@@ -65,19 +85,21 @@ namespace BivrostHeatmapViewer
 				{
 					await stream.WriteAsync(pixels, 0, pixels.Length);
 				}
+				//composition.Clips.Add();
 				//heatImage.Source = wb;
 			});
 		}
-
+		*/
 		public MainPage()
-        {
-            this.InitializeComponent();
-			
+		{
+			this.InitializeComponent();
 
-			InitializeFrostedGlass(heatImage);
-			InitializeDropShadow(mainPanel, previewImage);
-			pickFolderButton.Click += pickFolderButton_Click;
 			
+			InitializeFrostedGlass(mediaPlayerElement);
+			InitializeDropShadow(mainPanel, previewImage);
+			//ListOfSessions = new ListOfSessions();
+			//pickFolderButton.Click += pickFolderButton_Click;
+			//rect = Rect((int)mediaPlayerElement.ActualWidth, (int)mediaPlayerElement.ActualHeight);
 
 			heatmapSessionsListView.SelectionChanged += (s, e) =>
 			{
@@ -85,7 +107,12 @@ namespace BivrostHeatmapViewer
 			};
 			previewButton.IsEnabled = heatmapSessionsListView.SelectedItems.Count > 0;
 
-			previewButton.Click += PreviewButton_Click;
+			//HeatmapList.Add();
+
+
+
+
+			//previewButton.Click += PreviewButton_Click;
 
 			//debugButton.Click += async (s, e) =>
 			//{
@@ -102,50 +129,250 @@ namespace BivrostHeatmapViewer
 			//};
 		}
 
-		private void PreviewButton_Click(object sender, RoutedEventArgs e)
+		/*private async void GenerateVideoFromHeatmap()
 		{
-			if (heatmapSessionsListView.SelectedItems.Count <= 0) return;
+			List<byte[]> heatmaps = new List<byte[]>();
+			wb = new WriteableBitmap(64, 64);
+			composition = new MediaComposition();
 
-			if(heatmapSessionsListView.SelectedItems.Count == 1)
+			int count = heatmapSessionsListView.Items.Count;
+
+			for (int i = 1; i < count - 1; i++)
 			{
+				StorageFile file = await StorageFile.GetFileFromApplicationUriAsync(new Uri("ms-appx:///Sessions/session0" + i + ".bvr"));
+				var json = await Windows.Storage.FileIO.ReadTextAsync(file);
+				var session = JsonConvert.DeserializeObject<Session>(json);
 
-			} else
-			{
-
+				var deserializedData = Heatmap.CoordsDeserialize(session.history);
+				var heatmap = Heatmap.Generate(deserializedData);
+				byte[] pixels = Heatmap.RenderHeatmap(heatmap);
+				heatmaps.Add(pixels);
 			}
 
+			var clip = await MediaClip.CreateFromFileAsync(videoFile);
+			
+			MediaOverlay videoOverlay = new MediaOverlay(clip);
+			videoOverlay.Position = rect;
+			videoOverlay.Opacity = 0.7;
+			videoOverlay.AudioEnabled = true;
+
+			var bR = videoBackgroundPicker.Color.R;
+			var bG = videoBackgroundPicker.Color.G;
+			var bB = videoBackgroundPicker.Color.B;
+			Windows.UI.Color videoBackgoundColor = Windows.UI.Color.FromArgb(255,bR, bG, bB);
+
+			var videoBackground = MediaClip.CreateFromColor(videoBackgoundColor, new TimeSpan(0, 0, 20));
+
+			composition.Clips.Add(videoBackground);
+			
+			
+			//composition.Clips.Add(await MediaClip.CreateFromImageFileAsync(await WriteableBitmapToStorageFile(wb, FileFormat.Png), new TimeSpan(0, 0, 3)));
+
+			mediaStreamSource = composition.GeneratePreviewMediaStreamSource(
+				(int)mediaPlayerElement.ActualWidth,
+				(int)mediaPlayerElement.ActualHeight);
+
+
+			MediaOverlay mediaOverlay; 
+
+
+			MediaOverlayLayer mediaOverlayLayer = new MediaOverlayLayer();
+			mediaOverlayLayer.Overlays.Add(videoOverlay);
+
+			TimePicker timePicker = new TimePicker();
+
+			Stopwatch stopwatch = new Stopwatch();
+			stopwatch.Start();
+
+			videoLoading.Visibility = Visibility.Visible;
+
+			for (int i = 1; i < 200; i++)
+			{
+				using (Stream stream = wb.PixelBuffer.AsStream())
+				{
+					await stream.WriteAsync(heatmaps[(i%7)+1], 0, heatmaps[(i%7)+1].Length);
+					var overlayMediaClip = await MediaClip.CreateFromImageFileAsync(await WriteableBitmapToStorageFile(wb, FileFormat.Tiff), new TimeSpan(0, 0, 0, 0, 100));
+					mediaOverlay = new MediaOverlay(overlayMediaClip);
+					mediaOverlay.Delay = new TimeSpan(0, 0, 0, 0, (i - 1) * 100);
+					mediaOverlay.Position = rect;
+					mediaOverlay.Opacity = 0.35;
+					mediaOverlayLayer.Overlays.Add(mediaOverlay);
+					
+				}
+				videoLoading.Value = i * 100 / 200;
+			}
+
+			videoLoading.Visibility = Visibility.Collapsed;
+
+			stopwatch.Stop();
+
+			composition.OverlayLayers.Add(mediaOverlayLayer);
+
+
+
+			mediaPlayerElement.Source = MediaSource.CreateFromMediaStreamSource(mediaStreamSource);
+
+			//deserializedData.Clear();
+			//deserializedData.Add(new Heatmap.Coord() { yaw = 63, pitch = 63, fov = 20 });
+
+
+			//Preview(Heatmap.RenderHeatmap(heatmap), 64, 64);
+			//heatImage.Source = wb;
+
+			//for (int i = 0; i < count-1; i++)
+			//{
+			//Preview(heatmaps[0], 64, 64);
+			//Thread.Sleep(2000);
+
+			//Preview(heatmaps[1], 64, 64);
+			//Preview(heatmaps[2], 64, 64);
+			//Preview(heatmaps[3], 64, 64);
+			//Preview(heatmaps[4], 64, 64);
+			//}
+			debugInfo.Text = "Time: " + ((stopwatch.ElapsedMilliseconds) / 1000).ToString() + "s. ";
+
+		}
+
+
+		public static async Task<StorageFile> WriteableBitmapToStorageFile(WriteableBitmap WB, FileFormat fileFormat)
+		{
+			string FileName = "MyFile.";
+			Guid BitmapEncoderGuid = BitmapEncoder.JpegEncoderId;
+			switch (fileFormat)
+			{
+				case FileFormat.Jpeg:
+					FileName += "jpeg";
+					BitmapEncoderGuid = BitmapEncoder.JpegEncoderId; //7s
+					break;
+				case FileFormat.Tiff:
+					FileName += "tiff";
+					BitmapEncoderGuid = BitmapEncoder.TiffEncoderId; //7s
+					break;
+				case FileFormat.Gif:
+					FileName += "gif";
+					BitmapEncoderGuid = BitmapEncoder.GifEncoderId; //10s
+					break;
+			}
+			var file = await Windows.Storage.ApplicationData.Current.TemporaryFolder
+		.CreateFileAsync(FileName, CreationCollisionOption.GenerateUniqueName);
+			using (IRandomAccessStream stream = await file.OpenAsync(FileAccessMode.ReadWrite))
+			{
+				BitmapEncoder encoder = await BitmapEncoder.CreateAsync(BitmapEncoderGuid, stream);
+				Stream pixelStream = WB.PixelBuffer.AsStream();
+				byte[] pixels = new byte[pixelStream.Length];
+				await pixelStream.ReadAsync(pixels, 0, pixels.Length);
+				encoder.SetPixelData(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Ignore,
+						  (uint)WB.PixelWidth,
+						  (uint)WB.PixelHeight,
+						  96.0,
+						  96.0,
+						  pixels);
+				await encoder.FlushAsync();
+			}
+			return file;
+		}
+		public enum FileFormat
+		{
+			Jpeg,
+			Tiff,
+			Gif
+		}
+		*/
+
+
+		private void ShowHeatmapGenerating ()
+		{
+			heatmapLoadingIndicator.Visibility = Visibility.Visible;
+			heatmapLoadingIndicator.IsActive = true;
+		}
+
+		private void HideHeatmapGenerating ()
+		{
+			heatmapLoadingIndicator.IsActive = false;
+			heatmapLoadingIndicator.Visibility = Visibility.Collapsed;
+		}
+
+		private async void GenerateStaticHeatmap(object sender, RoutedEventArgs e)
+		{
+			mediaPlayerElement.AreTransportControlsEnabled = false;
+
+
+			ShowHeatmapGenerating();
+
+			SessionCollection sessionCollection = new SessionCollection();
+			sessionCollection.sessions = new List<Session>();
+
+
+			var listItems = heatmapSessionsListView.SelectedItems.ToList();
+			foreach (Session s in listItems)
+			{
+				sessionCollection.sessions.Add(s);
+			}
+
+			var result = await StaticHeatmapGenerator.GenerateHeatmap
+				(
+				sessionCollection,
+				rect,
+				videoBackgroundPicker,
+				heatmapOpacity.Value / 100
+				);
+
+			if (mediaPlayer == null)
+			{
+				mediaPlayer = new MediaPlayer();
+				mediaPlayer = mediaPlayerElement.MediaPlayer;
+			}
+
+
+			mediaPlayerElement.Source = MediaSource.CreateFromMediaStreamSource(result);
+
+			//mediaPlayerElement.Visibility = Visibility.Visible;
+
+			HideHeatmapGenerating();
 		}
 
 		private async void ListFolderButton_Click(object sender, RoutedEventArgs e)
 		{
+			
+			
 			StorageFile file = await StorageFile.GetFileFromApplicationUriAsync(new Uri("ms-appx:///Sessions/session01.bvr"));
+			/*
+			statici++;
+			if (statici > 9)
+				statici = 1;
 			var json = await Windows.Storage.FileIO.ReadTextAsync(file);
 			var session = JsonConvert.DeserializeObject<Session>(json);
 
-			var deserializedData = Heatmap.CoordsDeserialize(session.history);
+	*/
 
-			deserializedData.Clear();
-			deserializedData.Add(new Heatmap.Coord() { yaw = 32, pitch = 32, fov = 45 });
+			//przekazac sesje
+			//mediaPlayerElement.Visibility = Visibility.Collapsed;
+			//StaticHeatmapGenerator.GenerateHeatmap(session, heatImage, 64, 64);
 
-			var heatmap = Heatmap.Generate(deserializedData);
-			Preview(Heatmap.RenderHeatmap(heatmap), 64, 64);
+			//var deserializedData = Heatmap.CoordsDeserialize("!F75!K2");
+
+			//deserializedData.Clear();
+			//deserializedData.Add(new Heatmap.Coord() { yaw = 32, pitch = 32, fov = 45 });
+
+			//var heatmap = Heatmap.Generate(deserializedData);
+			//Preview(Heatmap.RenderHeatmap(heatmap), 64, 64);
 
 
-			Stopwatch w1 = new Stopwatch();
-			w1.Start();
+			//Stopwatch w1 = new Stopwatch();
+			//w1.Start();
 
 			
-			for (int it = 0; it < 1000; it++)
-			{
-				deserializedData = Heatmap.CoordsDeserialize(session.history);
-				heatmap = Heatmap.Generate(deserializedData);
-				var imageMap = Heatmap.RenderHeatmap(heatmap);
-			}
-			w1.Stop();
+			//for (int it = 0; it < 1000; it++)
+			//{
+			//	deserializedData = Heatmap.CoordsDeserialize(session.history);
+			//	heatmap = Heatmap.Generate(deserializedData);
+			//	var imageMap = Heatmap.RenderHeatmap(heatmap);
+			//}
+			//w1.Stop();
 
-			System.Diagnostics.Debug.WriteLine(1000f / (w1.ElapsedMilliseconds / 1000f));
-			fpsLabel.Text = (1000f / (w1.ElapsedMilliseconds / 1000f)).ToString();
-			;
+			//System.Diagnostics.Debug.WriteLine(1000f / (w1.ElapsedMilliseconds / 1000f));
+			//fpsLabel.Text = (1000f / (w1.ElapsedMilliseconds / 1000f)).ToString();
+			//;
 
 			//FileOpenPicker filePicker = new FileOpenPicker();
 			//filePicker.SuggestedStartLocation = PickerLocationId.ComputerFolder;
@@ -231,7 +458,7 @@ namespace BivrostHeatmapViewer
 
 			// Create a drop shadow
 			var dropShadow = compositor.CreateDropShadow();
-			dropShadow.Color = Color.FromArgb(255, 75, 75, 80);
+			dropShadow.Color = Windows.UI.Color.FromArgb(255, 75, 75, 80);
 			dropShadow.BlurRadius = 25.0f;
 			dropShadow.Offset = new Vector3(2.5f, 2.5f, 0.0f);
 			// Associate the shape of the shadow with the shape of the target element
@@ -303,23 +530,26 @@ namespace BivrostHeatmapViewer
 					{
 						videoFile = file;
 						selectedVideoFileTextBlock.Text = videoFile.DisplayName;
-						mediaPlayer.Source = MediaSource.CreateFromStorageFile(videoFile);
+						//mediaPlayerElement.Source = MediaSource.CreateFromStorageFile(videoFile);
 					}
 				}
 			}
 		}
-
+/*
 		private void playButton_Click(object sender, RoutedEventArgs e)
 		{
-			mediaPlayer.MediaPlayer.Play();
+			mediaStreamSource = composition.GenerateMediaStreamSource();
+
+			if (mediaPlayer == null)
+				mediaPlayer = new MediaPlayer();
+
+			//mediaPlayer.CommandManager.IsEnabled = true;
+			mediaPlayerElement.Source = MediaSource.CreateFromMediaStreamSource(mediaStreamSource);
+			mediaPlayer = mediaPlayerElement.MediaPlayer;
+			mediaPlayer.Play();		
 			
 		}
-
-		private void Button_Click(object sender, RoutedEventArgs e)
-		{
-
-		}
-
+		*/
 		private void selectAllHeatmaps_Click(object sender, RoutedEventArgs e)
 		{
 			heatmapSessionsListView.SelectionMode = ListViewSelectionMode.Multiple;
@@ -351,33 +581,83 @@ namespace BivrostHeatmapViewer
 		private void deleteSelectedHeatmaps_Click(object sender, RoutedEventArgs e)
 		{
 			if(heatmapSessionsListView.SelectedItems.Count > 0)
-			{				
-				var items = heatmapSessionsListView.SelectedItems.ToList();
-				foreach (var i in items)
-					heatmapSessionsListView.Items.Remove(i);
+			{
+				var listItems = heatmapSessionsListView.SelectedItems.ToList();
+				foreach (Session i in listItems)
+				{
+					Items.Remove(i);
+				}
 			}
+		}
+
+		private async Task<StorageFile> loadFile (params string[] fileTypes)
+		{
+			FileOpenPicker openPicker = new FileOpenPicker();
+			StorageFile file;
+
+			openPicker.ViewMode = PickerViewMode.Thumbnail;
+			openPicker.SuggestedStartLocation = PickerLocationId.Desktop;
+
+			foreach (String s in fileTypes)
+			{
+				openPicker.FileTypeFilter.Add(s);
+			}
+
+			file = await openPicker.PickSingleFileAsync();
+
+			return file;
+
 		}
 
 
 		private async void addHeatmaps_Click(object sender, RoutedEventArgs e)
 		{
-			StorageFile file = await StorageFile.GetFileFromApplicationUriAsync(new Uri("ms-appx:///Sessions/sessions-okrutna.js"));
-			var json = await Windows.Storage.FileIO.ReadTextAsync(file);
-			var sessionCollection = JsonConvert.DeserializeObject<SessionCollection>(json);
+			string json;
+			SessionCollection sessionCollection;
+			StorageFile file;
 
-			heatmapSessionsListView.Items.Add(new HeatmapListItem(sessionCollection.sessions[0]));
+			ShowHeatmapLoading();
+
+			file = await loadFile(".bvr", ".js", ".txt");
+			
+			
+			if (file != null)
+			{
+				json = await Windows.Storage.FileIO.ReadTextAsync(file);
+				sessionCollection = JsonConvert.DeserializeObject<SessionCollection>(json);
+				
+				foreach (Session s in sessionCollection.sessions)
+				{
+					Items.Add(s);
+				}
+				
+			}
+			HideHeatmapLoading();
+
+			/*
+			var result = await StaticHeatmapGenerator.GenerateHeatmap(sessionCollection, rect, videoBackgroundPicker, heatmapOpacity.Value/100);
+			
+			if (mediaPlayer == null)
+				mediaPlayer = new MediaPlayer();
+
+			//mediaPlayer.CommandManager.IsEnabled = true;
+			mediaPlayerElement.Source = MediaSource.CreateFromMediaStreamSource(result);
+			mediaPlayer = mediaPlayerElement.MediaPlayer;
+
+	*/
+			
 		}
 
 		private void ShowHeatmapLoading()
 		{
-			heatmapListLoadingIndicator.IsActive = true;
 			heatmapListLoadingScreenGrid.Visibility = Visibility.Visible;
+			heatmapListLoadingIndicator.IsActive = true;
 		}
 
 		private void HideHeatmapLoading()
 		{
-			heatmapListLoadingScreenGrid.Visibility = Visibility.Collapsed;
 			heatmapListLoadingIndicator.IsActive = false;
+			heatmapListLoadingScreenGrid.Visibility = Visibility.Collapsed;
 		}
 
 		private async void heatmapSessionsListView_Drop(object sender, DragEventArgs e)
@@ -422,6 +702,49 @@ namespace BivrostHeatmapViewer
 			e.DragUIOverride.IsCaptionVisible = true;
 			e.DragUIOverride.IsContentVisible = false;
 			e.DragUIOverride.IsGlyphVisible = false;
+		}
+
+		private void videoBackgroundPicker_ColorChanged(ColorPicker sender, ColorChangedEventArgs args)
+		{
+			colorRect.Fill = new SolidColorBrush(videoBackgroundPicker.Color);
+		}
+
+		private void mediaPlayerElement_Loading(FrameworkElement sender, object args)
+		{
+			//throw new NotImplementedException();
+			//TODO: 
+		}
+
+		private void CheckBox_Checked(object sender, RoutedEventArgs e)
+		{
+			horizonImage.Opacity = 0.8;
+			horizonImage.Visibility = Visibility.Visible;	
+		}
+
+		private void CheckBox_Unchecked(object sender, RoutedEventArgs e)
+		{
+			horizonImage.Visibility = Visibility.Collapsed;
+		}
+
+		private async void VideoGenTest(object sender, RoutedEventArgs e)
+		{
+			SessionCollection sessionCollection = new SessionCollection();
+			sessionCollection.sessions = new List<Session>();
+
+
+			var listItems = heatmapSessionsListView.SelectedItems.ToList();
+			foreach (Session s in listItems)
+			{
+				sessionCollection.sessions.Add(s);
+			}
+
+			StaticHeatmapGenerator.GenerateVideoFromHeatmap
+				(
+				sessionCollection,
+				rect,
+				videoBackgroundPicker
+				);
+
 		}
 	}
 }
