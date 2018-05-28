@@ -738,13 +738,25 @@ namespace BivrostHeatmapViewer
 				sessionCollection.sessions.Add(s);
 			}
 
-			StaticHeatmapGenerator.GenerateVideoFromHeatmap
+			List<MediaStreamSource> heatmaps = await StaticHeatmapGenerator.GenerateVideoFromHeatmap
 				(
 				sessionCollection,
 				rect,
 				videoBackgroundPicker
 				);
 
+            if (mediaPlayer == null)
+            {
+                mediaPlayer = new MediaPlayer();
+                mediaPlayer = mediaPlayerElement.MediaPlayer;
+            }
+            /*
+            for (int i = 0; i < heatmaps.Count - 1; i++)
+            {
+                mediaPlayerElement.Source = MediaSource.CreateFromMediaStreamSource(heatmaps[i]);
+            }
+            Console.WriteLine("asd");
+            */
 		}
 	}
 }

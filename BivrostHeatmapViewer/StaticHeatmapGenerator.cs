@@ -76,36 +76,70 @@ namespace BivrostHeatmapViewer
 
 
 
-		public static async void GenerateVideoFromHeatmap(SessionCollection sessions, Rect overlayPosition, ColorPicker colorPicker)
-		{
-			WriteableBitmap wb = new WriteableBitmap(64, 64);
-			List<byte[]> heatmaps = new List<byte[]>();
-			MediaComposition composition = new MediaComposition();
-			MediaStreamSource mediaStreamSource;
-			List<Session> videoSessions = new List<Session>();
+        public static async Task<List<MediaStreamSource>> GenerateVideoFromHeatmap(SessionCollection sessions, Rect overlayPosition, ColorPicker colorPicker)
+        {
+            WriteableBitmap wb = new WriteableBitmap(64, 64);
+            List<byte[]> heatmaps = new List<byte[]>();
+            MediaComposition composition = new MediaComposition();
+            List<MediaStreamSource> mediaStreamSource = new List<MediaStreamSource>();
+            List<List<Heatmap.Coord>> coords = new List<List<Heatmap.Coord>>();
+            List<List<Heatmap.Coord>> heatmapCoord = new List<List<Heatmap.Coord>>();
 
-			for (int i = 0; i < sessions.sessions[0].history.Length - 1; i++)
-			{
-				Session session = new Session();
-				session.history = new string('c', 1);
+            int min_length = 0;
 
-				foreach (Session s in sessions.sessions)
-				{
-					try
-					{
-						session.history.Append(s.history[i]);
-						i++;
-						session.history.Append(s.history[i]);
-					}
-					catch (IndexOutOfRangeException e)
-					{
+            coords.Add(Heatmap.CoordsDeserialize(sessions.sessions[0].history));
+            min_length = coords[0].Count;
 
-					}
-				}
 
-				videoSessions.Add(session);
+            for (int i = 1; i < sessions.sessions.Count - 1; i++)
+            {
+                coords.Add(Heatmap.CoordsDeserialize(sessions.sessions[i].history));
+                if (min_length > coords[i].Count)
+                    min_length = coords[i].Count;
+            }
 
-			}
+            for (int i = 0; i < min_length - 1; i++)
+            {
+                heatmapCoord.Add(new List<Heatmap.Coord>());
+                for (int k = 0; k < sessions.sessions.Count - 1; k++)
+                {
+                    heatmapCoord[i].Add(coords[k][i]);
+                }
+            }
+
+            List<byte[]> pixels = new List<byte[]>();
+
+            for (int i = 0; i < min_length - 1; i++)
+            {
+                pixels.Add(Heatmap.RenderHeatmap(Heatmap.Generate(heatmapCoord[i])));
+            }
+
+
+            for (int i = 0; i < min_length - 1; i++)
+            {
+                using (Stream stream = wb.PixelBuffer.AsStream())
+                {
+                    await stream.WriteAsync(pixels[i], 0, pixels[i].Length);
+                }
+
+                var clip = await MediaClip.CreateFromImageFileAsync(await WriteableBitmapToStorageFile(wb, FileFormat.Tiff), new TimeSpan(0, 0, 0, 0, 1));
+
+                var background = MediaClip.CreateFromColor(colorPicker.Color, new TimeSpan(0, 0, 0, 0, 1));
+
+                composition.Clips.Add(background);
+                mediaStreamSource.Add(composition.GeneratePreviewMediaStreamSource
+                    (
+                    (int)overlayPosition.Width,
+                    (int)overlayPosition.Height
+                    )
+            );
+            }
+
+
+
+            return mediaStreamSource;
+
+          //  return pixels;
 
 			//int count = heatmapSessionsListView.Items.Count;
 
@@ -117,8 +151,8 @@ namespace BivrostHeatmapViewer
 
 				var deserializedData = Heatmap.CoordsDeserialize(session.history);
 				var heatmap = Heatmap.Generate(deserializedData);
-				byte[] pixels = Heatmap.RenderHeatmap(heatmap);
-				heatmaps.Add(pixels);
+				//byte[] pixels = Heatmap.RenderHeatmap(heatmap);
+				//heatmaps.Add(pixels);
 			}
 		}
 /*
