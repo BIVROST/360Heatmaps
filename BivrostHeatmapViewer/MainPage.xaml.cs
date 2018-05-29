@@ -59,6 +59,7 @@ namespace BivrostHeatmapViewer
 		WriteableBitmap wb;
 		private MediaComposition composition;
 		private MediaStreamSource mediaStreamSource;
+		List<MediaStreamSource> heatmaps;
 		private MediaPlayer mediaPlayer;
 		private Rect rect = new Rect(0, 0, 1280, 720);
 
@@ -737,19 +738,24 @@ namespace BivrostHeatmapViewer
 			{
 				sessionCollection.sessions.Add(s);
 			}
-
-			List<MediaStreamSource> heatmaps = await StaticHeatmapGenerator.GenerateVideoFromHeatmap
+			ShowHeatmapGenerating();
+			heatmaps = await StaticHeatmapGenerator.GenerateVideoFromHeatmap
 				(
 				sessionCollection,
 				rect,
 				videoBackgroundPicker
 				);
-
+			HideHeatmapGenerating();
             if (mediaPlayer == null)
             {
                 mediaPlayer = new MediaPlayer();
                 mediaPlayer = mediaPlayerElement.MediaPlayer;
             }
+
+			
+				//Thread.Sleep(2000);
+			
+
             /*
             for (int i = 0; i < heatmaps.Count - 1; i++)
             {
@@ -757,6 +763,13 @@ namespace BivrostHeatmapViewer
             }
             Console.WriteLine("asd");
             */
+		}
+
+		static int counter = 0;
+		private void Button_Click(object sender, RoutedEventArgs e)
+		{ 
+			mediaPlayerElement.Source = MediaSource.CreateFromMediaStreamSource(heatmaps[counter]);
+			counter++;
 		}
 	}
 }

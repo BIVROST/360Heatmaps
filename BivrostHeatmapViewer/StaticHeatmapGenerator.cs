@@ -78,9 +78,9 @@ namespace BivrostHeatmapViewer
 
         public static async Task<List<MediaStreamSource>> GenerateVideoFromHeatmap(SessionCollection sessions, Rect overlayPosition, ColorPicker colorPicker)
         {
-            WriteableBitmap wb = new WriteableBitmap(64, 64);
+            
             List<byte[]> heatmaps = new List<byte[]>();
-            MediaComposition composition = new MediaComposition();
+            //MediaComposition composition = new MediaComposition();
             List<MediaStreamSource> mediaStreamSource = new List<MediaStreamSource>();
             List<List<Heatmap.Coord>> coords = new List<List<Heatmap.Coord>>();
             List<List<Heatmap.Coord>> heatmapCoord = new List<List<Heatmap.Coord>>();
@@ -117,16 +117,29 @@ namespace BivrostHeatmapViewer
 
             for (int i = 0; i < min_length - 1; i++)
             {
-                using (Stream stream = wb.PixelBuffer.AsStream())
+				MediaComposition composition = new MediaComposition();
+				WriteableBitmap wb = new WriteableBitmap(64, 64);
+				using (Stream stream = wb.PixelBuffer.AsStream())
                 {
                     await stream.WriteAsync(pixels[i], 0, pixels[i].Length);
                 }
 
                 var clip = await MediaClip.CreateFromImageFileAsync(await WriteableBitmapToStorageFile(wb, FileFormat.Tiff), new TimeSpan(0, 0, 0, 0, 1));
+				var videoBackground = MediaClip.CreateFromColor(colorPicker.Color, new TimeSpan(0, 0, 20));
 
-                var background = MediaClip.CreateFromColor(colorPicker.Color, new TimeSpan(0, 0, 0, 0, 1));
 
-                composition.Clips.Add(background);
+				MediaOverlay videoOverlay = new MediaOverlay(clip);
+				videoOverlay.Position = overlayPosition;
+				videoOverlay.Opacity = 0.7;
+				//videoOverlay.AudioEnabled = true;
+
+				MediaOverlayLayer mediaOverlayLayer = new MediaOverlayLayer();
+				mediaOverlayLayer.Overlays.Add(videoOverlay);
+
+				composition.Clips.Add(videoBackground);
+				composition.OverlayLayers.Add(mediaOverlayLayer);
+
+
                 mediaStreamSource.Add(composition.GeneratePreviewMediaStreamSource
                     (
                     (int)overlayPosition.Width,
@@ -155,6 +168,7 @@ namespace BivrostHeatmapViewer
 				//heatmaps.Add(pixels);
 			}
 		}
+
 /*
 			var clip = await MediaClip.CreateFromFileAsync(videoFile);
 

@@ -170,6 +170,9 @@
 					<Rectangle x:Name="colorRect" Width="{Binding ElementName=videoBackgroundColorButton, Path=ActualWidth}" Height="40" Fill="White"/>
 					<TextBlock/>
 					<CheckBox HorizontalAlignment="Center" Content="Enable Horizon" Checked="CheckBox_Checked" Unchecked="CheckBox_Unchecked"/>
+					<Button HorizontalAlignment="Center" VerticalAlignment="Top" Click="Button_Click" >
+						<SymbolIcon Symbol="Play"/>
+					</Button>
 				</StackPanel>
 			</Grid>
 
