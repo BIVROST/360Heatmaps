@@ -75,98 +75,118 @@ namespace BivrostHeatmapViewer
 		}
 
 
-
-        public static async Task<List<MediaStreamSource>> GenerateVideoFromHeatmap(SessionCollection sessions, Rect overlayPosition, ColorPicker colorPicker)
+        private static async Task<MediaStreamSource> Test(List<Heatmap.Coord> coords, Rect overlayPosition, ColorPicker colorPicker, double heatmapOpacity)
         {
-            
-            List<byte[]> heatmaps = new List<byte[]>();
-            //MediaComposition composition = new MediaComposition();
-            List<MediaStreamSource> mediaStreamSource = new List<MediaStreamSource>();
-            List<List<Heatmap.Coord>> coords = new List<List<Heatmap.Coord>>();
-            List<List<Heatmap.Coord>> heatmapCoord = new List<List<Heatmap.Coord>>();
+            MediaComposition mediaComposition = new MediaComposition();
+            MediaOverlayLayer overlayLayer = new MediaOverlayLayer();
+            MediaStreamSource mediaStreamSource;
 
-            int min_length = 0;
+            //var deserializedData = Heatmap.CoordsDeserialize(session.history);
+            var heatmap = Heatmap.Generate(coords);
+            var renderedHeatmap = Heatmap.RenderHeatmap(heatmap);
 
-            coords.Add(Heatmap.CoordsDeserialize(sessions.sessions[0].history));
-            min_length = coords[0].Count;
+            WriteableBitmap wb = new WriteableBitmap(64, 64);
 
 
-            for (int i = 1; i < sessions.sessions.Count - 1; i++)
+            using (Stream stream = wb.PixelBuffer.AsStream())
             {
-                coords.Add(Heatmap.CoordsDeserialize(sessions.sessions[i].history));
-                if (min_length > coords[i].Count)
-                    min_length = coords[i].Count;
+                await stream.WriteAsync(renderedHeatmap, 0, renderedHeatmap.Length);
             }
 
-            for (int i = 0; i < min_length - 1; i++)
-            {
-                heatmapCoord.Add(new List<Heatmap.Coord>());
-                for (int k = 0; k < sessions.sessions.Count - 1; k++)
-                {
-                    heatmapCoord[i].Add(coords[k][i]);
-                }
-            }
+            var clip = await MediaClip.CreateFromImageFileAsync(await WriteableBitmapToStorageFile(wb, FileFormat.Tiff), new TimeSpan(0, 0, 0, 0, 100));
 
-            List<byte[]> pixels = new List<byte[]>();
+            var background = MediaClip.CreateFromColor(colorPicker.Color, new TimeSpan(0, 0, 0, 0, 100));
 
-            for (int i = 0; i < min_length - 1; i++)
-            {
-                pixels.Add(Heatmap.RenderHeatmap(Heatmap.Generate(heatmapCoord[i])));
-            }
+            mediaComposition.Clips.Add(background);
 
+            MediaOverlay mediaOverlay = new MediaOverlay(clip);
+            mediaOverlay.Position = overlayPosition;
+            mediaOverlay.Opacity = heatmapOpacity;
 
-            for (int i = 0; i < min_length - 1; i++)
-            {
-				MediaComposition composition = new MediaComposition();
-				WriteableBitmap wb = new WriteableBitmap(64, 64);
-				using (Stream stream = wb.PixelBuffer.AsStream())
-                {
-                    await stream.WriteAsync(pixels[i], 0, pixels[i].Length);
-                }
+            overlayLayer.Overlays.Add(mediaOverlay);
+            mediaComposition.OverlayLayers.Add(overlayLayer);
 
-                var clip = await MediaClip.CreateFromImageFileAsync(await WriteableBitmapToStorageFile(wb, FileFormat.Tiff), new TimeSpan(0, 0, 0, 0, 1));
-				var videoBackground = MediaClip.CreateFromColor(colorPicker.Color, new TimeSpan(0, 0, 20));
-
-
-				MediaOverlay videoOverlay = new MediaOverlay(clip);
-				videoOverlay.Position = overlayPosition;
-				videoOverlay.Opacity = 0.7;
-				//videoOverlay.AudioEnabled = true;
-
-				MediaOverlayLayer mediaOverlayLayer = new MediaOverlayLayer();
-				mediaOverlayLayer.Overlays.Add(videoOverlay);
-
-				composition.Clips.Add(videoBackground);
-				composition.OverlayLayers.Add(mediaOverlayLayer);
-
-
-                mediaStreamSource.Add(composition.GeneratePreviewMediaStreamSource
-                    (
-                    (int)overlayPosition.Width,
-                    (int)overlayPosition.Height
-                    )
-            );
-            }
-
-
+            mediaStreamSource = mediaComposition.GeneratePreviewMediaStreamSource
+                (
+                (int)overlayPosition.Width,
+                (int)overlayPosition.Height
+                );
 
             return mediaStreamSource;
+        }
 
-          //  return pixels;
+        public static async Task<List<MediaStreamSource>> GenerateVideoFromHeatmap(SessionCollection sessions, Rect overlayPosition, ColorPicker colorPicker, ProgressBar videoGeneratingProgress)
+        {
 
-			//int count = heatmapSessionsListView.Items.Count;
+            List<MediaStreamSource> mediaStreamSources = new List<MediaStreamSource>();
+            Session session = sessions.sessions[0];
 
-			for (int i = 1; i < 5 - 1; i++)
-			{
-				StorageFile file = await StorageFile.GetFileFromApplicationUriAsync(new Uri("ms-appx:///Sessions/session0" + i + ".bvr"));
-				var json = await Windows.Storage.FileIO.ReadTextAsync(file);
-				var session = JsonConvert.DeserializeObject<Session>(json);
+            List<Heatmap.Coord>[] coordsArray = new List<Heatmap.Coord>[sessions.sessions.Count];
+            coordsArray[0] = Heatmap.CoordsDeserialize(sessions.sessions[0].history);
 
-				var deserializedData = Heatmap.CoordsDeserialize(session.history);
-				var heatmap = Heatmap.Generate(deserializedData);
-				//byte[] pixels = Heatmap.RenderHeatmap(heatmap);
-				//heatmaps.Add(pixels);
-			}
+            int min_length = coordsArray[0].Count - 1;
+
+            for (int i = 1; i < sessions.sessions.Count; i++)
+            {
+                coordsArray[i] = Heatmap.CoordsDeserialize(sessions.sessions[i].history);
+
+                if (min_length > coordsArray[i].Count)
+                {
+                    min_length = coordsArray[i].Count;
+                }
+            }
+
+            videoGeneratingProgress.Maximum = min_length;
+            videoGeneratingProgress.Visibility = Windows.UI.Xaml.Visibility.Visible;
+
+            List<Heatmap.Coord>[] generatedCoords = new List<Heatmap.Coord>[min_length];
+            for (int i = 0; i < min_length; i++)
+            {
+                generatedCoords[i] = new List<Heatmap.Coord>();
+            }
+
+            try
+            {
+                for (int i = 0; i < min_length; i++)
+                {
+                    for (int j = 0; j < sessions.sessions.Count; j++)
+                    {
+                        generatedCoords[i].Add(coordsArray[j][i]);
+                        //Debug.WriteLine("j: " + j);
+                    }
+                    //Debug.WriteLine("i: " + i);
+                    mediaStreamSources.Add(await Test(generatedCoords[i], overlayPosition, colorPicker, 0.8));
+                    videoGeneratingProgress.Value = i;
+                }
+            }
+            catch (Exception e)
+            {
+
+            }
+
+            videoGeneratingProgress.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+
+            /*
+            Console.WriteLine();
+            
+            List<Heatmap.Coord> coords = Heatmap.CoordsDeserialize(session.history);
+            mediaStreamSources.Add(await Test(coords, overlayPosition, colorPicker, 0.8));
+
+            
+               List<Heatmap.Coord> coords2 = Heatmap.CoordsDeserialize(session.history);
+               mediaStreamSources.Add(await Test(coords2, overlayPosition, colorPicker, 0.8));
+
+
+               List<Heatmap.Coord> coords3 = Heatmap.CoordsDeserialize(session.history);
+               mediaStreamSources.Add(await Test(coords3, overlayPosition, colorPicker, 0.8));
+
+               List<Heatmap.Coord> coords4 = new List<Heatmap.Coord>();
+               coords4.AddRange(coords);
+               coords4.AddRange(coords2);
+               mediaStreamSources.Add(await Test(coords4, overlayPosition, colorPicker, 0.8));
+               */
+
+            return mediaStreamSources;
 		}
 
 /*

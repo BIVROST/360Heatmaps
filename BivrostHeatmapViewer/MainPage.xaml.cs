@@ -729,6 +729,8 @@ namespace BivrostHeatmapViewer
 
 		private async void VideoGenTest(object sender, RoutedEventArgs e)
 		{
+
+            mediaPlayerElement.Source = null;
 			SessionCollection sessionCollection = new SessionCollection();
 			sessionCollection.sessions = new List<Session>();
 
@@ -738,14 +740,15 @@ namespace BivrostHeatmapViewer
 			{
 				sessionCollection.sessions.Add(s);
 			}
-			ShowHeatmapGenerating();
+			//ShowHeatmapGenerating();
 			heatmaps = await StaticHeatmapGenerator.GenerateVideoFromHeatmap
 				(
 				sessionCollection,
 				rect,
-				videoBackgroundPicker
+				videoBackgroundPicker,
+                videoLoading
 				);
-			HideHeatmapGenerating();
+			//HideHeatmapGenerating();
             if (mediaPlayer == null)
             {
                 mediaPlayer = new MediaPlayer();
