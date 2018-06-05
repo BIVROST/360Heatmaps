@@ -96,7 +96,7 @@ namespace BivrostHeatmapViewer
 			this.InitializeComponent();
 
 			
-			InitializeFrostedGlass(mediaPlayerElement);
+			//InitializeFrostedGlass(mediaPlayerElement);
 			InitializeDropShadow(mainPanel, previewImage);
 			//ListOfSessions = new ListOfSessions();
 			//pickFolderButton.Click += pickFolderButton_Click;
@@ -740,7 +740,8 @@ namespace BivrostHeatmapViewer
 			{
 				sessionCollection.sessions.Add(s);
 			}
-			//ShowHeatmapGenerating();
+			ShowHeatmapGenerating();
+			/*
 			heatmaps = await StaticHeatmapGenerator.GenerateVideoFromHeatmap
 				(
 				sessionCollection,
@@ -748,18 +749,42 @@ namespace BivrostHeatmapViewer
 				videoBackgroundPicker,
                 videoLoading
 				);
-			//HideHeatmapGenerating();
-            if (mediaPlayer == null)
+				*/
+
+			var result = await StaticHeatmapGenerator.GenerateVideoFromHeatmap
+				(
+				sessionCollection,
+				rect,
+				videoBackgroundPicker,
+				videoLoading
+				);
+
+
+			
+			if (mediaPlayer == null)
             {
                 mediaPlayer = new MediaPlayer();
-                mediaPlayer = mediaPlayerElement.MediaPlayer;
+				composition = new MediaComposition();
+				
+				
             }
-
 			
-				//Thread.Sleep(2000);
 			
+			composition.Clips.Add(await MediaClip.CreateFromFileAsync(videoFile));
+			composition.OverlayLayers.Add(result);
 
-            /*
+			mediaPlayerElement.Source = MediaSource.CreateFromMediaStreamSource(composition.GeneratePreviewMediaStreamSource(
+				1280,
+				720 ));
+			mediaPlayer = mediaPlayerElement.MediaPlayer;
+			HideHeatmapGenerating();
+
+			//MediaSource.CreateFromMediaStreamSource
+
+			//Thread.Sleep(2000);
+
+
+			/*
             for (int i = 0; i < heatmaps.Count - 1; i++)
             {
                 mediaPlayerElement.Source = MediaSource.CreateFromMediaStreamSource(heatmaps[i]);
@@ -768,11 +793,9 @@ namespace BivrostHeatmapViewer
             */
 		}
 
-		static int counter = 0;
 		private void Button_Click(object sender, RoutedEventArgs e)
-		{ 
-			mediaPlayerElement.Source = MediaSource.CreateFromMediaStreamSource(heatmaps[counter]);
-			counter++;
+		{
+			mediaPlayer.Play();
 		}
 	}
 }

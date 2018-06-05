@@ -75,11 +75,11 @@ namespace BivrostHeatmapViewer
 		}
 
 
-        private static async Task<MediaStreamSource> Test(List<Heatmap.Coord> coords, Rect overlayPosition, ColorPicker colorPicker, double heatmapOpacity)
+        private static async Task<MediaOverlay> Test(List<Heatmap.Coord> coords, Rect overlayPosition, ColorPicker colorPicker, double heatmapOpacity)
         {
-            MediaComposition mediaComposition = new MediaComposition();
+            //MediaComposition mediaComposition = new MediaComposition();
             MediaOverlayLayer overlayLayer = new MediaOverlayLayer();
-            MediaStreamSource mediaStreamSource;
+            //MediaStreamSource mediaStreamSource;
 
             //var deserializedData = Heatmap.CoordsDeserialize(session.history);
             var heatmap = Heatmap.Generate(coords);
@@ -95,31 +95,32 @@ namespace BivrostHeatmapViewer
 
             var clip = await MediaClip.CreateFromImageFileAsync(await WriteableBitmapToStorageFile(wb, FileFormat.Tiff), new TimeSpan(0, 0, 0, 0, 100));
 
-            var background = MediaClip.CreateFromColor(colorPicker.Color, new TimeSpan(0, 0, 0, 0, 100));
+            //var background = MediaClip.CreateFromColor(colorPicker.Color, new TimeSpan(0, 0, 0, 0, 100));
 
-            mediaComposition.Clips.Add(background);
+            //mediaComposition.Clips.Add(background);
 
             MediaOverlay mediaOverlay = new MediaOverlay(clip);
             mediaOverlay.Position = overlayPosition;
             mediaOverlay.Opacity = heatmapOpacity;
 
-            overlayLayer.Overlays.Add(mediaOverlay);
-            mediaComposition.OverlayLayers.Add(overlayLayer);
+            //overlayLayer.Overlays.Add(mediaOverlay);
+            //mediaComposition.OverlayLayers.Add(overlayLayer);
 
-            mediaStreamSource = mediaComposition.GeneratePreviewMediaStreamSource
-                (
+			//mediaStreamSource = mediaComposition.GenerateMediaStreamSource();
+               /* (
                 (int)overlayPosition.Width,
                 (int)overlayPosition.Height
                 );
-
-            return mediaStreamSource;
+				*/
+            return mediaOverlay;
         }
 
-        public static async Task<List<MediaStreamSource>> GenerateVideoFromHeatmap(SessionCollection sessions, Rect overlayPosition, ColorPicker colorPicker, ProgressBar videoGeneratingProgress)
+        public static async Task<MediaOverlayLayer> GenerateVideoFromHeatmap(SessionCollection sessions, Rect overlayPosition, ColorPicker colorPicker, ProgressBar videoGeneratingProgress)
         {
 
             List<MediaStreamSource> mediaStreamSources = new List<MediaStreamSource>();
             Session session = sessions.sessions[0];
+			List<MediaOverlay> mediaOverlays = new List<MediaOverlay>();
 
             List<Heatmap.Coord>[] coordsArray = new List<Heatmap.Coord>[sessions.sessions.Count];
             coordsArray[0] = Heatmap.CoordsDeserialize(sessions.sessions[0].history);
@@ -154,9 +155,11 @@ namespace BivrostHeatmapViewer
                         generatedCoords[i].Add(coordsArray[j][i]);
                         //Debug.WriteLine("j: " + j);
                     }
-                    //Debug.WriteLine("i: " + i);
-                    mediaStreamSources.Add(await Test(generatedCoords[i], overlayPosition, colorPicker, 0.8));
-                    videoGeneratingProgress.Value = i;
+					//Debug.WriteLine("i: " + i);
+					//mediaStreamSources.Add(await Test(generatedCoords[i], overlayPosition, colorPicker, 0.8));
+					mediaOverlays.Add(await Test(generatedCoords[i], overlayPosition, colorPicker, 0.35));
+
+					videoGeneratingProgress.Value = i;
                 }
             }
             catch (Exception e)
@@ -165,6 +168,15 @@ namespace BivrostHeatmapViewer
             }
 
             videoGeneratingProgress.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+
+			int delay = 0;
+			MediaOverlayLayer mediaOverlayLayer = new MediaOverlayLayer();
+			foreach (MediaOverlay x in mediaOverlays)
+			{
+				x.Delay = new TimeSpan(0, 0, 0, 0, delay);
+				delay += 100;
+				mediaOverlayLayer.Overlays.Add(x);
+			}
 
             /*
             Console.WriteLine();
@@ -186,7 +198,7 @@ namespace BivrostHeatmapViewer
                mediaStreamSources.Add(await Test(coords4, overlayPosition, colorPicker, 0.8));
                */
 
-            return mediaStreamSources;
+            return mediaOverlayLayer;
 		}
 
 /*
