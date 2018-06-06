@@ -11,8 +11,10 @@ using Windows.Foundation;
 using Windows.Graphics.Imaging;
 using Windows.Media.Core;
 using Windows.Media.Editing;
+using Windows.Media.Transcoding;
 using Windows.Storage;
 using Windows.Storage.Streams;
+using Windows.UI.Core;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media.Imaging;
 
@@ -38,7 +40,7 @@ namespace BivrostHeatmapViewer
 				await stream.WriteAsync(renderedHeatmap, 0, renderedHeatmap.Length);
 			}
 
-			var clip = await MediaClip.CreateFromImageFileAsync(await WriteableBitmapToStorageFile(wb, FileFormat.Tiff), new TimeSpan(0, 0, 0, 0, 1));
+			var clip = await MediaClip.CreateFromImageFileAsync(await WriteableBitmapToStorageFile(wb), new TimeSpan(0, 0, 0, 0, 1));
 			
 			var background = MediaClip.CreateFromColor(colorPicker.Color, new TimeSpan(0, 0, 0, 0, 1));
 
@@ -93,7 +95,7 @@ namespace BivrostHeatmapViewer
                 await stream.WriteAsync(renderedHeatmap, 0, renderedHeatmap.Length);
             }
 
-            var clip = await MediaClip.CreateFromImageFileAsync(await WriteableBitmapToStorageFile(wb, FileFormat.Tiff), new TimeSpan(0, 0, 0, 0, 100));
+            var clip = await MediaClip.CreateFromImageFileAsync(await WriteableBitmapToStorageFile(wb), new TimeSpan(0, 0, 0, 0, 100));
 
             //var background = MediaClip.CreateFromColor(colorPicker.Color, new TimeSpan(0, 0, 0, 0, 100));
 
@@ -115,10 +117,11 @@ namespace BivrostHeatmapViewer
             return mediaOverlay;
         }
 
-        public static async Task<MediaOverlayLayer> GenerateVideoFromHeatmap(SessionCollection sessions, Rect overlayPosition, ColorPicker colorPicker, ProgressBar videoGeneratingProgress)
+        public static async Task<MediaOverlayLayer> GenerateVideoFromHeatmap(SessionCollection sessions, Rect overlayPosition, ColorPicker colorPicker, ProgressBar videoGeneratingProgress, double opacity)
         {
+			await Windows.Storage.ApplicationData.Current.ClearAsync();
 
-            List<MediaStreamSource> mediaStreamSources = new List<MediaStreamSource>();
+			List<MediaStreamSource> mediaStreamSources = new List<MediaStreamSource>();
             Session session = sessions.sessions[0];
 			List<MediaOverlay> mediaOverlays = new List<MediaOverlay>();
 
@@ -164,9 +167,9 @@ namespace BivrostHeatmapViewer
             }
             catch (Exception e)
             {
-
+				Debug.WriteLine(e.Message);
             }
-
+			videoGeneratingProgress.Value = 0;
             videoGeneratingProgress.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
 
 			int delay = 0;
@@ -175,6 +178,7 @@ namespace BivrostHeatmapViewer
 			{
 				x.Delay = new TimeSpan(0, 0, 0, 0, delay);
 				delay += 100;
+				x.Opacity = opacity;
 				mediaOverlayLayer.Overlays.Add(x);
 			}
 
@@ -201,102 +205,136 @@ namespace BivrostHeatmapViewer
             return mediaOverlayLayer;
 		}
 
-/*
-			var clip = await MediaClip.CreateFromFileAsync(videoFile);
+		public static async Task RenderCompositionToFile(MediaComposition composition, saveProgressCallback ShowErrorMessage)
+		{
+			var picker = new Windows.Storage.Pickers.FileSavePicker();
+			picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.VideosLibrary;
+			picker.FileTypeChoices.Add("MP4 files", new List<string>() { ".mp4" });
+			picker.SuggestedFileName = "RenderedComposition.mp4";
 
-			MediaOverlay videoOverlay = new MediaOverlay(clip);
-			videoOverlay.Position = overlayPosition;
-			videoOverlay.Opacity = 0.7;
-			videoOverlay.AudioEnabled = true;
-
-			var bR = colorPicker.Color.R;
-			var bG = colorPicker.Color.G;
-			var bB = colorPicker.Color.B;
-			Windows.UI.Color videoBackgoundColor = Windows.UI.Color.FromArgb(255, bR, bG, bB);
-
-			var videoBackground = MediaClip.CreateFromColor(videoBackgoundColor, new TimeSpan(0, 0, 20));
-
-			composition.Clips.Add(videoBackground);
-
-
-			//composition.Clips.Add(await MediaClip.CreateFromImageFileAsync(await WriteableBitmapToStorageFile(wb, FileFormat.Png), new TimeSpan(0, 0, 3)));
-
-			mediaStreamSource = composition.GeneratePreviewMediaStreamSource(
-				(int)overlayPosition.Width,
-				(int)overlayPosition.Height
-				);
-
-
-			MediaOverlay mediaOverlay;
-
-
-			MediaOverlayLayer mediaOverlayLayer = new MediaOverlayLayer();
-			mediaOverlayLayer.Overlays.Add(videoOverlay);
-
-			TimePicker timePicker = new TimePicker();
-
-			//Stopwatch stopwatch = new Stopwatch();
-			//stopwatch.Start();
-
-			//videoLoading.Visibility = Visibility.Visible;
-
-			for (int i = 1; i < 200; i++)
+			Windows.Storage.StorageFile file = await picker.PickSaveFileAsync();
+			if (file != null)
 			{
-				using (Stream stream = wb.PixelBuffer.AsStream())
+				// Call RenderToFileAsync
+				var saveOperation = composition.RenderToFileAsync(file, MediaTrimmingPreference.Precise);
+
+				saveOperation.Progress = new AsyncOperationProgressHandler<TranscodeFailureReason, double>(async (info, progress) =>
 				{
-					await stream.WriteAsync(heatmaps[(i % 7) + 1], 0, heatmaps[(i % 7) + 1].Length);
-					var overlayMediaClip = await MediaClip.CreateFromImageFileAsync(await WriteableBitmapToStorageFile(wb, FileFormat.Tiff), new TimeSpan(0, 0, 0, 0, 100));
-					mediaOverlay = new MediaOverlay(overlayMediaClip);
-					mediaOverlay.Delay = new TimeSpan(0, 0, 0, 0, (i - 1) * 100);
-					mediaOverlay.Position = overlayPosition;
-					mediaOverlay.Opacity = 0.35;
-					mediaOverlayLayer.Overlays.Add(mediaOverlay);
+					await this.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, new DispatchedHandler(() =>
+					{
+						ShowErrorMessage(string.Format("Saving file... Progress: {0:F0}%", progress));
+					}));
+				});
+				saveOperation.Completed = new AsyncOperationWithProgressCompletedHandler<TranscodeFailureReason, double>(async (info, status) =>
+				{
+					await this.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, new DispatchedHandler(() =>
+					{
+						try
+						{
+							var results = info.GetResults();
+							if (results != TranscodeFailureReason.None || status != AsyncStatus.Completed)
+							{
+								ShowErrorMessage("Saving was unsuccessful");
+							}
+							else
+							{
+								ShowErrorMessage("Trimmed clip saved to file");
+							}
+						}
+						finally
+						{
+							// Update UI whether the operation succeeded or not
+						}
+
+					}));
+				});
+			}
+			else
+			{
+				ShowErrorMessage("User cancelled the file selection");
+			}
+		}
+		/*
+					var clip = await MediaClip.CreateFromFileAsync(videoFile);
+
+					MediaOverlay videoOverlay = new MediaOverlay(clip);
+					videoOverlay.Position = overlayPosition;
+					videoOverlay.Opacity = 0.7;
+					videoOverlay.AudioEnabled = true;
+
+					var bR = colorPicker.Color.R;
+					var bG = colorPicker.Color.G;
+					var bB = colorPicker.Color.B;
+					Windows.UI.Color videoBackgoundColor = Windows.UI.Color.FromArgb(255, bR, bG, bB);
+
+					var videoBackground = MediaClip.CreateFromColor(videoBackgoundColor, new TimeSpan(0, 0, 20));
+
+					composition.Clips.Add(videoBackground);
+
+
+					//composition.Clips.Add(await MediaClip.CreateFromImageFileAsync(await WriteableBitmapToStorageFile(wb, FileFormat.Png), new TimeSpan(0, 0, 3)));
+
+					mediaStreamSource = composition.GeneratePreviewMediaStreamSource(
+						(int)overlayPosition.Width,
+						(int)overlayPosition.Height
+						);
+
+
+					MediaOverlay mediaOverlay;
+
+
+					MediaOverlayLayer mediaOverlayLayer = new MediaOverlayLayer();
+					mediaOverlayLayer.Overlays.Add(videoOverlay);
+
+					TimePicker timePicker = new TimePicker();
+
+					//Stopwatch stopwatch = new Stopwatch();
+					//stopwatch.Start();
+
+					//videoLoading.Visibility = Visibility.Visible;
+
+					for (int i = 1; i < 200; i++)
+					{
+						using (Stream stream = wb.PixelBuffer.AsStream())
+						{
+							await stream.WriteAsync(heatmaps[(i % 7) + 1], 0, heatmaps[(i % 7) + 1].Length);
+							var overlayMediaClip = await MediaClip.CreateFromImageFileAsync(await WriteableBitmapToStorageFile(wb, FileFormat.Tiff), new TimeSpan(0, 0, 0, 0, 100));
+							mediaOverlay = new MediaOverlay(overlayMediaClip);
+							mediaOverlay.Delay = new TimeSpan(0, 0, 0, 0, (i - 1) * 100);
+							mediaOverlay.Position = overlayPosition;
+							mediaOverlay.Opacity = 0.35;
+							mediaOverlayLayer.Overlays.Add(mediaOverlay);
+
+						}
+						//videoLoading.Value = i * 100 / 200;
+					}
+
+					//videoLoading.Visibility = Visibility.Collapsed;
+
+					//stopwatch.Stop();
+
+					composition.OverlayLayers.Add(mediaOverlayLayer);
+
+					//mediaPlayerElement.Source = MediaSource.CreateFromMediaStreamSource(mediaStreamSource);
+
+					return MediaSource.CreateFromMediaStreamSource(mediaStreamSource);
 
 				}
-				//videoLoading.Value = i * 100 / 200;
-			}
 
-			//videoLoading.Visibility = Visibility.Collapsed;
-
-			//stopwatch.Stop();
-
-			composition.OverlayLayers.Add(mediaOverlayLayer);
-
-			//mediaPlayerElement.Source = MediaSource.CreateFromMediaStreamSource(mediaStreamSource);
-
-			return MediaSource.CreateFromMediaStreamSource(mediaStreamSource);
-
-		}
-
-*/
+		*/
 
 
 
-		private static async Task<StorageFile> WriteableBitmapToStorageFile(WriteableBitmap WB, FileFormat fileFormat)
+		private static async Task<StorageFile> WriteableBitmapToStorageFile(WriteableBitmap WB)
 		{
 			string FileName = "MyFile.";
 			Guid BitmapEncoderGuid = BitmapEncoder.JpegEncoderId;
-			switch (fileFormat)
-			{
-				case FileFormat.Jpeg:
-					FileName += "jpeg";
-					BitmapEncoderGuid = BitmapEncoder.JpegEncoderId; //7s
-					break;
-				case FileFormat.Tiff:
-					FileName += "tiff";
-					BitmapEncoderGuid = BitmapEncoder.TiffEncoderId; //7s
-					break;
-				case FileFormat.Gif:
-					FileName += "gif";
-					BitmapEncoderGuid = BitmapEncoder.GifEncoderId; //10s
-					break;
-				case FileFormat.Bmp:
-					FileName += "bmp";
-					BitmapEncoderGuid = BitmapEncoder.BmpEncoderId;
-					break;
-			}
+			FileName += "tiff";
+			BitmapEncoderGuid = BitmapEncoder.TiffEncoderId; //7s
+
 			var file = await Windows.Storage.ApplicationData.Current.TemporaryFolder
 				.CreateFileAsync(FileName, CreationCollisionOption.GenerateUniqueName);
+
 			using (IRandomAccessStream stream = await file.OpenAsync(FileAccessMode.ReadWrite))
 			{
 				BitmapEncoder encoder = await BitmapEncoder.CreateAsync(BitmapEncoderGuid, stream);
@@ -312,13 +350,6 @@ namespace BivrostHeatmapViewer
 				await encoder.FlushAsync();
 			}
 			return file;
-		}
-		public enum FileFormat
-		{
-			Jpeg,
-			Tiff,
-			Gif,
-			Bmp
 		}
 	}
 

@@ -23,6 +23,7 @@
 				<RowDefinition Height="auto" />
 				<RowDefinition Height="*" />
 				<RowDefinition Height="Auto" />
+				<RowDefinition Height="Auto" />
 			</Grid.RowDefinitions>
 
 			<StackPanel Grid.Row="0" VerticalAlignment="Top">
@@ -71,6 +72,7 @@
 
 
 			<Button HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="12" Width="200" Height="40" Style="{ThemeResource ButtonRevealStyle}" Grid.Row="2" Click="VideoGenTest">Generate video</Button>
+			<Button HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="12" Width="200" Height="40" Style="{ThemeResource ButtonRevealStyle}" Grid.Row="3" Click="SaveVideo_Click">Save video to file</Button>
 
 			<Rectangle Grid.RowSpan="3" Width="20" HorizontalAlignment="Right" IsHitTestVisible="False" Margin="0,-12,0,-12" Opacity="0.2">
 				<Rectangle.Fill>
@@ -112,7 +114,15 @@
 										AreTransportControlsEnabled="True"
 										Loading="mediaPlayerElement_Loading">
 
+						<MediaPlayerElement.TransportControls>
+							<MediaTransportControls 
+								IsZoomEnabled="False"
+								IsZoomButtonVisible="False"
+								/>
+						</MediaPlayerElement.TransportControls>
+						
 					</MediaPlayerElement>
+					
 					<ProgressBar Width="500" Value="0" Visibility="Collapsed" x:Name="videoLoading" />
 					<ProgressRing x:Name="heatmapLoadingIndicator"  IsActive="False" Width="64" Height="64"/>
 					<Image x:Name="heatImage" Stretch="Fill" Opacity="0.5" IsHitTestVisible="False">
@@ -145,7 +155,7 @@
 						<TextBlock>heatmap opacity</TextBlock>
 						<Slider x:Name="heatmapOpacity" Minimum="0" Maximum="100" Value="50" TickPlacement="Inline" TickFrequency="5"/>
 						<TextBlock>video opacity</TextBlock>
-						<Slider Minimum="0" Maximum="100" Value="50" TickPlacement="Inline" TickFrequency="5"/>
+						<Slider x:Name="videoOpacity" Minimum="0" Maximum="100" Value="50" TickPlacement="Inline" TickFrequency="5"/>
 						<Button Style="{ThemeResource ButtonRevealStyle}" x:Name="previewButton" Width="200" Height="40" HorizontalAlignment="Center" Click="GenerateStaticHeatmap">Generate Heatmap Image</Button>
 					</StackPanel>
 				</StackPanel>
