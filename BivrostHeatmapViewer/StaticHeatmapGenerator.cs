@@ -15,6 +15,7 @@ using Windows.Media.Transcoding;
 using Windows.Storage;
 using Windows.Storage.Streams;
 using Windows.UI.Core;
+using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media.Imaging;
 
@@ -205,12 +206,12 @@ namespace BivrostHeatmapViewer
             return mediaOverlayLayer;
 		}
 
-		public static async Task RenderCompositionToFile(MediaComposition composition, saveProgressCallback ShowErrorMessage)
+		public static async Task RenderCompositionToFile(MediaComposition composition, saveProgressCallback ShowErrorMessage, Window window)
 		{
 			var picker = new Windows.Storage.Pickers.FileSavePicker();
 			picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.VideosLibrary;
 			picker.FileTypeChoices.Add("MP4 files", new List<string>() { ".mp4" });
-			picker.SuggestedFileName = "RenderedComposition.mp4";
+			picker.SuggestedFileName = "RenderedVideo.mp4";
 
 			Windows.Storage.StorageFile file = await picker.PickSaveFileAsync();
 			if (file != null)
@@ -220,14 +221,14 @@ namespace BivrostHeatmapViewer
 
 				saveOperation.Progress = new AsyncOperationProgressHandler<TranscodeFailureReason, double>(async (info, progress) =>
 				{
-					await this.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, new DispatchedHandler(() =>
+					await window.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, new DispatchedHandler(() =>
 					{
 						ShowErrorMessage(string.Format("Saving file... Progress: {0:F0}%", progress));
 					}));
 				});
 				saveOperation.Completed = new AsyncOperationWithProgressCompletedHandler<TranscodeFailureReason, double>(async (info, status) =>
 				{
-					await this.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, new DispatchedHandler(() =>
+					await window.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, new DispatchedHandler(() =>
 					{
 						try
 						{
@@ -351,6 +352,7 @@ namespace BivrostHeatmapViewer
 			}
 			return file;
 		}
+
 	}
 
 }

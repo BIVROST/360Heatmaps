@@ -760,7 +760,7 @@ namespace BivrostHeatmapViewer
 		private async void SaveVideo_Click(object sender, RoutedEventArgs e)
 		{
 			saveProgressCallback saveProgress = ShowErrorMessage;
-			await StaticHeatmapGenerator.RenderCompositionToFile(composition, saveProgress);
+			await StaticHeatmapGenerator.RenderCompositionToFile(composition, saveProgress, Window.Current);
 		}
 
 		private void ShowErrorMessage(string v)

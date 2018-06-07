@@ -53,7 +53,7 @@ namespace BivrostHeatmapViewer
 					if (yaw >= 0 && pitch >= 0) // ignore unknown parts ("--") and broken messages
 						coords.Add(new Coord() { yaw = yaw, pitch = pitch, fov = fov });
 					else
-						coords.Add(null);
+						coords.Add(new Coord() { yaw = 0, pitch = 0, fov = 0 });
 				}
 			}
 
