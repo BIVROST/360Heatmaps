@@ -5,13 +5,22 @@
     xmlns:local="using:BivrostHeatmapViewer"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	xmlns:controls="using:Microsoft.Toolkit.Uwp.UI.Controls"
+	DataContext="{Binding RelativeSource={RelativeSource Self}}"
     mc:Ignorable="d">
+
+
+
+	
 
 	<Grid Background="{ThemeResource SidePanelAcrylicBrush}" x:Name="mainGridControl">
 		<Grid.ColumnDefinitions>
 			<ColumnDefinition Width="350" />
 			<ColumnDefinition Width="*" />
 		</Grid.ColumnDefinitions>
+
+
+		
 		<!--
 		<Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" x:Name="GlassHost">
 			<TextBlock Text="abrakadabra 123666!!!~~~ioneoneone" FontSize="96" VerticalAlignment="Center" HorizontalAlignment="Center" TextWrapping="Wrap"/>
@@ -30,7 +39,7 @@
 
 				<TextBlock Margin="4">Selected video</TextBlock>
 				<StackPanel Orientation="Horizontal" AllowDrop="True" DragOver="SelectedVideo_DragOver" Drop="SelectedVideo_Drop">
-					<Button x:Name="pickFolderButton" Width="40" Height="40" Margin="8" Style="{ThemeResource ButtonRevealStyle}" Click="pickFolderButton_Click">
+					<Button x:Name="addVideoButton" Width="40" Height="40" Margin="8" Style="{ThemeResource ButtonRevealStyle}" Click="addVideoButton_Click">
 						<SymbolIcon Symbol="Add" />
 					</Button>
 					<TextBlock FontSize="24" VerticalAlignment="Center" x:Name="selectedVideoFileTextBlock">(...)</TextBlock>
@@ -47,14 +56,14 @@
 					<Button Style="{ThemeResource ButtonRevealStyle}" x:Name="selectionModeHeatmaps" Click="selectionModeHeatmaps_Click">
 						<SymbolIcon Symbol="List"/>
 					</Button>
-					
+
 					<Button Style="{ThemeResource ButtonRevealStyle}" x:Name="selectAllHeatmaps" Click="selectAllHeatmaps_Click" Visibility="Collapsed">
 						<SymbolIcon Symbol="SelectAll"/>
 					</Button>
 					<Button Style="{ThemeResource ButtonRevealStyle}" x:Name="deselectAllHeatmaps" Click="deselectAllHeatmaps_Click" Visibility="Collapsed">
 						<SymbolIcon Symbol="ClearSelection"/>
 					</Button>
-					
+
 					<Button Style="{ThemeResource ButtonRevealStyle}" x:Name="deleteSelectedHeatmaps" Click="deleteSelectedHeatmaps_Click">
 						<SymbolIcon Symbol="Delete"/>
 					</Button>
@@ -65,14 +74,14 @@
 					  AllowDrop="True" Drop="heatmapSessionsListView_Drop" DragOver="heatmapSessionsListView_DragOver" >
 			</ListView>
 
-			
+
 			<Grid x:Name="heatmapListLoadingScreenGrid" Grid.Row="1" Visibility="Collapsed">
 				<ProgressRing x:Name="heatmapListLoadingIndicator"  IsActive="False" Width="64" Height="64"/>
 			</Grid>
 
 
-			<Button HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="12" Width="200" Height="40" Style="{ThemeResource ButtonRevealStyle}" Grid.Row="2" Click="VideoGenTest">Generate video</Button>
-			<Button HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="12" Width="200" Height="40" Style="{ThemeResource ButtonRevealStyle}" Grid.Row="3" Click="SaveVideo_Click">Save video to file</Button>
+			<Button x:Name="generateVideoButton" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="12" Width="200" Height="40" Style="{ThemeResource ButtonRevealStyle}" Grid.Row="2" Click="VideoGenTest">Generate video</Button>
+			<Button x:Name="saveCompositionButton" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="12" Width="200" Height="40" Style="{ThemeResource ButtonRevealStyle}" Grid.Row="3" Click="SaveVideo_Click">Save video to file</Button>
 
 			<Rectangle Grid.RowSpan="3" Width="20" HorizontalAlignment="Right" IsHitTestVisible="False" Margin="0,-12,0,-12" Opacity="0.2">
 				<Rectangle.Fill>
@@ -90,6 +99,7 @@
 			<Grid.RowDefinitions>
 				<RowDefinition Height="Auto" />
 				<RowDefinition Height="*" />
+				<RowDefinition Height="Auto" />
 				<RowDefinition Height="Auto" />
 			</Grid.RowDefinitions>
 
@@ -120,15 +130,15 @@
 								IsZoomButtonVisible="False"
 								/>
 						</MediaPlayerElement.TransportControls>
-						
+
 					</MediaPlayerElement>
+
 					
-					<ProgressBar Width="500" Value="0" Visibility="Collapsed" x:Name="videoLoading" />
 					<ProgressRing x:Name="heatmapLoadingIndicator"  IsActive="False" Width="64" Height="64"/>
 					<Image x:Name="heatImage" Stretch="Fill" Opacity="0.5" IsHitTestVisible="False">
 
 					</Image>
-					<Image x:Name="horizonImage" Source="ms-appx:///Assets/horizon3840x2160.png" Visibility="Collapsed" Stretch="Fill"
+					<Image x:Name="horizonImage" Source="ms-appx:///Assets/horizon3840x2160.png" Visibility="Collapsed" Stretch="Fill" Opacity="0.5" IsHitTestVisible="False"
 						   Width="{Binding ElementName=mediaPlayerElement, Path=ActualWidth}"
 							Height="{Binding ElementName=mediaPlayerElement, Path=ActualHeight}"
 						   />
@@ -144,7 +154,7 @@
 					<ColumnDefinition Width="*"/>
 					<ColumnDefinition Width="*"/>
 				</Grid.ColumnDefinitions>
-				
+
 				<StackPanel Grid.Column="0" HorizontalAlignment="Center">
 					<TextBlock x:Name="fpsLabel"></TextBlock>
 					<!--<Button x:Name="playButton" HorizontalAlignment="Center" VerticalAlignment="Bottom" Click="playButton_Click" Width="200" Height="40">
@@ -153,15 +163,21 @@
 
 					<StackPanel Width="300">
 						<TextBlock>heatmap opacity</TextBlock>
-						<Slider x:Name="heatmapOpacity" Minimum="0" Maximum="100" Value="50" TickPlacement="Inline" TickFrequency="5"/>
+						<Slider x:Name="heatmapOpacity" Minimum="0" Maximum="100" Value="30" TickPlacement="Inline" TickFrequency="5"/>
 						<TextBlock>video opacity</TextBlock>
-						<Slider x:Name="videoOpacity" Minimum="0" Maximum="100" Value="50" TickPlacement="Inline" TickFrequency="5"/>
-						<Button Style="{ThemeResource ButtonRevealStyle}" x:Name="previewButton" Width="200" Height="40" HorizontalAlignment="Center" Click="GenerateStaticHeatmap">Generate Heatmap Image</Button>
+						<Slider x:Name="videoOpacity" Minimum="0" Maximum="100" Value="75" TickPlacement="Inline" TickFrequency="5"/>
+						<CheckBox HorizontalAlignment="Left" Content="Enable Horizon" Checked="CheckBox_Checked" Unchecked="CheckBox_Unchecked"/>
+
 					</StackPanel>
+
 				</StackPanel>
 
 				<StackPanel Grid.Column="1" HorizontalAlignment="Center" Width="300">
 					<TextBlock/>
+					<TextBlock>start</TextBlock>
+					<Slider x:Name="videoStartSlider" HorizontalAlignment="Left" Width="300" Minimum="0" Value="0" TickPlacement="Inline" TickFrequency="5"/>
+					<TextBlock>stop</TextBlock>
+					<Slider x:Name="videoStopSlider" HorizontalAlignment="Left" Width="300" Minimum="0" TickPlacement="Inline" TickFrequency="5"/>
 					<Button x:Name="videoBackgroundColorButton" Style="{ThemeResource ButtonRevealStyle}" Width="200" Height="40" HorizontalAlignment="Center" Content="Background Color">
 						<Button.Flyout>
 							<Flyout>
@@ -179,22 +195,33 @@
 					<TextBlock/>
 					<Rectangle x:Name="colorRect" Width="{Binding ElementName=videoBackgroundColorButton, Path=ActualWidth}" Height="40" Fill="White"/>
 					<TextBlock/>
-					<CheckBox HorizontalAlignment="Center" Content="Enable Horizon" Checked="CheckBox_Checked" Unchecked="CheckBox_Unchecked"/>
-					<Button HorizontalAlignment="Center" VerticalAlignment="Top" Click="Button_Click" >
-						<SymbolIcon Symbol="Play"/>
-					</Button>
+
 				</StackPanel>
+
 			</Grid>
 
-
+			<Button Grid.Row="3" Style="{ThemeResource ButtonRevealStyle}" Margin="0, 0, 0, 30" x:Name="previewButton" Width="200" Height="40" HorizontalAlignment="Center" Click="GenerateStaticHeatmap">Generate Heatmap Image</Button>
 
 		</Grid>
 
+		<Rectangle x:Name="loadingScreen" IsHitTestVisible="True" Grid.ColumnSpan="2" Width="{Binding ElementName=mainGridControl, Path=Width}" Opacity="0.5" Visibility="Collapsed">
+			<Rectangle.Fill>
+				<SolidColorBrush Color="Gray"/>
+			</Rectangle.Fill>
+		</Rectangle>
+		
+		<StackPanel Grid.ColumnSpan="2" VerticalAlignment="Center">
+			<ProgressBar x:Name="videoLoading" HorizontalAlignment="Center" Width="500" Value="0" Visibility="Collapsed" />
+			<TextBlock/>
+			<Button x:Name="buttonLoadingStop" HorizontalAlignment="Center" Style="{ThemeResource ButtonRevealStyle}" Width="40" Height="40" Visibility="Collapsed" Click="ButtonLoadingStop_Click">
+				<SymbolIcon Symbol="Stop" />
+			</Button>
+		</StackPanel>
+		
 
-		
-		
+
+
 	</Grid>
-	
+
 	
 </Page>
- 

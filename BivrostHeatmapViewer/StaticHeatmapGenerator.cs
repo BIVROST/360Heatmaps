@@ -1,11 +1,10 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Graphics.Imaging;
@@ -118,7 +117,7 @@ namespace BivrostHeatmapViewer
             return mediaOverlay;
         }
 
-        public static async Task<MediaOverlayLayer> GenerateVideoFromHeatmap(SessionCollection sessions, Rect overlayPosition, ColorPicker colorPicker, ProgressBar videoGeneratingProgress, double opacity)
+        public static async Task<MediaOverlayLayer> GenerateVideoFromHeatmap(CancellationToken token, SessionCollection sessions, Rect overlayPosition, ColorPicker colorPicker, ProgressBar videoGeneratingProgress, double opacity)
         {
 			await Windows.Storage.ApplicationData.Current.ClearAsync();
 
@@ -142,7 +141,7 @@ namespace BivrostHeatmapViewer
             }
 
             videoGeneratingProgress.Maximum = min_length;
-            videoGeneratingProgress.Visibility = Windows.UI.Xaml.Visibility.Visible;
+            videoGeneratingProgress.Visibility = Visibility.Visible;
 
             List<Heatmap.Coord>[] generatedCoords = new List<Heatmap.Coord>[min_length];
             for (int i = 0; i < min_length; i++)
@@ -150,28 +149,41 @@ namespace BivrostHeatmapViewer
                 generatedCoords[i] = new List<Heatmap.Coord>();
             }
 
-            try
-            {
-                for (int i = 0; i < min_length; i++)
-                {
-                    for (int j = 0; j < sessions.sessions.Count; j++)
-                    {
-                        generatedCoords[i].Add(coordsArray[j][i]);
-                        //Debug.WriteLine("j: " + j);
-                    }
+			try
+			{
+				for (int i = 0; i < min_length; i++)
+				{
+					for (int j = 0; j < sessions.sessions.Count; j++)
+					{
+						generatedCoords[i].Add(coordsArray[j][i]);
+						//Debug.WriteLine("j: " + j);
+					}
 					//Debug.WriteLine("i: " + i);
 					//mediaStreamSources.Add(await Test(generatedCoords[i], overlayPosition, colorPicker, 0.8));
+					if (token.IsCancellationRequested)
+					{
+						token.ThrowIfCancellationRequested();
+					}
 					mediaOverlays.Add(await Test(generatedCoords[i], overlayPosition, colorPicker, 0.35));
 
 					videoGeneratingProgress.Value = i;
-                }
-            }
-            catch (Exception e)
-            {
+				}
+			}
+			catch (OperationCanceledException e)
+			{
+				return new MediaOverlayLayer();
+			}
+			catch (Exception e)
+			{
 				Debug.WriteLine(e.Message);
-            }
-			videoGeneratingProgress.Value = 0;
-            videoGeneratingProgress.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+			}
+			finally
+			{
+				videoGeneratingProgress.Value = 0;
+				videoGeneratingProgress.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+				//token.IsCancellationRequested 
+				//token = CancellationToken.None;
+			}
 
 			int delay = 0;
 			MediaOverlayLayer mediaOverlayLayer = new MediaOverlayLayer();
@@ -206,16 +218,8 @@ namespace BivrostHeatmapViewer
             return mediaOverlayLayer;
 		}
 
-		public static async Task RenderCompositionToFile(MediaComposition composition, saveProgressCallback ShowErrorMessage, Window window)
+		public static void RenderCompositionToFile(StorageFile file, MediaComposition composition, saveProgressCallback ShowErrorMessage, Window window)
 		{
-			var picker = new Windows.Storage.Pickers.FileSavePicker();
-			picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.VideosLibrary;
-			picker.FileTypeChoices.Add("MP4 files", new List<string>() { ".mp4" });
-			picker.SuggestedFileName = "RenderedVideo.mp4";
-
-			Windows.Storage.StorageFile file = await picker.PickSaveFileAsync();
-			if (file != null)
-			{
 				// Call RenderToFileAsync
 				var saveOperation = composition.RenderToFileAsync(file, MediaTrimmingPreference.Precise);
 
@@ -223,7 +227,7 @@ namespace BivrostHeatmapViewer
 				{
 					await window.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, new DispatchedHandler(() =>
 					{
-						ShowErrorMessage(string.Format("Saving file... Progress: {0:F0}%", progress));
+						ShowErrorMessage(progress);
 					}));
 				});
 				saveOperation.Completed = new AsyncOperationWithProgressCompletedHandler<TranscodeFailureReason, double>(async (info, status) =>
@@ -235,11 +239,11 @@ namespace BivrostHeatmapViewer
 							var results = info.GetResults();
 							if (results != TranscodeFailureReason.None || status != AsyncStatus.Completed)
 							{
-								ShowErrorMessage("Saving was unsuccessful");
+								//ShowErrorMessage("Saving was unsuccessful");
 							}
 							else
 							{
-								ShowErrorMessage("Trimmed clip saved to file");
+								//ShowErrorMessage("Trimmed clip saved to file");
 							}
 						}
 						finally
@@ -249,12 +253,11 @@ namespace BivrostHeatmapViewer
 
 					}));
 				});
-			}
-			else
-			{
-				ShowErrorMessage("User cancelled the file selection");
-			}
+
+			//button.IsEnabled = true;
+			//await saveOperation;
 		}
+
 		/*
 					var clip = await MediaClip.CreateFromFileAsync(videoFile);
 
@@ -323,8 +326,6 @@ namespace BivrostHeatmapViewer
 				}
 
 		*/
-
-
 
 		private static async Task<StorageFile> WriteableBitmapToStorageFile(WriteableBitmap WB)
 		{
