@@ -14,6 +14,7 @@ using Windows.Media.Transcoding;
 using Windows.Storage;
 using Windows.Storage.Streams;
 using Windows.UI.Core;
+using Windows.UI.Popups;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media.Imaging;
@@ -77,7 +78,7 @@ namespace BivrostHeatmapViewer
 		}
 
 
-        private static async Task<MediaOverlay> Test(List<Heatmap.Coord> coords, Rect overlayPosition, ColorPicker colorPicker, double heatmapOpacity)
+        private static async Task<MediaOverlay> Test(List<Heatmap.Coord> coords, Rect overlayPosition, ColorPicker colorPicker, double heatmapOpacity, int sampleRate)
         {
             //MediaComposition mediaComposition = new MediaComposition();
             MediaOverlayLayer overlayLayer = new MediaOverlayLayer();
@@ -95,7 +96,7 @@ namespace BivrostHeatmapViewer
                 await stream.WriteAsync(renderedHeatmap, 0, renderedHeatmap.Length);
             }
 
-            var clip = await MediaClip.CreateFromImageFileAsync(await WriteableBitmapToStorageFile(wb), new TimeSpan(0, 0, 0, 0, 100));
+            var clip = await MediaClip.CreateFromImageFileAsync(await WriteableBitmapToStorageFile(wb), new TimeSpan(0, 0, 0, 0, 1000/sampleRate));
 
             //var background = MediaClip.CreateFromColor(colorPicker.Color, new TimeSpan(0, 0, 0, 0, 100));
 
@@ -140,16 +141,27 @@ namespace BivrostHeatmapViewer
                 }
             }
 
-            videoGeneratingProgress.Maximum = min_length;
-            videoGeneratingProgress.Visibility = Visibility.Visible;
-
             List<Heatmap.Coord>[] generatedCoords = new List<Heatmap.Coord>[min_length];
             for (int i = 0; i < min_length; i++)
             {
                 generatedCoords[i] = new List<Heatmap.Coord>();
             }
 
-			try
+            int sampleRate;
+
+            if (!CheckSampleRate(sessions, out sampleRate))
+            {
+                var dialog = new MessageDialog("Sessions should have the same sample rate. Please change selected sessions.");
+                dialog.Title = "Error";
+                dialog.Commands.Add(new UICommand { Label = "OK", Id = 0 });
+                await dialog.ShowAsync();
+                return new MediaOverlayLayer();
+            }
+
+            videoGeneratingProgress.Maximum = min_length;
+            videoGeneratingProgress.Visibility = Visibility.Visible;
+
+            try
 			{
 				for (int i = 0; i < min_length; i++)
 				{
@@ -163,8 +175,9 @@ namespace BivrostHeatmapViewer
 					if (token.IsCancellationRequested)
 					{
 						token.ThrowIfCancellationRequested();
+                        //token = CancellationToken.None;
 					}
-					mediaOverlays.Add(await Test(generatedCoords[i], overlayPosition, colorPicker, 0.35));
+					mediaOverlays.Add(await Test(generatedCoords[i], overlayPosition, colorPicker, 0.35, sampleRate));
 
 					videoGeneratingProgress.Value = i;
 				}
@@ -190,7 +203,7 @@ namespace BivrostHeatmapViewer
 			foreach (MediaOverlay x in mediaOverlays)
 			{
 				x.Delay = new TimeSpan(0, 0, 0, 0, delay);
-				delay += 100;
+				delay += 1000/sampleRate;
 				x.Opacity = opacity;
 				mediaOverlayLayer.Overlays.Add(x);
 			}
@@ -353,6 +366,20 @@ namespace BivrostHeatmapViewer
 			}
 			return file;
 		}
+
+        private static bool CheckSampleRate (SessionCollection sessions, out int sampleRate)
+        {
+            sampleRate = sessions.sessions[0].sample_rate;
+            foreach (Session x in sessions.sessions)
+            {
+                if (sampleRate != x.sample_rate)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
 
 	}
 

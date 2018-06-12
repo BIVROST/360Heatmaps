@@ -27,12 +27,13 @@ using Windows.Media.Editing;
 using Windows.Media.Playback;
 using System.Collections.ObjectModel;
 using System.Threading;
+using System.Net.Http;
+using Windows.UI.Popups;
 
 
 /* TODO:
  * heatmap generator frequency 
  * heatmap list with error markers
- * time start/end
  * generowanie heatmap do max dlugosci filmu
  * */
 
@@ -58,7 +59,7 @@ namespace BivrostHeatmapViewer
 		private MediaPlayer mediaPlayer;
 		private Rect rect = new Rect(0, 0, 1280, 720);
 		MediaClip video;
-		public CancellationTokenSource tokenSource = new CancellationTokenSource();
+        public CancellationTokenSource tokenSource = new CancellationTokenSource();
 		public CancellationToken token;
 		//private bool saveFlag = false;
 		Task<MediaOverlayLayer> task;
@@ -167,22 +168,6 @@ namespace BivrostHeatmapViewer
 
 			shadowVisual.StartAnimation("Size", bindSizeAnimation);
 		}
-
-		/*private async void pickFolderButton_Click(object sender, RoutedEventArgs e)
-		{
-			FolderPicker folderPicker = new FolderPicker();
-			folderPicker.SuggestedStartLocation = PickerLocationId.ComputerFolder;
-			folderPicker.FileTypeFilter.Add(".txt");
-			StorageFolder folder = await folderPicker.PickSingleFolderAsync();
-			
-			if(folder != null)
-			{
-				StorageApplicationPermissions.FutureAccessList.AddOrReplace("PickedFolderToken", folder);
-			} else
-			{
-				;
-			}
-		}*/
 
 		private async void addVideoButton_Click(object sender, RoutedEventArgs e)
 		{
@@ -332,18 +317,6 @@ namespace BivrostHeatmapViewer
 				
 			}
 			HideHeatmapLoading();
-
-			/*
-			var result = await StaticHeatmapGenerator.GenerateHeatmap(sessionCollection, rect, videoBackgroundPicker, heatmapOpacity.Value/100);
-			
-			if (mediaPlayer == null)
-				mediaPlayer = new MediaPlayer();
-
-			//mediaPlayer.CommandManager.IsEnabled = true;
-			mediaPlayerElement.Source = MediaSource.CreateFromMediaStreamSource(result);
-			mediaPlayer = mediaPlayerElement.MediaPlayer;
-
-	*/
 			
 		}
 
@@ -373,23 +346,24 @@ namespace BivrostHeatmapViewer
 						var file = item as StorageFile;
 						if (file.FileType == ".bvr" || file.FileType == ".txt" || file.FileType == ".js" || file.FileType == ".json")
 						{
-							try
-							{
-								var json = await FileIO.ReadTextAsync(file);
-								var session = JsonConvert.DeserializeObject<Session>(json);
-								if(session.history != null)
-								{
-									heatmapSessionsListView.Items.Add(new HeatmapListItem(session));
-								}
-							}
-							catch (Exception exc) {
-								;
-							};
+                            try
+                            {
+                                var json = await FileIO.ReadTextAsync(file);
+                                var sessionCollection = JsonConvert.DeserializeObject<SessionCollection>(json);
+                                foreach (Session s in sessionCollection.sessions)
+                                {
+                                    Items.Add(s);
+                                }
+                            }
+                            catch (Exception exc)
+                            {
+                                ;
+                            };
 						}
 					}
 				}
 			}
-			await Task.Factory.StartNew(() => System.Threading.Thread.Sleep(2000));
+			//await Task.Factory.StartNew(() => System.Threading.Thread.Sleep(2000));
 			HideHeatmapLoading();
 		}
 
@@ -467,7 +441,7 @@ namespace BivrostHeatmapViewer
 
 		private async void VideoGenTest(object sender, RoutedEventArgs e)
 		{
-			loadingScreen.Visibility = Visibility.Visible;
+            loadingScreen.Visibility = Visibility.Visible;
 			buttonLoadingStop.Visibility = Visibility.Visible;
 
 			saveCompositionButton.IsEnabled = false;
@@ -483,8 +457,6 @@ namespace BivrostHeatmapViewer
 				sessionCollection.sessions.Add(s);
 			}
 
-			//================================
-
 			task = StaticHeatmapGenerator.GenerateVideoFromHeatmap
 				(
 				token,
@@ -498,24 +470,7 @@ namespace BivrostHeatmapViewer
 			await task;
 			var result = task.Result;
 
-			token = CancellationToken.None;
-			
-
-			//var result = task.
-			//================================
-
-			/*
-			var result = await StaticHeatmapGenerator.GenerateVideoFromHeatmap
-				(
-				sessionCollection,
-				rect,
-				videoBackgroundPicker,
-				videoLoading,
-				heatmapOpacity.Value/100
-				);
-			*/
-
-			buttonLoadingStop.Visibility = Visibility.Collapsed;
+            buttonLoadingStop.Visibility = Visibility.Collapsed;
 
 			ShowHeatmapGenerating();
 			
@@ -523,9 +478,6 @@ namespace BivrostHeatmapViewer
             {
                 mediaPlayer = new MediaPlayer();
 			}
-
-
-			//var video = this.video;
 
 			var video = await MediaClip.CreateFromFileAsync(videoFile);
 
@@ -538,14 +490,13 @@ namespace BivrostHeatmapViewer
 
 			videoOverlayLayer.Overlays.Add(videoOverlay);
 			
-			composition.Clips.Add(MediaClip.CreateFromColor(videoBackgroundPicker.Color, video.OriginalDuration));
+			composition.Clips.Add(MediaClip.CreateFromColor(videoBackgroundPicker.Color, video.TrimmedDuration));
 			composition.OverlayLayers.Add(videoOverlayLayer);
 			composition.OverlayLayers.Add(result);
 
 			MediaStreamSource res;
 			try
 			{
-
 				res = composition.GeneratePreviewMediaStreamSource(1280, 720);
 				var md = MediaSource.CreateFromMediaStreamSource(res);
 				mediaPlayerElement.Source = md;
@@ -558,26 +509,50 @@ namespace BivrostHeatmapViewer
 			mediaPlayer = mediaPlayerElement.MediaPlayer;
 			HideHeatmapGenerating();
 			mediaPlayerElement.AreTransportControlsEnabled = true;
-			saveCompositionButton.IsEnabled = true;
-			loadingScreen.Visibility = Visibility.Collapsed;
+
+            if (token.IsCancellationRequested)
+            {
+                saveCompositionButton.IsEnabled = false;
+            }
+            else
+            {
+                saveCompositionButton.IsEnabled = true;
+            }
+
+            tokenSource.Dispose();
+            tokenSource = new CancellationTokenSource();
+            token = tokenSource.Token;
+
+            loadingScreen.Visibility = Visibility.Collapsed;
+            
 
 		}
 
 		private async void SaveVideo_Click(object sender, RoutedEventArgs e)
 		{
-			var picker = new Windows.Storage.Pickers.FileSavePicker();
-			picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.VideosLibrary;
-			picker.FileTypeChoices.Add("MP4 files", new List<string>() { ".mp4" });
-			picker.SuggestedFileName = "RenderedVideo.mp4";
-			saveProgressCallback saveProgress = ShowErrorMessage;
+            var dialog = new MessageDialog("That operation cannot be canceled.");
+            dialog.Title = "Are you sure?";
+            dialog.Commands.Add(new UICommand { Label = "OK", Id = 0 });
+            dialog.Commands.Add(new UICommand { Label = "Cancel", Id = 1 });
+            var idResult = await dialog.ShowAsync();
 
-			Windows.Storage.StorageFile file = await picker.PickSaveFileAsync();
-			if (file != null)
-			{
-				generateVideoButton.IsEnabled = false;
-				saveCompositionButton.IsEnabled = false;
-				StaticHeatmapGenerator.RenderCompositionToFile(file, composition, saveProgress, Window.Current);
-			}			
+            if ((int)idResult.Id == 0)
+            {
+
+                var picker = new Windows.Storage.Pickers.FileSavePicker();
+                picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.VideosLibrary;
+                picker.FileTypeChoices.Add("MP4 files", new List<string>() { ".mp4" });
+                picker.SuggestedFileName = "RenderedVideo.mp4";
+                saveProgressCallback saveProgress = ShowErrorMessage;
+
+                Windows.Storage.StorageFile file = await picker.PickSaveFileAsync();
+                if (file != null)
+                {
+                    generateVideoButton.IsEnabled = false;
+                    saveCompositionButton.IsEnabled = false;
+                    StaticHeatmapGenerator.RenderCompositionToFile(file, composition, saveProgress, Window.Current);
+                }
+            }
 		}
 
 		private void ShowErrorMessage(double v)
@@ -639,10 +614,10 @@ namespace BivrostHeatmapViewer
 
 		}
 
-		private void ButtonLoadingStop_Click(object sender, RoutedEventArgs e)
-		{
-			tokenSource.Cancel();
-		}
+        private void ButtonLoadingStop_Click(object sender, RoutedEventArgs e)
+        {
+            tokenSource.Cancel();
+        }
 
 
 	}
