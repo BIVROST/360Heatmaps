@@ -1,13 +1,13 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Text;
+using Windows.UI.Xaml.Controls;
 
 namespace BivrostHeatmapViewer
 {
 	public struct Session
 	{
-		[JsonIgnore]
-		static int i = 0;
 
 		public string version;
 		public Guid guid;
@@ -32,13 +32,12 @@ namespace BivrostHeatmapViewer
 
 		public override string ToString()
 		{
-			i++;
-			return uri.Substring(uri.LastIndexOf('\\') + 1) + "\nSession " + i;
+			return uri.Substring(uri.LastIndexOf('\\') + 1).ToString();
 		}
 
 	}
 
-	public struct SessionCollection
+public struct SessionCollection
 	{
 		public string vid;
 		public List<Session> sessions;

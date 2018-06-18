@@ -68,6 +68,8 @@ namespace BivrostHeatmapViewer
 		{
 			StringBuilder builder = new StringBuilder();
 
+			CheckHistoryErrors(sessions);
+
 			foreach (Session s in sessions.sessions)
 				builder.Append(s.history);
 
@@ -80,6 +82,7 @@ namespace BivrostHeatmapViewer
 
         private static async Task<MediaOverlay> Test(List<Heatmap.Coord> coords, Rect overlayPosition, ColorPicker colorPicker, double heatmapOpacity, int sampleRate)
         {
+
             //MediaComposition mediaComposition = new MediaComposition();
             MediaOverlayLayer overlayLayer = new MediaOverlayLayer();
             //MediaStreamSource mediaStreamSource;
@@ -106,24 +109,28 @@ namespace BivrostHeatmapViewer
             mediaOverlay.Position = overlayPosition;
             mediaOverlay.Opacity = heatmapOpacity;
 
-            //overlayLayer.Overlays.Add(mediaOverlay);
-            //mediaComposition.OverlayLayers.Add(overlayLayer);
+			//overlayLayer.Overlays.Add(mediaOverlay);
+			//mediaComposition.OverlayLayers.Add(overlayLayer);
 
 			//mediaStreamSource = mediaComposition.GenerateMediaStreamSource();
-               /* (
-                (int)overlayPosition.Width,
-                (int)overlayPosition.Height
-                );
-				*/
+			/* (
+			 (int)overlayPosition.Width,
+			 (int)overlayPosition.Height
+			 );
+			 */
             return mediaOverlay;
         }
 
-        public static async Task<MediaOverlayLayer> GenerateVideoFromHeatmap(CancellationToken token, SessionCollection sessions, Rect overlayPosition, ColorPicker colorPicker, ProgressBar videoGeneratingProgress, double opacity)
+        public static async Task<MediaOverlayLayer> GenerateVideoFromHeatmap(CancellationToken token, SessionCollection sessions, Rect overlayPosition, ColorPicker colorPicker, ProgressBar videoGeneratingProgress, 
+			double opacity, Slider videoStartSlider, Slider videoStopSlider)
         {
-			await Windows.Storage.ApplicationData.Current.ClearAsync();
 
+			await Windows.Storage.ApplicationData.Current.ClearAsync();
 			List<MediaStreamSource> mediaStreamSources = new List<MediaStreamSource>();
-            Session session = sessions.sessions[0];
+
+			CheckHistoryErrors(sessions);
+
+			Session session = sessions.sessions[0];
 			List<MediaOverlay> mediaOverlays = new List<MediaOverlay>();
 
             List<Heatmap.Coord>[] coordsArray = new List<Heatmap.Coord>[sessions.sessions.Count];
@@ -158,28 +165,34 @@ namespace BivrostHeatmapViewer
                 return new MediaOverlayLayer();
             }
 
-            videoGeneratingProgress.Maximum = min_length;
-            videoGeneratingProgress.Visibility = Visibility.Visible;
 
-            try
+
+			int startValue = (int)videoStartSlider.Value * sampleRate;
+			int stopValue = (int)videoStopSlider.Value * sampleRate;
+
+			if (stopValue > min_length)
 			{
-				for (int i = 0; i < min_length; i++)
+				stopValue = min_length;
+			}
+
+			videoGeneratingProgress.Maximum = stopValue - startValue;
+			videoGeneratingProgress.Visibility = Visibility.Visible;
+
+			try
+			{
+				for (int i = startValue; i < stopValue; i++)
 				{
 					for (int j = 0; j < sessions.sessions.Count; j++)
 					{
 						generatedCoords[i].Add(coordsArray[j][i]);
-						//Debug.WriteLine("j: " + j);
 					}
-					//Debug.WriteLine("i: " + i);
-					//mediaStreamSources.Add(await Test(generatedCoords[i], overlayPosition, colorPicker, 0.8));
 					if (token.IsCancellationRequested)
 					{
 						token.ThrowIfCancellationRequested();
-                        //token = CancellationToken.None;
 					}
 					mediaOverlays.Add(await Test(generatedCoords[i], overlayPosition, colorPicker, 0.35, sampleRate));
 
-					videoGeneratingProgress.Value = i;
+					videoGeneratingProgress.Value = i - startValue;
 				}
 			}
 			catch (OperationCanceledException e)
@@ -271,76 +284,8 @@ namespace BivrostHeatmapViewer
 			//await saveOperation;
 		}
 
-		/*
-					var clip = await MediaClip.CreateFromFileAsync(videoFile);
 
-					MediaOverlay videoOverlay = new MediaOverlay(clip);
-					videoOverlay.Position = overlayPosition;
-					videoOverlay.Opacity = 0.7;
-					videoOverlay.AudioEnabled = true;
-
-					var bR = colorPicker.Color.R;
-					var bG = colorPicker.Color.G;
-					var bB = colorPicker.Color.B;
-					Windows.UI.Color videoBackgoundColor = Windows.UI.Color.FromArgb(255, bR, bG, bB);
-
-					var videoBackground = MediaClip.CreateFromColor(videoBackgoundColor, new TimeSpan(0, 0, 20));
-
-					composition.Clips.Add(videoBackground);
-
-
-					//composition.Clips.Add(await MediaClip.CreateFromImageFileAsync(await WriteableBitmapToStorageFile(wb, FileFormat.Png), new TimeSpan(0, 0, 3)));
-
-					mediaStreamSource = composition.GeneratePreviewMediaStreamSource(
-						(int)overlayPosition.Width,
-						(int)overlayPosition.Height
-						);
-
-
-					MediaOverlay mediaOverlay;
-
-
-					MediaOverlayLayer mediaOverlayLayer = new MediaOverlayLayer();
-					mediaOverlayLayer.Overlays.Add(videoOverlay);
-
-					TimePicker timePicker = new TimePicker();
-
-					//Stopwatch stopwatch = new Stopwatch();
-					//stopwatch.Start();
-
-					//videoLoading.Visibility = Visibility.Visible;
-
-					for (int i = 1; i < 200; i++)
-					{
-						using (Stream stream = wb.PixelBuffer.AsStream())
-						{
-							await stream.WriteAsync(heatmaps[(i % 7) + 1], 0, heatmaps[(i % 7) + 1].Length);
-							var overlayMediaClip = await MediaClip.CreateFromImageFileAsync(await WriteableBitmapToStorageFile(wb, FileFormat.Tiff), new TimeSpan(0, 0, 0, 0, 100));
-							mediaOverlay = new MediaOverlay(overlayMediaClip);
-							mediaOverlay.Delay = new TimeSpan(0, 0, 0, 0, (i - 1) * 100);
-							mediaOverlay.Position = overlayPosition;
-							mediaOverlay.Opacity = 0.35;
-							mediaOverlayLayer.Overlays.Add(mediaOverlay);
-
-						}
-						//videoLoading.Value = i * 100 / 200;
-					}
-
-					//videoLoading.Visibility = Visibility.Collapsed;
-
-					//stopwatch.Stop();
-
-					composition.OverlayLayers.Add(mediaOverlayLayer);
-
-					//mediaPlayerElement.Source = MediaSource.CreateFromMediaStreamSource(mediaStreamSource);
-
-					return MediaSource.CreateFromMediaStreamSource(mediaStreamSource);
-
-				}
-
-		*/
-
-		private static async Task<StorageFile> WriteableBitmapToStorageFile(WriteableBitmap WB)
+		public static async Task<StorageFile> WriteableBitmapToStorageFile(WriteableBitmap WB)
 		{
 			string FileName = "MyFile.";
 			Guid BitmapEncoderGuid = BitmapEncoder.JpegEncoderId;
@@ -380,6 +325,32 @@ namespace BivrostHeatmapViewer
 
             return true;
         }
+
+		private static async void CheckHistoryErrors (SessionCollection sessions)
+		{
+			bool flag;
+
+			foreach (Session s in sessions.sessions)
+			{
+				if (s.history.Contains("--"))
+				{
+					flag = true;
+				}
+				else
+				{
+					flag = false;
+				}
+
+				if (flag)
+				{
+					var dialog = new MessageDialog("Sessions contains time errors. Added empty heatmaps to repair it.");
+					dialog.Title = "Error";
+					dialog.Commands.Add(new UICommand { Label = "OK", Id = 0 });
+					await dialog.ShowAsync();
+				}
+
+			}
+		}
 
 	}
 

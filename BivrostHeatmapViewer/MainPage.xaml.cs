@@ -31,10 +31,8 @@ using System.Net.Http;
 using Windows.UI.Popups;
 
 
-/* TODO:
- * heatmap generator frequency 
+/* TODO: 
  * heatmap list with error markers
- * generowanie heatmap do max dlugosci filmu
  * */
 
 
@@ -52,17 +50,14 @@ namespace BivrostHeatmapViewer
 	{
 
 		StorageFile videoFile;
-		//WriteableBitmap wb;
 		private MediaComposition composition;
-		//private MediaStreamSource mediaStreamSource;
-		//List<MediaStreamSource> heatmaps;
 		private MediaPlayer mediaPlayer;
 		private Rect rect = new Rect(0, 0, 1280, 720);
 		MediaClip video;
         public CancellationTokenSource tokenSource = new CancellationTokenSource();
 		public CancellationToken token;
-		//private bool saveFlag = false;
 		Task<MediaOverlayLayer> task;
+		//private static int heatmapListCounter = 0;
 
 		private ObservableCollection<Session> _items = new ObservableCollection<Session>();
 
@@ -76,9 +71,6 @@ namespace BivrostHeatmapViewer
 			this.InitializeComponent();
 			//InitializeFrostedGlass(mediaPlayerElement);
 			InitializeDropShadow(mainPanel, previewImage);
-			//ListOfSessions = new ListOfSessions();
-			//pickFolderButton.Click += pickFolderButton_Click;
-			//rect = Rect((int)mediaPlayerElement.ActualWidth, (int)mediaPlayerElement.ActualHeight);
 
 			heatmapSessionsListView.SelectionChanged += (s, e) =>
 			{
@@ -224,8 +216,6 @@ namespace BivrostHeatmapViewer
 					{
 						videoFile = file;
 						selectedVideoFileTextBlock.Text = videoFile.DisplayName;
-						//Stopwatch stopwatch = new Stopwatch();
-						//stopwatch.Start();
 						video = await MediaClip.CreateFromFileAsync(videoFile);
 						SetTimeSliders(video.OriginalDuration);
 						GenerateButtonEnable();
@@ -309,7 +299,7 @@ namespace BivrostHeatmapViewer
 			{
 				json = await Windows.Storage.FileIO.ReadTextAsync(file);
 				sessionCollection = JsonConvert.DeserializeObject<SessionCollection>(json);
-				
+
 				foreach (Session s in sessionCollection.sessions)
 				{
 					Items.Add(s);
@@ -353,7 +343,8 @@ namespace BivrostHeatmapViewer
                                 foreach (Session s in sessionCollection.sessions)
                                 {
                                     Items.Add(s);
-                                }
+
+								}
                             }
                             catch (Exception exc)
                             {
@@ -388,13 +379,21 @@ namespace BivrostHeatmapViewer
 			//TODO: 
 		}
 
-		private void CheckBox_Checked(object sender, RoutedEventArgs e)
+		private void horizonEnableCheckbox_Checked(object sender, RoutedEventArgs e)
 		{
-			horizonImage.Opacity = 0.8;
+			/*
+			MediaOverlayLayer horizonOverlay = new MediaOverlayLayer();
+			MediaOverlay mediaOverlay = new MediaOverlay();//generowanie horyzontu
+			mediaOverlay.Position = rect;
+			mediaOverlay.Opacity = 0.7;
+
+			horizonOverlay.Overlays.Add(mediaOverlay);
+			*/
+			horizonImage.Opacity = 0.7;
 			horizonImage.Visibility = Visibility.Visible;	
 		}
 
-		private void CheckBox_Unchecked(object sender, RoutedEventArgs e)
+		private void horizonEnableCheckbox_Unchecked(object sender, RoutedEventArgs e)
 		{
 			horizonImage.Visibility = Visibility.Collapsed;
 		}
@@ -464,7 +463,9 @@ namespace BivrostHeatmapViewer
 				rect,
 				videoBackgroundPicker,
 				videoLoading,
-				heatmapOpacity.Value / 100
+				heatmapOpacity.Value / 100,
+				videoStartSlider,
+				videoStopSlider
 				);
 
 			await task;
@@ -619,6 +620,13 @@ namespace BivrostHeatmapViewer
             tokenSource.Cancel();
         }
 
+		private void videoStopSlider_DragEnter(object sender, DragEventArgs e)
+		{
+			if (videoStopSlider.Value <= videoStartSlider.Value)
+			{
+				videoStopSlider.Value = videoStopSlider.Maximum;
+			}
+		}
 
 	}
 }
