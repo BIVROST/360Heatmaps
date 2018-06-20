@@ -733,7 +733,7 @@ namespace BivrostHeatmapViewer
 			args.DrawingSession.FillCircle(125, 125, 5, Colors.Green);
 
 			byte[] bytes = RenderHeatmap();
-			WriteableBitmap wb = new WriteableBitmap(64, 64);
+			WriteableBitmap wb = new WriteableBitmap(1280, 720);
 
 			using (Stream stream = wb.PixelBuffer.AsStream())
 			{
@@ -745,6 +745,8 @@ namespace BivrostHeatmapViewer
 				BitmapPixelFormat.Bgra8,
 				wb.PixelWidth,
 				wb.PixelHeight);
+
+			softwareBitmap = SoftwareBitmap.Convert(softwareBitmap, BitmapPixelFormat.Bgra8, BitmapAlphaMode.Ignore);
 
 			CanvasBitmap canvasBitmap = CanvasBitmap.CreateFromSoftwareBitmap(sender, softwareBitmap);
 
