@@ -29,6 +29,10 @@ using System.Collections.ObjectModel;
 using System.Threading;
 using System.Net.Http;
 using Windows.UI.Popups;
+using Windows.Graphics.Imaging;
+using Microsoft.Graphics.Canvas;
+using System.Runtime.InteropServices.WindowsRuntime;
+using System.IO;
 
 
 /* TODO: 
@@ -50,7 +54,9 @@ namespace BivrostHeatmapViewer
 	{
 
 		StorageFile videoFile;
+		StorageFile horizonFile;
 		private MediaComposition composition;
+		private MediaComposition mementoComposition;
 		private MediaPlayer mediaPlayer;
 		private Rect rect = new Rect(0, 0, 1280, 720);
 		MediaClip video;
@@ -379,23 +385,39 @@ namespace BivrostHeatmapViewer
 			//TODO: 
 		}
 
-		private void horizonEnableCheckbox_Checked(object sender, RoutedEventArgs e)
+		private async void horizonEnableCheckbox_Checked(object sender, RoutedEventArgs e)
 		{
-			/*
-			MediaOverlayLayer horizonOverlay = new MediaOverlayLayer();
-			MediaOverlay mediaOverlay = new MediaOverlay();//generowanie horyzontu
-			mediaOverlay.Position = rect;
-			mediaOverlay.Opacity = 0.7;
+			if (composition != null)
+			{
+				horizonFile = await StorageFile.GetFileFromApplicationUriAsync(new Uri ("ms-appx:///Assets/horizon3840x2160.png"));
 
-			horizonOverlay.Overlays.Add(mediaOverlay);
-			*/
-			horizonImage.Opacity = 0.7;
-			horizonImage.Visibility = Visibility.Visible;	
+				mementoComposition = composition.Clone();
+
+				MediaOverlayLayer horizonOverlay = new MediaOverlayLayer();
+				MediaOverlay mediaOverlay = new MediaOverlay(await MediaClip.CreateFromImageFileAsync(horizonFile, composition.Duration));//generowanie horyzontu
+				mediaOverlay.Position = rect;
+				mediaOverlay.Opacity = 0.7;
+
+				horizonOverlay.Overlays.Add(mediaOverlay);
+				composition.OverlayLayers.Add(horizonOverlay);
+
+				var res = composition.GeneratePreviewMediaStreamSource(1280, 720);
+				var md = MediaSource.CreateFromMediaStreamSource(res);
+				mediaPlayerElement.Source = md;
+			}
+			//horizonImage.Opacity = 0.7;
+			//horizonImage.Visibility = Visibility.Visible;	
 		}
 
 		private void horizonEnableCheckbox_Unchecked(object sender, RoutedEventArgs e)
 		{
-			horizonImage.Visibility = Visibility.Collapsed;
+			if (composition != null && mementoComposition != null)
+			{
+				composition = mementoComposition.Clone();
+				var res = composition.GeneratePreviewMediaStreamSource(1280, 720);
+				var md = MediaSource.CreateFromMediaStreamSource(res);
+				mediaPlayerElement.Source = md;
+			}//horizonImage.Visibility = Visibility.Collapsed;
 		}
 
 		private async void GenerateStaticHeatmap(object sender, RoutedEventArgs e)
@@ -440,7 +462,9 @@ namespace BivrostHeatmapViewer
 
 		private async void VideoGenTest(object sender, RoutedEventArgs e)
 		{
-            loadingScreen.Visibility = Visibility.Visible;
+			horizonEnableCheckbox.IsChecked = false;
+
+			loadingScreen.Visibility = Visibility.Visible;
 			buttonLoadingStop.Visibility = Visibility.Visible;
 
 			saveCompositionButton.IsEnabled = false;
@@ -628,5 +652,81 @@ namespace BivrostHeatmapViewer
 			}
 		}
 
+		private async void drawCircleExample(object sender, RoutedEventArgs e)
+		{
+
+			var random = new Random(DateTime.Now.Second + DateTime.Now.Minute + DateTime.Now.Hour);
+			//int prev = 10;
+
+			mainPanel.Children.Clear();
+
+			//MediaClip
+
+			for (int i = 0; i < 2000; i++)
+			{
+				
+				var ellipse = new Ellipse();
+				ellipse.Fill = new SolidColorBrush(Windows.UI.Colors.Red);
+				ellipse.Width = 10;
+				ellipse.Height = 10;
+				//prev += prev + random.Next(1, 10);
+				Canvas.SetLeft(ellipse, random.Next(1, 1200));
+				Canvas.SetTop(ellipse, random.Next(1, 700));
+
+				mainPanel.Children.Add(ellipse);
+
+				
+			}
+
+			mainPanel.Visibility = Visibility.Collapsed;
+
+			byte[] bytes = RenderHeatmap();
+			WriteableBitmap wb = new WriteableBitmap(64, 64);
+
+			using (Stream stream = wb.PixelBuffer.AsStream())
+			{
+				await stream.WriteAsync(bytes, 0, bytes.Length);
+			}
+
+			var clip = await MediaClip.CreateFromImageFileAsync(await StaticHeatmapGenerator.WriteableBitmapToStorageFile(wb), new TimeSpan (0, 1, 0));
+
+			MediaComposition compo = new MediaComposition();
+			compo.Clips.Add(clip);
+
+			MediaStreamSource mediaSS = compo.GenerateMediaStreamSource();
+
+			if (mediaPlayer == null)
+			{
+				mediaPlayer = new MediaPlayer();
+				mediaPlayer = mediaPlayerElement.MediaPlayer;
+			}
+
+
+			mediaPlayerElement.Source = MediaSource.CreateFromMediaStreamSource(mediaSS);
+
+		}
+
+		public static byte[] RenderHeatmap()
+		{
+			byte[] image = new byte[64 * 64 * 4];
+
+			for (int it = 0; it < 8; it++)
+			{
+				var c = Microsoft.Toolkit.Uwp.Helpers.ColorHelper.FromHsl(360, 1, 0.5);
+				image[it * 4 + 0] = c.B;
+				image[it * 4 + 1] = c.G;
+				image[it * 4 + 2] = c.R;
+				image[it * 4 + 3] = 255;
+			}
+
+			image[0] = 0;
+			image[1] = 0;
+			image[2] = 0;
+			image[3] = 0;
+
+			return image;
+		}
 	}
+
+
 }
