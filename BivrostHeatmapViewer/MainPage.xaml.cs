@@ -18,7 +18,7 @@ using Windows.UI.Xaml.Hosting;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Shapes;
 
-
+using Windows.UI;
 //camera capture
 using System.Threading.Tasks;
 using Windows.UI.Xaml.Media.Imaging;
@@ -725,6 +725,37 @@ namespace BivrostHeatmapViewer
 			image[3] = 0;
 
 			return image;
+		}
+
+		private async void canvas_Draw(Microsoft.Graphics.Canvas.UI.Xaml.CanvasControl sender, Microsoft.Graphics.Canvas.UI.Xaml.CanvasDrawEventArgs args)
+		{
+			args.DrawingSession.DrawCircle(125, 125, 5, Colors.Green);
+			args.DrawingSession.FillCircle(125, 125, 5, Colors.Green);
+
+			byte[] bytes = RenderHeatmap();
+			WriteableBitmap wb = new WriteableBitmap(64, 64);
+
+			using (Stream stream = wb.PixelBuffer.AsStream())
+			{
+				await stream.WriteAsync(bytes, 0, bytes.Length);
+			}
+
+			SoftwareBitmap softwareBitmap = SoftwareBitmap.CreateCopyFromBuffer(
+				wb.PixelBuffer,
+				BitmapPixelFormat.Bgra8,
+				wb.PixelWidth,
+				wb.PixelHeight);
+
+			CanvasBitmap canvasBitmap = CanvasBitmap.CreateFromSoftwareBitmap(sender, softwareBitmap);
+
+			args.DrawingSession.DrawImage(canvasBitmap);
+
+		}
+
+		private void Page_Unloaded(object sender, RoutedEventArgs e)
+		{
+			this.canvas.RemoveFromVisualTree();
+			this.canvas = null;
 		}
 	}
 

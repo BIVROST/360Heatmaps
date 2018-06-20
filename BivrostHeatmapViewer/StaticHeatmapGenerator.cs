@@ -99,7 +99,9 @@ namespace BivrostHeatmapViewer
                 await stream.WriteAsync(renderedHeatmap, 0, renderedHeatmap.Length);
             }
 
-            var clip = await MediaClip.CreateFromImageFileAsync(await WriteableBitmapToStorageFile(wb), new TimeSpan(0, 0, 0, 0, 1000/sampleRate));
+
+
+			var clip = await MediaClip.CreateFromImageFileAsync(await WriteableBitmapToStorageFile(wb), new TimeSpan(0, 0, 0, 0, 1000/sampleRate));
 
             //var background = MediaClip.CreateFromColor(colorPicker.Color, new TimeSpan(0, 0, 0, 0, 100));
 

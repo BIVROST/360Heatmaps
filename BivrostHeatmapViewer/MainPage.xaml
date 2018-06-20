@@ -6,7 +6,9 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:controls="using:Microsoft.Toolkit.Uwp.UI.Controls"
+	xmlns:canvas="using:Microsoft.Graphics.Canvas.UI.Xaml"
 	DataContext="{Binding RelativeSource={RelativeSource Self}}"
+	Unloaded="Page_Unloaded"
     mc:Ignorable="d">
 
 	<Page.Resources>
@@ -32,6 +34,7 @@
 			<Grid.RowDefinitions>
 				<RowDefinition Height="auto" />
 				<RowDefinition Height="*" />
+				<RowDefinition Height="Auto" />
 				<RowDefinition Height="Auto" />
 				<RowDefinition Height="Auto" />
 			</Grid.RowDefinitions>
@@ -92,6 +95,7 @@
 
 			<Button x:Name="generateVideoButton" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="12" Width="200" Height="40" Style="{ThemeResource ButtonRevealStyle}" Grid.Row="2" Click="VideoGenTest">Generate video</Button>
 			<Button x:Name="saveCompositionButton" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="12" Width="200" Height="40" Style="{ThemeResource ButtonRevealStyle}" Grid.Row="3" Click="SaveVideo_Click">Save video to file</Button>
+			<!--<Button x:Name="testButton" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="12" Width="200" Height="40" Style="{ThemeResource ButtonRevealStyle}" Grid.Row="4" Click="canvas_Draw">draw canvas</Button>-->
 
 			<Rectangle Grid.RowSpan="4" Width="20" HorizontalAlignment="Right" IsHitTestVisible="False" Margin="0,-12,0,-12" Opacity="0.2">
 				<Rectangle.Fill>
@@ -140,7 +144,12 @@
 
 					</MediaPlayerElement>
 
-					<Canvas x:Name="mainPanel" Margin="-16" Visibility="Visible" Opacity="0.5" IsHitTestVisible="False" Background="White"
+					<Canvas x:Name="mainPanel" Margin="-16" Visibility="Collapsed" Opacity="0.5" IsHitTestVisible="False" Background="White"
+							Width="{Binding ElementName=mediaPlayerElement, Path=ActualWidth}"
+							Height="{Binding ElementName=mediaPlayerElement, Path=ActualHeight}"
+							/>
+
+					<canvas:CanvasControl x:Name="canvas" Visibility="Visible" Background="White" IsHitTestVisible="False" Draw="canvas_Draw"
 							Width="{Binding ElementName=mediaPlayerElement, Path=ActualWidth}"
 							Height="{Binding ElementName=mediaPlayerElement, Path=ActualHeight}"
 							/>
@@ -213,7 +222,7 @@
 
 			</Grid>
 
-			<Button Grid.Row="3" Style="{ThemeResource ButtonRevealStyle}" Margin="0, 0, 0, 30" x:Name="previewButton" Width="200" Height="40" HorizontalAlignment="Center" Click="drawCircleExample">Generate Heatmap Image</Button>
+			<Button Grid.Row="3" Style="{ThemeResource ButtonRevealStyle}" Margin="0, 0, 0, 30" x:Name="previewButton" Width="200" Height="40" HorizontalAlignment="Center" Click="GenerateStaticHeatmap">Generate Heatmap Image</Button>
 
 		</Grid>
 
