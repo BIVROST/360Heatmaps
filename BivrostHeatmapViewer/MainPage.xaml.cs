@@ -33,6 +33,7 @@ using Windows.Graphics.Imaging;
 using Microsoft.Graphics.Canvas;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.IO;
+using Microsoft.Graphics.Canvas.UI.Composition;
 
 
 /* TODO: 
@@ -462,6 +463,9 @@ namespace BivrostHeatmapViewer
 
 		private async void VideoGenTest(object sender, RoutedEventArgs e)
 		{
+			Stopwatch stopwatch = new Stopwatch();
+			stopwatch.Start();
+
 			horizonEnableCheckbox.IsChecked = false;
 
 			loadingScreen.Visibility = Visibility.Visible;
@@ -480,6 +484,16 @@ namespace BivrostHeatmapViewer
 				sessionCollection.sessions.Add(s);
 			}
 
+			bool generateDots;
+			if (dotsEnableCheckbox.IsChecked == null)
+			{
+				generateDots = false;
+			}
+			else
+			{
+				generateDots = (bool)dotsEnableCheckbox.IsChecked;
+			}
+
 			task = StaticHeatmapGenerator.GenerateVideoFromHeatmap
 				(
 				token,
@@ -489,7 +503,8 @@ namespace BivrostHeatmapViewer
 				videoLoading,
 				heatmapOpacity.Value / 100,
 				videoStartSlider,
-				videoStopSlider
+				videoStopSlider,
+				generateDots
 				);
 
 			await task;
@@ -549,6 +564,10 @@ namespace BivrostHeatmapViewer
             token = tokenSource.Token;
 
             loadingScreen.Visibility = Visibility.Collapsed;
+
+			stopwatch.Stop();
+
+			debugInfo.Text = stopwatch.Elapsed.TotalSeconds.ToString();
             
 
 		}
@@ -652,60 +671,6 @@ namespace BivrostHeatmapViewer
 			}
 		}
 
-		private async void drawCircleExample(object sender, RoutedEventArgs e)
-		{
-
-			var random = new Random(DateTime.Now.Second + DateTime.Now.Minute + DateTime.Now.Hour);
-			//int prev = 10;
-
-			mainPanel.Children.Clear();
-
-			//MediaClip
-
-			for (int i = 0; i < 2000; i++)
-			{
-				
-				var ellipse = new Ellipse();
-				ellipse.Fill = new SolidColorBrush(Windows.UI.Colors.Red);
-				ellipse.Width = 10;
-				ellipse.Height = 10;
-				//prev += prev + random.Next(1, 10);
-				Canvas.SetLeft(ellipse, random.Next(1, 1200));
-				Canvas.SetTop(ellipse, random.Next(1, 700));
-
-				mainPanel.Children.Add(ellipse);
-
-				
-			}
-
-			mainPanel.Visibility = Visibility.Collapsed;
-
-			byte[] bytes = RenderHeatmap();
-			WriteableBitmap wb = new WriteableBitmap(64, 64);
-
-			using (Stream stream = wb.PixelBuffer.AsStream())
-			{
-				await stream.WriteAsync(bytes, 0, bytes.Length);
-			}
-
-			var clip = await MediaClip.CreateFromImageFileAsync(await StaticHeatmapGenerator.WriteableBitmapToStorageFile(wb), new TimeSpan (0, 1, 0));
-
-			MediaComposition compo = new MediaComposition();
-			compo.Clips.Add(clip);
-
-			MediaStreamSource mediaSS = compo.GenerateMediaStreamSource();
-
-			if (mediaPlayer == null)
-			{
-				mediaPlayer = new MediaPlayer();
-				mediaPlayer = mediaPlayerElement.MediaPlayer;
-			}
-
-
-			mediaPlayerElement.Source = MediaSource.CreateFromMediaStreamSource(mediaSS);
-
-		}
-
 		public static byte[] RenderHeatmap()
 		{
 			byte[] image = new byte[64 * 64 * 4];
@@ -727,38 +692,13 @@ namespace BivrostHeatmapViewer
 			return image;
 		}
 
-		private async void canvas_Draw(Microsoft.Graphics.Canvas.UI.Xaml.CanvasControl sender, Microsoft.Graphics.Canvas.UI.Xaml.CanvasDrawEventArgs args)
-		{
-			args.DrawingSession.DrawCircle(125, 125, 5, Colors.Green);
-			args.DrawingSession.FillCircle(125, 125, 5, Colors.Green);
-
-			byte[] bytes = RenderHeatmap();
-			WriteableBitmap wb = new WriteableBitmap(1280, 720);
-
-			using (Stream stream = wb.PixelBuffer.AsStream())
-			{
-				await stream.WriteAsync(bytes, 0, bytes.Length);
-			}
-
-			SoftwareBitmap softwareBitmap = SoftwareBitmap.CreateCopyFromBuffer(
-				wb.PixelBuffer,
-				BitmapPixelFormat.Bgra8,
-				wb.PixelWidth,
-				wb.PixelHeight);
-
-			softwareBitmap = SoftwareBitmap.Convert(softwareBitmap, BitmapPixelFormat.Bgra8, BitmapAlphaMode.Ignore);
-
-			CanvasBitmap canvasBitmap = CanvasBitmap.CreateFromSoftwareBitmap(sender, softwareBitmap);
-
-			args.DrawingSession.DrawImage(canvasBitmap);
-
-		}
-
 		private void Page_Unloaded(object sender, RoutedEventArgs e)
 		{
-			this.canvas.RemoveFromVisualTree();
-			this.canvas = null;
+			//this.canvas.RemoveFromVisualTree();
+			//this.canvas = null;
 		}
+
+
 	}
 
 

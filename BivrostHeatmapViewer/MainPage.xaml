@@ -149,12 +149,6 @@
 							Height="{Binding ElementName=mediaPlayerElement, Path=ActualHeight}"
 							/>
 
-					<canvas:CanvasControl x:Name="canvas" Visibility="Visible" Background="White" IsHitTestVisible="False" Draw="canvas_Draw"
-							Width="{Binding ElementName=mediaPlayerElement, Path=ActualWidth}"
-							Height="{Binding ElementName=mediaPlayerElement, Path=ActualHeight}"
-							/>
-
-
 					<ProgressRing x:Name="heatmapLoadingIndicator"  IsActive="False" Width="64" Height="64"/>
 					<Image x:Name="heatImage" Stretch="Fill" Opacity="0.5" IsHitTestVisible="False">
 
@@ -189,6 +183,7 @@
 						<TextBlock>video opacity</TextBlock>
 						<Slider x:Name="videoOpacity" Minimum="0" Maximum="100" Value="75" TickPlacement="Inline" TickFrequency="5"/>
 						<CheckBox x:Name="horizonEnableCheckbox" HorizontalAlignment="Left" Content="Enable Horizon" Checked="horizonEnableCheckbox_Checked" Unchecked="horizonEnableCheckbox_Unchecked"/>
+						<CheckBox x:Name="dotsEnableCheckbox" HorizontalAlignment="Left" Content="Enable Dots"/>
 
 					</StackPanel>
 

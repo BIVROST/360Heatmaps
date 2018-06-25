@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.Graphics.Canvas;
+using Microsoft.Graphics.Canvas.Effects;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -13,21 +15,23 @@ using Windows.Media.Editing;
 using Windows.Media.Transcoding;
 using Windows.Storage;
 using Windows.Storage.Streams;
+using Windows.UI;
 using Windows.UI.Core;
 using Windows.UI.Popups;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Imaging;
+
 
 namespace BivrostHeatmapViewer
 {
 	public class StaticHeatmapGenerator
 	{
-		public static async Task<MediaStreamSource> GenerateHeatmap(Session session, Rect overlayPosition, ColorPicker colorPicker, double heatmapOpacity)
+		private static async Task<WriteableBitmap> GenerateHeatmap(Session session, Rect overlayPosition)
 		{
 			MediaComposition mediaComposition = new MediaComposition();
 			MediaOverlayLayer overlayLayer = new MediaOverlayLayer();
-			MediaStreamSource mediaStreamSource;
 
 			var deserializedData = Heatmap.CoordsDeserialize(session.history);
 			var heatmap = Heatmap.Generate(deserializedData);
@@ -41,53 +45,71 @@ namespace BivrostHeatmapViewer
 				await stream.WriteAsync(renderedHeatmap, 0, renderedHeatmap.Length);
 			}
 
+			return wb;
+		}
+
+		public static async Task<MediaStreamSource> GenerateHeatmap(SessionCollection sessions, Rect overlayPosition, ColorPicker colorPicker, double heatmapOpacity)
+		{
+			CheckHistoryErrors(sessions);
+
+			StringBuilder sb = new StringBuilder();
+			MediaOverlayLayer mediaOverlayLayer = new MediaOverlayLayer();
+			WriteableBitmap wb;// = new List<WriteableBitmap>();
+
+			foreach (Session x in sessions.sessions)
+			{
+				sb.Append(x.history);
+			}
+
+			Session s = new Session();
+			s.history = sb.ToString();
+
+			wb = await GenerateHeatmap(s, overlayPosition);
+
+			/*
+
+			foreach (Session s in sessions.sessions)
+			{
+				wb.Add(await GenerateHeatmap(s, overlayPosition));
+				//heatmap.Opacity = heatmapOpacity / sessions.sessions.Count;
+				//mediaOverlayLayer.Overlays.Add(heatmap);
+			}
+
+
+			for (int i = 1; i < sessions.sessions.Count; i++)
+			{
+				wb[0].Blit(overlayPosition, wb[i], overlayPosition, WriteableBitmapExtensions.BlendMode.Alpha);
+			}
+
+			//wb[0].Blit(overlayPosition, wb[1], overlayPosition, WriteableBitmapExtensions.BlendMode.Alpha);
+			var clip = await MediaClip.CreateFromImageFileAsync(await WriteableBitmapToStorageFile(wb[0]), new TimeSpan(0, 0, 0, 0, 1));
+			*/
+
 			var clip = await MediaClip.CreateFromImageFileAsync(await WriteableBitmapToStorageFile(wb), new TimeSpan(0, 0, 0, 0, 1));
-			
-			var background = MediaClip.CreateFromColor(colorPicker.Color, new TimeSpan(0, 0, 0, 0, 1));
-
-			mediaComposition.Clips.Add(background);
-
 			MediaOverlay mediaOverlay = new MediaOverlay(clip);
 			mediaOverlay.Position = overlayPosition;
 			mediaOverlay.Opacity = heatmapOpacity;
 
-			overlayLayer.Overlays.Add(mediaOverlay);
-			mediaComposition.OverlayLayers.Add(overlayLayer);
+			mediaOverlayLayer.Overlays.Add(mediaOverlay);
 
-			mediaStreamSource = mediaComposition.GeneratePreviewMediaStreamSource
+
+			MediaComposition mediaComposition = new MediaComposition();
+			mediaComposition.Clips.Add(MediaClip.CreateFromColor(colorPicker.Color, new TimeSpan(0, 0, 0, 0, 1)));
+			mediaComposition.OverlayLayers.Add(mediaOverlayLayer);
+
+			return mediaComposition.GeneratePreviewMediaStreamSource
 				(
 				(int)overlayPosition.Width,
 				(int)overlayPosition.Height
-				); 
+				);
 
-			return mediaStreamSource;
 		}
 
-
-		public static async Task<MediaStreamSource> GenerateHeatmap(SessionCollection sessions, Rect overlayPosition, ColorPicker colorPicker, double heatmapOpacity)
-		{
-			StringBuilder builder = new StringBuilder();
-
-			CheckHistoryErrors(sessions);
-
-			foreach (Session s in sessions.sessions)
-				builder.Append(s.history);
-
-			Session session = new Session();
-			session.history = builder.ToString();
-
-			return await GenerateHeatmap(session, overlayPosition, colorPicker, heatmapOpacity);
-		}
-
-
-        private static async Task<MediaOverlay> Test(List<Heatmap.Coord> coords, Rect overlayPosition, ColorPicker colorPicker, double heatmapOpacity, int sampleRate)
+		private static async Task<MediaOverlay> Test(List<Heatmap.Coord> coords, Rect overlayPosition, ColorPicker colorPicker, double heatmapOpacity, int sampleRate, bool generateDots = false)
         {
 
-            //MediaComposition mediaComposition = new MediaComposition();
             MediaOverlayLayer overlayLayer = new MediaOverlayLayer();
-            //MediaStreamSource mediaStreamSource;
 
-            //var deserializedData = Heatmap.CoordsDeserialize(session.history);
             var heatmap = Heatmap.Generate(coords);
             var renderedHeatmap = Heatmap.RenderHeatmap(heatmap);
 
@@ -99,32 +121,29 @@ namespace BivrostHeatmapViewer
                 await stream.WriteAsync(renderedHeatmap, 0, renderedHeatmap.Length);
             }
 
+			wb = wb.Resize(2048, 1080, WriteableBitmapExtensions.Interpolation.Bilinear);
+			if (generateDots)
+			{
+				foreach (Heatmap.Coord x in coords)
+				{
 
+					wb.FillEllipseCentered(x.yaw * 2048 / 64, x.pitch * 1080 / 64, 16, 16, Colors.Black);
+					wb.FillEllipseCentered(x.yaw * 2048 / 64, x.pitch * 1080 / 64, 17, 17, Colors.Black);
+					wb.FillEllipseCentered(x.yaw * 2048 / 64, x.pitch * 1080 / 64, 15, 15, Colors.DarkOrange);
+				}
+			}
 
-			var clip = await MediaClip.CreateFromImageFileAsync(await WriteableBitmapToStorageFile(wb), new TimeSpan(0, 0, 0, 0, 1000/sampleRate));
+			var clip = await MediaClip.CreateFromImageFileAsync(await WriteableBitmapToStorageFile(wb), new TimeSpan(0, 0, 0, 0, 1000 / sampleRate));
 
-            //var background = MediaClip.CreateFromColor(colorPicker.Color, new TimeSpan(0, 0, 0, 0, 100));
-
-            //mediaComposition.Clips.Add(background);
-
-            MediaOverlay mediaOverlay = new MediaOverlay(clip);
+			MediaOverlay mediaOverlay = new MediaOverlay(clip);
             mediaOverlay.Position = overlayPosition;
-            mediaOverlay.Opacity = heatmapOpacity;
+			mediaOverlay.Opacity = heatmapOpacity;
 
-			//overlayLayer.Overlays.Add(mediaOverlay);
-			//mediaComposition.OverlayLayers.Add(overlayLayer);
-
-			//mediaStreamSource = mediaComposition.GenerateMediaStreamSource();
-			/* (
-			 (int)overlayPosition.Width,
-			 (int)overlayPosition.Height
-			 );
-			 */
             return mediaOverlay;
         }
 
-        public static async Task<MediaOverlayLayer> GenerateVideoFromHeatmap(CancellationToken token, SessionCollection sessions, Rect overlayPosition, ColorPicker colorPicker, ProgressBar videoGeneratingProgress, 
-			double opacity, Slider videoStartSlider, Slider videoStopSlider)
+		public static async Task<MediaOverlayLayer> GenerateVideoFromHeatmap(CancellationToken token, SessionCollection sessions, Rect overlayPosition, ColorPicker colorPicker, ProgressBar videoGeneratingProgress, 
+			double opacity, Slider videoStartSlider, Slider videoStopSlider, bool generateDots)
         {
 
 			await Windows.Storage.ApplicationData.Current.ClearAsync();
@@ -192,7 +211,7 @@ namespace BivrostHeatmapViewer
 					{
 						token.ThrowIfCancellationRequested();
 					}
-					mediaOverlays.Add(await Test(generatedCoords[i], overlayPosition, colorPicker, 0.35, sampleRate));
+					mediaOverlays.Add(await Test(generatedCoords[i], overlayPosition, colorPicker, 0.35, sampleRate, generateDots));
 
 					videoGeneratingProgress.Value = i - startValue;
 				}
@@ -286,8 +305,7 @@ namespace BivrostHeatmapViewer
 			//await saveOperation;
 		}
 
-
-		public static async Task<StorageFile> WriteableBitmapToStorageFile(WriteableBitmap WB)
+		private static async Task<StorageFile> WriteableBitmapToStorageFile(WriteableBitmap WB)
 		{
 			string FileName = "MyFile.";
 			Guid BitmapEncoderGuid = BitmapEncoder.JpegEncoderId;
