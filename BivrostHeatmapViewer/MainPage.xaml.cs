@@ -355,7 +355,7 @@ namespace BivrostHeatmapViewer
                             }
                             catch (Exception exc)
                             {
-                                ;
+								Debug.WriteLine(exc.Message);
                             };
 						}
 					}
@@ -494,7 +494,7 @@ namespace BivrostHeatmapViewer
 				generateDots = (bool)dotsEnableCheckbox.IsChecked;
 			}
 
-			task = StaticHeatmapGenerator.GenerateVideoFromHeatmap
+			task = StaticHeatmapGenerator.GenerateVideoFromHeatmap2
 				(
 				token,
 				sessionCollection,
