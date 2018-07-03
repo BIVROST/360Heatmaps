@@ -34,6 +34,10 @@ using Microsoft.Graphics.Canvas;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.IO;
 using Microsoft.Graphics.Canvas.UI.Composition;
+using System.Runtime.InteropServices;
+using Windows.Media.Effects;
+using Windows.Foundation.Collections;
+using Windows.Media.MediaProperties;
 
 
 /* TODO: 
@@ -53,7 +57,7 @@ namespace BivrostHeatmapViewer
 	public delegate void saveProgressCallback(double message);
 	public sealed partial class MainPage : Page
 	{
-
+		public PropertySet valuePairs = new PropertySet();
 		StorageFile videoFile;
 		StorageFile horizonFile;
 		private MediaComposition composition;
@@ -84,7 +88,7 @@ namespace BivrostHeatmapViewer
 				previewButton.IsEnabled = heatmapSessionsListView.SelectedItems.Count > 0;
 				GenerateButtonEnable();
 			};
-
+			valuePairs.Add("Blur", 5.0);
 			saveCompositionButton.IsEnabled = false;
 			generateVideoButton.IsEnabled = heatmapSessionsListView.SelectedItems.Count > 0;
 			previewButton.IsEnabled = heatmapSessionsListView.SelectedItems.Count > 0;
@@ -572,6 +576,57 @@ namespace BivrostHeatmapViewer
 
 		}
 
+
+		private async void VideoGenTest2(object sender, RoutedEventArgs e)
+		{
+			horizonEnableCheckbox.IsChecked = false;
+
+			saveCompositionButton.IsEnabled = false;
+			composition = new MediaComposition();
+			mediaPlayerElement.Source = null;
+			SessionCollection sessionCollection = new SessionCollection();
+			sessionCollection.sessions = new List<Session>();
+
+
+			var listItems = heatmapSessionsListView.SelectedItems.ToList();
+			foreach (Session s in listItems)
+			{
+				sessionCollection.sessions.Add(s);
+			}
+
+			if (mediaPlayer == null)
+			{
+				mediaPlayer = new MediaPlayer();
+			}
+
+			var video = await MediaClip.CreateFromFileAsync(videoFile);
+
+			MediaOverlayLayer videoOverlayLayer = new MediaOverlayLayer();
+			TrimVideo(ref video);
+			composition.Clips.Add(video);
+
+			var videoEffectDefinition = new VideoEffectDefinition("VideoEffectComponent.ExampleVideoEffect", valuePairs);
+			video.VideoEffectDefinitions.Add(videoEffectDefinition);
+
+			MediaStreamSource res;
+			try
+			{
+				var ep = MediaEncodingProfile.CreateMp4(VideoEncodingQuality.Uhd2160p);
+				res = composition.GenerateMediaStreamSource(ep);
+				//res = composition.GeneratePreviewMediaStreamSource(3840, 2160);
+				var md = MediaSource.CreateFromMediaStreamSource(res);
+				mediaPlayerElement.Source = md;
+			}
+			catch (Exception f)
+			{
+				Debug.WriteLine(f.Message);
+			}
+
+			mediaPlayer = mediaPlayerElement.MediaPlayer;
+			mediaPlayerElement.AreTransportControlsEnabled = true;
+			saveCompositionButton.IsEnabled = true;
+		}
+
 		private async void SaveVideo_Click(object sender, RoutedEventArgs e)
 		{
             var dialog = new MessageDialog("That operation cannot be canceled.");
@@ -698,7 +753,11 @@ namespace BivrostHeatmapViewer
 			//this.canvas = null;
 		}
 
-
+		private void previewButton_Click(object sender, RoutedEventArgs e)
+		{
+			valuePairs.Clear();
+			valuePairs.Add("Blur", 0.0);
+		}
 	}
 
 

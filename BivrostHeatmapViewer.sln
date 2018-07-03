@@ -5,6 +5,10 @@ VisualStudioVersion = 15.0.27130.2020
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BivrostHeatmapViewer", "BivrostHeatmapViewer\BivrostHeatmapViewer.csproj", "{58B670D2-0D17-46A5-AAD9-E0C8BAC528F3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VideoEffectComponent", "VideoEffectComponent\VideoEffectComponent.csproj", "{FA74C0E4-2593-499D-9FA3-1FC5672D44F5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HiSLib", "ClassLibrary1\HiSLib.csproj", "{B3018112-C760-4CD2-873D-6FD548D4F079}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -41,6 +45,38 @@ Global
 		{58B670D2-0D17-46A5-AAD9-E0C8BAC528F3}.Release|x86.ActiveCfg = Release|x86
 		{58B670D2-0D17-46A5-AAD9-E0C8BAC528F3}.Release|x86.Build.0 = Release|x86
 		{58B670D2-0D17-46A5-AAD9-E0C8BAC528F3}.Release|x86.Deploy.0 = Release|x86
+		{FA74C0E4-2593-499D-9FA3-1FC5672D44F5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FA74C0E4-2593-499D-9FA3-1FC5672D44F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FA74C0E4-2593-499D-9FA3-1FC5672D44F5}.Debug|ARM.ActiveCfg = Debug|ARM
+		{FA74C0E4-2593-499D-9FA3-1FC5672D44F5}.Debug|ARM.Build.0 = Debug|ARM
+		{FA74C0E4-2593-499D-9FA3-1FC5672D44F5}.Debug|x64.ActiveCfg = Debug|x64
+		{FA74C0E4-2593-499D-9FA3-1FC5672D44F5}.Debug|x64.Build.0 = Debug|x64
+		{FA74C0E4-2593-499D-9FA3-1FC5672D44F5}.Debug|x86.ActiveCfg = Debug|x86
+		{FA74C0E4-2593-499D-9FA3-1FC5672D44F5}.Debug|x86.Build.0 = Debug|x86
+		{FA74C0E4-2593-499D-9FA3-1FC5672D44F5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FA74C0E4-2593-499D-9FA3-1FC5672D44F5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FA74C0E4-2593-499D-9FA3-1FC5672D44F5}.Release|ARM.ActiveCfg = Release|ARM
+		{FA74C0E4-2593-499D-9FA3-1FC5672D44F5}.Release|ARM.Build.0 = Release|ARM
+		{FA74C0E4-2593-499D-9FA3-1FC5672D44F5}.Release|x64.ActiveCfg = Release|x64
+		{FA74C0E4-2593-499D-9FA3-1FC5672D44F5}.Release|x64.Build.0 = Release|x64
+		{FA74C0E4-2593-499D-9FA3-1FC5672D44F5}.Release|x86.ActiveCfg = Release|x86
+		{FA74C0E4-2593-499D-9FA3-1FC5672D44F5}.Release|x86.Build.0 = Release|x86
+		{B3018112-C760-4CD2-873D-6FD548D4F079}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B3018112-C760-4CD2-873D-6FD548D4F079}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B3018112-C760-4CD2-873D-6FD548D4F079}.Debug|ARM.ActiveCfg = Debug|ARM
+		{B3018112-C760-4CD2-873D-6FD548D4F079}.Debug|ARM.Build.0 = Debug|ARM
+		{B3018112-C760-4CD2-873D-6FD548D4F079}.Debug|x64.ActiveCfg = Debug|x64
+		{B3018112-C760-4CD2-873D-6FD548D4F079}.Debug|x64.Build.0 = Debug|x64
+		{B3018112-C760-4CD2-873D-6FD548D4F079}.Debug|x86.ActiveCfg = Debug|x86
+		{B3018112-C760-4CD2-873D-6FD548D4F079}.Debug|x86.Build.0 = Debug|x86
+		{B3018112-C760-4CD2-873D-6FD548D4F079}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B3018112-C760-4CD2-873D-6FD548D4F079}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B3018112-C760-4CD2-873D-6FD548D4F079}.Release|ARM.ActiveCfg = Release|ARM
+		{B3018112-C760-4CD2-873D-6FD548D4F079}.Release|ARM.Build.0 = Release|ARM
+		{B3018112-C760-4CD2-873D-6FD548D4F079}.Release|x64.ActiveCfg = Release|x64
+		{B3018112-C760-4CD2-873D-6FD548D4F079}.Release|x64.Build.0 = Release|x64
+		{B3018112-C760-4CD2-873D-6FD548D4F079}.Release|x86.ActiveCfg = Release|x86
+		{B3018112-C760-4CD2-873D-6FD548D4F079}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

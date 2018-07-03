@@ -1,5 +1,4 @@
 ﻿using Microsoft.Graphics.Canvas;
-using Microsoft.Graphics.Canvas.UI.Composition;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -12,6 +11,7 @@ using Windows.Foundation;
 using Windows.Graphics.Imaging;
 using Windows.Media.Core;
 using Windows.Media.Editing;
+using Windows.Media.MediaProperties;
 using Windows.Media.Transcoding;
 using Windows.Storage;
 using Windows.Storage.Streams;
@@ -21,8 +21,6 @@ using Windows.UI.Popups;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media.Imaging;
-
-
 
 namespace BivrostHeatmapViewer
 {
@@ -44,7 +42,6 @@ namespace BivrostHeatmapViewer
 			return hCode.GetHashCode();
 		}
 	}
-
 
 
 	public class StaticHeatmapGenerator
@@ -197,9 +194,6 @@ namespace BivrostHeatmapViewer
 				);
 
 		}
-
-
-
 
 
 		private static async Task<MediaOverlay> GenerateVideoHeatmap2 (List<Heatmap.Coord> coords, Rect overlayPosition, ColorPicker colorPicker, double heatmapOpacity, int sampleRate, bool generateDots = false)
@@ -387,7 +381,10 @@ namespace BivrostHeatmapViewer
 		public static void RenderCompositionToFile(StorageFile file, MediaComposition composition, saveProgressCallback ShowErrorMessage, Window window)
 		{
 			// Call RenderToFileAsync
-			var saveOperation = composition.RenderToFileAsync(file, MediaTrimmingPreference.Precise);
+			MediaEncodingProfile encodingProfile = MediaEncodingProfile.CreateMp4(VideoEncodingQuality.Uhd2160p);
+			
+
+			var saveOperation = composition.RenderToFileAsync(file, MediaTrimmingPreference.Precise, encodingProfile);
 
 			saveOperation.Progress = new AsyncOperationProgressHandler<TranscodeFailureReason, double>(async (info, progress) =>
 			{
@@ -463,6 +460,8 @@ namespace BivrostHeatmapViewer
 
 			}
 		}
+
+
 
 	}
 
