@@ -13,6 +13,7 @@ using System.IO;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Graphics.Imaging;
 using System.Diagnostics;
+using BivrostHeatmapViewer;
 
 
 namespace VideoEffectComponent
@@ -25,12 +26,10 @@ namespace VideoEffectComponent
 	{
 		void GetBuffer(out byte* buffer, out uint capacity);
 	}
-	public sealed class ExampleVideoEffect : IBasicVideoEffect
+	public sealed class HeatmapAddVideoEffect : IBasicVideoEffect
 	{
-
-		private Dictionary<int, WriteableBitmap> heatmaps = new Dictionary<int, WriteableBitmap>();
 		
-		public ExampleVideoEffect()
+		public HeatmapAddVideoEffect()
 		{
 			Debug.WriteLine("ExampleVideoEffect constructor");
 		}

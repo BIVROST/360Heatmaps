@@ -605,7 +605,7 @@ namespace BivrostHeatmapViewer
 			TrimVideo(ref video);
 			composition.Clips.Add(video);
 
-			var videoEffectDefinition = new VideoEffectDefinition("VideoEffectComponent.ExampleVideoEffect", valuePairs);
+			var videoEffectDefinition = new VideoEffectDefinition("VideoEffectComponent.HeatmapAddVideoEffect", valuePairs);
 			video.VideoEffectDefinitions.Add(videoEffectDefinition);
 
 			MediaStreamSource res;

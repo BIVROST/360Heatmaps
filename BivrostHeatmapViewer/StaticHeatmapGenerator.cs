@@ -24,25 +24,6 @@ using Windows.UI.Xaml.Media.Imaging;
 
 namespace BivrostHeatmapViewer
 {
-	internal class HeatmapComparer : EqualityComparer<Heatmap.Coord>
-	{
-		public override bool Equals(Heatmap.Coord x, Heatmap.Coord y)
-		{
-			if (x.fov == y.fov && x.pitch == y.pitch && x.yaw == y.yaw)
-			{
-				return true;
-			}
-
-			return false;
-		}
-
-		public override int GetHashCode(Heatmap.Coord obj)
-		{
-			int hCode = obj.yaw ^ obj.pitch ^ obj.fov;
-			return hCode.GetHashCode();
-		}
-	}
-
 
 	public class StaticHeatmapGenerator
 	{
@@ -393,6 +374,7 @@ namespace BivrostHeatmapViewer
 					ShowErrorMessage(progress);
 				}));
 			});
+
 			saveOperation.Completed = new AsyncOperationWithProgressCompletedHandler<TranscodeFailureReason, double>(async (info, status) =>
 			{
 				await window.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, new DispatchedHandler(() =>

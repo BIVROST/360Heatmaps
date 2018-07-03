@@ -1,11 +1,33 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
 using System.Threading.Tasks;
+using Windows.UI.Xaml.Media.Imaging;
 
 namespace BivrostHeatmapViewer
 {
+	public class HeatmapComparer : EqualityComparer<Heatmap.Coord>
+	{
+		public override bool Equals(Heatmap.Coord x, Heatmap.Coord y)
+		{
+			if (x.fov == y.fov && x.pitch == y.pitch && x.yaw == y.yaw)
+			{
+				return true;
+			}
+
+			return false;
+		}
+
+		public override int GetHashCode(Heatmap.Coord obj)
+		{
+			int hCode = obj.yaw ^ obj.pitch ^ obj.fov;
+			return hCode.GetHashCode();
+		}
+	}
+
 	public class Heatmap
 	{
 		public class Coord
@@ -86,7 +108,7 @@ namespace BivrostHeatmapViewer
 		 */
 		static protected float distanceOpt(int lon1_, int lat1_, int lon2_, int lat2_)
 		{
-			if(distanceOptCache == null)
+			if (distanceOptCache == null)
 			{
 				distanceOptCache = new float[64 * 64 * 64];
 				for (var lon1 = 0; lon1 < 64; lon1++)
@@ -125,15 +147,15 @@ namespace BivrostHeatmapViewer
 			var hm = new float[64 * 64];
 			for (var y = 0; y < 64; y++)
 			{
-//				var row = hm[y] = new Array(64);
+				//				var row = hm[y] = new Array(64);
 				for (var x = 0; x < 64; x++)
 					//hm[y,x] = 0;
-					hm[y*64+x] = 0;
+					hm[y * 64 + x] = 0;
 			}
 
 			// generate fov tables	
 			//var fov_tables = new Array(64);
-			var fov_tables = new int[64*64*64];
+			var fov_tables = new int[64 * 64 * 64];
 			//for (var yy = 0; yy < 64; yy++)
 			//{
 			//	//var table = fov_tables[yy] = new Array(64);
@@ -215,7 +237,7 @@ namespace BivrostHeatmapViewer
 				for (var x = 0; x < 64; x++)
 				{
 					//var cell = hm[y,x];
-					var cell = hm[y*64+x];
+					var cell = hm[y * 64 + x];
 					if (cell < hm_min) hm_min = cell;
 					if (cell > hm_max) hm_max = cell;
 				}
@@ -234,7 +256,7 @@ namespace BivrostHeatmapViewer
 				for (var x = 0; x < 64; x++)
 				{
 					//hm[y,x] = (hm[y,x] - hm_min) * rev_hm_max_minus_hm_min;
-					hm[y*64+x] = (hm[y * 64 + x] - hm_min) * rev_hm_max_minus_hm_min;
+					hm[y * 64 + x] = (hm[y * 64 + x] - hm_min) * rev_hm_max_minus_hm_min;
 				}
 			}
 			return hm;
@@ -247,7 +269,7 @@ namespace BivrostHeatmapViewer
 			for (int y = 0; y < 64; y++)
 				for (int x = 0; x < 64; x++)
 				{
-					var c = Microsoft.Toolkit.Uwp.Helpers.ColorHelper.FromHsl(240 * (1-heatmap[y, x]), 1, 0.5);
+					var c = Microsoft.Toolkit.Uwp.Helpers.ColorHelper.FromHsl(240 * (1 - heatmap[y, x]), 1, 0.5);
 
 
 					image[(y * 64 + x) * 4 + 0] = c.B;
@@ -263,7 +285,7 @@ namespace BivrostHeatmapViewer
 		{
 			byte[] image = new byte[64 * 64 * 4];
 
-			for(int it = 0; it < heatmap.Length; it++)
+			for (int it = 0; it < heatmap.Length; it++)
 			{
 				var c = Microsoft.Toolkit.Uwp.Helpers.ColorHelper.FromHsl(240 * (1 - heatmap[it]), 1, 0.5);
 				image[it * 4 + 0] = c.B;
@@ -273,6 +295,27 @@ namespace BivrostHeatmapViewer
 			}
 
 			return image;
+		}
+
+		public static async Task<WriteableBitmap> GenerateHeatmap(Heatmap.Coord coord)
+		{
+
+			List<Heatmap.Coord> coords = new List<Heatmap.Coord>();
+			coords.Add(coord);
+
+			var heatmap = Heatmap.Generate(coords);
+			var renderedHeatmap = Heatmap.RenderHeatmap(heatmap);
+
+			WriteableBitmap wb = new WriteableBitmap(64, 64);
+
+			//SoftwareBitmap sb = new SoftwareBitmap(BitmapPixelFormat.Bgra8, 64, 64);
+
+			using (Stream stream = wb.PixelBuffer.AsStream())
+			{
+				await stream.WriteAsync(renderedHeatmap, 0, renderedHeatmap.Length);
+			}
+
+			return wb;
 		}
 	}
 }
