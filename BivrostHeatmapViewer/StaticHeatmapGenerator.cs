@@ -329,36 +329,6 @@ namespace BivrostHeatmapViewer
 		}
 
 
-		private static async Task<StorageFile> WriteableBitmapToStorageFile(WriteableBitmap WB)
-		{
-			string FileName = "MyFile.";
-			Guid BitmapEncoderGuid = BitmapEncoder.TiffEncoderId;
-			FileName += "tiff";
-
-			var file = await Windows.Storage.ApplicationData.Current.TemporaryFolder
-				.CreateFileAsync(FileName, CreationCollisionOption.GenerateUniqueName);
-
-			using (IRandomAccessStream stream = await file.OpenAsync(FileAccessMode.ReadWrite))
-			{
-				BitmapEncoder encoder = await BitmapEncoder.CreateAsync(BitmapEncoderGuid, stream);
-				Stream pixelStream = WB.PixelBuffer.AsStream();
-				byte[] pixels = new byte[pixelStream.Length];
-				await pixelStream.ReadAsync(pixels, 0, pixels.Length);
-				encoder.SetPixelData(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Ignore,
-						  (uint)WB.PixelWidth,
-						  (uint)WB.PixelHeight,
-						  96.0,
-						  96.0,
-						  pixels);
-				await encoder.FlushAsync();
-			}
-			return file;
-		}
-
-
-
-
-
 		public static void RenderCompositionToFile(StorageFile file, MediaComposition composition, saveProgressCallback ShowErrorMessage, Window window)
 		{
 			// Call RenderToFileAsync

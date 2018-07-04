@@ -14,7 +14,7 @@ using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Graphics.Imaging;
 using System.Diagnostics;
 using BivrostHeatmapViewer;
-
+using System.Collections;
 
 namespace VideoEffectComponent
 {
@@ -26,9 +26,12 @@ namespace VideoEffectComponent
 	{
 		void GetBuffer(out byte* buffer, out uint capacity);
 	}
+
+
 	public sealed class HeatmapAddVideoEffect : IBasicVideoEffect
 	{
-		
+		//public static IDictionary<string, List<int>> coords;
+
 		public HeatmapAddVideoEffect()
 		{
 			Debug.WriteLine("ExampleVideoEffect constructor");
@@ -72,21 +75,37 @@ namespace VideoEffectComponent
 		public void SetProperties(IPropertySet configuration)
 		{
 			this.configuration = configuration;
-		}
+			//this.pitch = new List<int>();
+			//this.yaw = new List<int>();
+			//this.fov = new List<int>();
 
-		public double BlurAmount
-		{
-			get
+			object count;
+			if (configuration.TryGetValue("count", out count))
 			{
-				object val;
-				if (configuration != null && configuration.TryGetValue("Blur", out val))
-				{
-					return (double)val;
-				}
-				return 3;
+				this.count = (int)count;
+
+				object pitch;
+				configuration.TryGetValue("pitch", out pitch);
+
+				object yaw;
+				configuration.TryGetValue("yaw", out yaw);
+
+				object fov;
+				configuration.TryGetValue("fov", out fov);
+
+				this.pitch = pitch as List<int>;
+				this.yaw = yaw as List<int>;
+				this.fov = fov as List<int>;
+
 			}
 		}
-		private static int counter = 2;
+
+		private List<int> pitch;
+		private List<int> yaw;
+		private List<int> fov;
+		private int count;
+
+		private double frameLength = 0;
 
 		public void ProcessFrame(ProcessVideoFrameContext context)
 		{
@@ -94,50 +113,37 @@ namespace VideoEffectComponent
 			using (CanvasBitmap inputBitmap = CanvasBitmap.CreateFromDirect3D11Surface(canvasDevice, context.InputFrame.Direct3DSurface))
 			using (CanvasRenderTarget renderTarget = CanvasRenderTarget.CreateFromDirect3D11Surface(canvasDevice, context.OutputFrame.Direct3DSurface))
 			using (CanvasDrawingSession ds = renderTarget.CreateDrawingSession())
+			using (var scaleEffect = new ScaleEffect())
 			{
-
-
-
-
-				var gaussianBlurEffect = new GaussianBlurEffect
+				if (frameLength == 0)
 				{
-					Source = inputBitmap,
-					BlurAmount = (float)BlurAmount,
-					Optimization = EffectOptimization.Speed
-				};
-
-				ds.DrawImage(gaussianBlurEffect);
-
-				if (counter % 2 == 0)
-				{
-					ds.DrawCircle(200, 200, 20, Colors.Red);
-					ds.FillCircle(200, 200, 20, Colors.Red);
-				}
-				else
-				{
-					ds.DrawCircle(1200, 700, 20, Colors.OrangeRed);
-					ds.FillCircle(1200, 700, 20, Colors.OrangeRed);
+					frameLength = context.InputFrame.Duration.Value.TotalMilliseconds;
 				}
 
-				double dur = context.InputFrame.Duration.Value.TotalMilliseconds;
+
+				//double dur = context.InputFrame.Duration.Value.TotalMilliseconds;
 				double rel = context.InputFrame.RelativeTime.Value.TotalMilliseconds;
 
-				Debug.Write(dur + "ms ===> ");
-				Debug.WriteLine(rel + "ms ");
-				Debug.WriteLine(Math.Round(rel/dur) + " frame -> i:" + counter);
-				//Debug.WriteLine(context.InputFrame.SystemRelativeTime.Value.TotalMilliseconds.ToString());
+				int frameTimeCounter = (int)Math.Round(rel / frameLength);
 
+				Debug.WriteLine("Frame: " + frameTimeCounter);
 
-				counter++;
-
-				if (counter == int.MaxValue)
-				{
-					counter = 0;
-				}
-
-				
-
+				byte[] tab = Heatmap.GenerateHeatmap(pitch[frameTimeCounter % count], yaw[frameTimeCounter % count], fov[frameTimeCounter % count]);
+				CanvasBitmap cb = CanvasBitmap.CreateFromBytes(canvasDevice, tab, 64, 64, Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized, 96, CanvasAlphaMode.Premultiplied);
+				scaleEffect.Source = cb;
+				scaleEffect.Scale = new System.Numerics.Vector2(3840 / 64, 2160 / 64);
+				scaleEffect.InterpolationMode = CanvasImageInterpolation.Linear;
+				scaleEffect.BorderMode = EffectBorderMode.Hard;
+				ds.DrawImage(inputBitmap);
+				ds.DrawImage(scaleEffect, 0, 120, new Windows.Foundation.Rect { Height = 2160, Width = 3840 }, 0.35f);
+				ds.Flush();
 			}
+
+
+			//Debug.Write(dur + "ms ===> ");
+			//Debug.WriteLine(rel + "ms ");			
+
 		}
 	}
+
 }

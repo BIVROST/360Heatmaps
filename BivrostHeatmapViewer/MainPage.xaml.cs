@@ -38,6 +38,7 @@ using System.Runtime.InteropServices;
 using Windows.Media.Effects;
 using Windows.Foundation.Collections;
 using Windows.Media.MediaProperties;
+using VideoEffectComponent;
 
 
 /* TODO: 
@@ -80,7 +81,7 @@ namespace BivrostHeatmapViewer
 		public MainPage()
 		{
 			this.InitializeComponent();
-			//InitializeFrostedGlass(mediaPlayerElement);
+			InitializeFrostedGlass(mediaPlayerElement);
 			InitializeDropShadow(mainPanel, previewImage);
 
 			heatmapSessionsListView.SelectionChanged += (s, e) =>
@@ -88,7 +89,8 @@ namespace BivrostHeatmapViewer
 				previewButton.IsEnabled = heatmapSessionsListView.SelectedItems.Count > 0;
 				GenerateButtonEnable();
 			};
-			valuePairs.Add("Blur", 5.0);
+
+
 			saveCompositionButton.IsEnabled = false;
 			generateVideoButton.IsEnabled = heatmapSessionsListView.SelectedItems.Count > 0;
 			previewButton.IsEnabled = heatmapSessionsListView.SelectedItems.Count > 0;
@@ -119,7 +121,7 @@ namespace BivrostHeatmapViewer
 			// Create a glass effect, requires Win2D NuGet package
 			var glassEffect = new GaussianBlurEffect
 			{
-				BlurAmount = 50.0f,
+				BlurAmount = 4f,
 				BorderMode = EffectBorderMode.Hard,
 				Source = new CompositionEffectSourceParameter("backdropBrush")
 			};
@@ -605,8 +607,11 @@ namespace BivrostHeatmapViewer
 			TrimVideo(ref video);
 			composition.Clips.Add(video);
 
+
 			var videoEffectDefinition = new VideoEffectDefinition("VideoEffectComponent.HeatmapAddVideoEffect", valuePairs);
 			video.VideoEffectDefinitions.Add(videoEffectDefinition);
+
+
 
 			MediaStreamSource res;
 			try
@@ -671,11 +676,6 @@ namespace BivrostHeatmapViewer
 			}
 		}
 
-		private void Button_Click(object sender, RoutedEventArgs e)
-		{
-			mediaPlayer.Play();
-		}
-
 		private void GenerateButtonEnable ()
 		{
 			if (videoFile != null && heatmapSessionsListView.SelectedItems.Count > 0)
@@ -718,46 +718,34 @@ namespace BivrostHeatmapViewer
             tokenSource.Cancel();
         }
 
-		private void videoStopSlider_DragEnter(object sender, DragEventArgs e)
-		{
-			if (videoStopSlider.Value <= videoStartSlider.Value)
-			{
-				videoStopSlider.Value = videoStopSlider.Maximum;
-			}
-		}
-
-		public static byte[] RenderHeatmap()
-		{
-			byte[] image = new byte[64 * 64 * 4];
-
-			for (int it = 0; it < 8; it++)
-			{
-				var c = Microsoft.Toolkit.Uwp.Helpers.ColorHelper.FromHsl(360, 1, 0.5);
-				image[it * 4 + 0] = c.B;
-				image[it * 4 + 1] = c.G;
-				image[it * 4 + 2] = c.R;
-				image[it * 4 + 3] = 255;
-			}
-
-			image[0] = 0;
-			image[1] = 0;
-			image[2] = 0;
-			image[3] = 0;
-
-			return image;
-		}
-
 		private void Page_Unloaded(object sender, RoutedEventArgs e)
 		{
-			//this.canvas.RemoveFromVisualTree();
-			//this.canvas = null;
+			if (mediaPlayer != null)
+			{
+				mediaPlayer.Dispose();
+			}
 		}
 
-		private void previewButton_Click(object sender, RoutedEventArgs e)
+		private void FillEffectPropertySet (SessionCollection sessions)
 		{
-			valuePairs.Clear();
-			valuePairs.Add("Blur", 0.0);
+			var pitch = new List<int>();
+			var yaw = new List<int>();
+			var fov = new List<int>();
+
+			foreach (Session s in sessions.sessions)
+			{
+				var output = Heatmap.CoordsDeserialize(s.history);
+			}
+
+
+
+
+			valuePairs.Add("count", 20);
+			valuePairs.Add("pitch", pitch);
+			valuePairs.Add("yaw", yaw);
+			valuePairs.Add("fov", fov);
 		}
+
 	}
 
 

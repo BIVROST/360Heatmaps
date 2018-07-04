@@ -297,25 +297,22 @@ namespace BivrostHeatmapViewer
 			return image;
 		}
 
-		public static async Task<WriteableBitmap> GenerateHeatmap(Heatmap.Coord coord)
+		public static byte[] GenerateHeatmap(int pitch, int yaw, int fov)
 		{
+			Coord cord = new Coord
+			{
+				fov = fov,
+				pitch = pitch,
+				yaw = yaw
+			};
 
 			List<Heatmap.Coord> coords = new List<Heatmap.Coord>();
-			coords.Add(coord);
+			coords.Add(cord);
 
 			var heatmap = Heatmap.Generate(coords);
 			var renderedHeatmap = Heatmap.RenderHeatmap(heatmap);
 
-			WriteableBitmap wb = new WriteableBitmap(64, 64);
-
-			//SoftwareBitmap sb = new SoftwareBitmap(BitmapPixelFormat.Bgra8, 64, 64);
-
-			using (Stream stream = wb.PixelBuffer.AsStream())
-			{
-				await stream.WriteAsync(renderedHeatmap, 0, renderedHeatmap.Length);
-			}
-
-			return wb;
+			return renderedHeatmap;
 		}
 	}
 }
