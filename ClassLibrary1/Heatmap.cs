@@ -297,20 +297,24 @@ namespace BivrostHeatmapViewer
 			return image;
 		}
 
-		public static byte[] GenerateHeatmap(int pitch, int yaw, int fov)
+		public static byte[] GenerateHeatmap(int[] pitch, int[] yaw, int[] fov)
 		{
-			Coord cord = new Coord
-			{
-				fov = fov,
-				pitch = pitch,
-				yaw = yaw
-			};
+            List<Coord> coords = new List<Coord>();
 
-			List<Heatmap.Coord> coords = new List<Heatmap.Coord>();
-			coords.Add(cord);
+            for (int i = 0; i < pitch.Length; i++)
+            {
+                coords.Add(
+                    new Coord
+                    {
+                        pitch = pitch[i],
+                        yaw = yaw[i],
+                        fov = fov[i]
+                    }
+                    );
+            }
 
-			var heatmap = Heatmap.Generate(coords);
-			var renderedHeatmap = Heatmap.RenderHeatmap(heatmap);
+			var heatmap = Generate(coords);
+			var renderedHeatmap = RenderHeatmap(heatmap);
 
 			return renderedHeatmap;
 		}

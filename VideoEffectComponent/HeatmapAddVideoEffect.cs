@@ -124,11 +124,32 @@ namespace VideoEffectComponent
 				//double dur = context.InputFrame.Duration.Value.TotalMilliseconds;
 				double rel = context.InputFrame.RelativeTime.Value.TotalMilliseconds;
 
-				int frameTimeCounter = (int)Math.Round(rel / frameLength);
+				int frameTimeCounter = (int)Math.Round(rel / frameLength) -1;
 
 				Debug.WriteLine("Frame: " + frameTimeCounter);
 
-				byte[] tab = Heatmap.GenerateHeatmap(pitch[frameTimeCounter % count], yaw[frameTimeCounter % count], fov[frameTimeCounter % count]);
+                int[] pitch = new int[count];
+                int[] yaw = new int[count];
+                int[] fov = new int[count];
+
+                for (int i = 0; i < count; i++)
+                {
+                    try
+                    {
+                        pitch[i] = this.pitch[frameTimeCounter + i];
+                        fov[i] = this.fov[frameTimeCounter + i];
+                        yaw[i] = this.yaw[frameTimeCounter + i];
+                    }
+                    catch (ArgumentOutOfRangeException ex)
+                    {
+                        Debug.WriteLine(ex.Message);
+                        pitch[i] = 0;
+                        fov[i] = 0;
+                        yaw[i] = 0;
+                    }
+                }
+
+				byte[] tab = Heatmap.GenerateHeatmap(pitch, yaw, fov);
 				CanvasBitmap cb = CanvasBitmap.CreateFromBytes(canvasDevice, tab, 64, 64, Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized, 96, CanvasAlphaMode.Premultiplied);
 				scaleEffect.Source = cb;
 				scaleEffect.Scale = new System.Numerics.Vector2(3840 / 64, 2160 / 64);

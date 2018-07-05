@@ -81,17 +81,16 @@ namespace BivrostHeatmapViewer
 		public MainPage()
 		{
 			this.InitializeComponent();
-			InitializeFrostedGlass(mediaPlayerElement);
+			//InitializeFrostedGlass(mediaPlayerElement);
 			InitializeDropShadow(mainPanel, previewImage);
 
-			heatmapSessionsListView.SelectionChanged += (s, e) =>
-			{
-				previewButton.IsEnabled = heatmapSessionsListView.SelectedItems.Count > 0;
-				GenerateButtonEnable();
-			};
+            heatmapSessionsListView.SelectionChanged += (s, e) =>
+            {
+                previewButton.IsEnabled = heatmapSessionsListView.SelectedItems.Count > 0;
+                GenerateButtonEnable();
+            };
 
-
-			saveCompositionButton.IsEnabled = false;
+            saveCompositionButton.IsEnabled = false;
 			generateVideoButton.IsEnabled = heatmapSessionsListView.SelectedItems.Count > 0;
 			previewButton.IsEnabled = heatmapSessionsListView.SelectedItems.Count > 0;
 
@@ -596,7 +595,10 @@ namespace BivrostHeatmapViewer
 				sessionCollection.sessions.Add(s);
 			}
 
-			if (mediaPlayer == null)
+            FillEffectPropertySet(sessionCollection);
+
+
+            if (mediaPlayer == null)
 			{
 				mediaPlayer = new MediaPlayer();
 			}
@@ -728,19 +730,44 @@ namespace BivrostHeatmapViewer
 
 		private void FillEffectPropertySet (SessionCollection sessions)
 		{
+            valuePairs.Clear();
+
 			var pitch = new List<int>();
 			var yaw = new List<int>();
 			var fov = new List<int>();
 
-			foreach (Session s in sessions.sessions)
-			{
-				var output = Heatmap.CoordsDeserialize(s.history);
-			}
+            List<Heatmap.Coord>[] coordsArray = new List<Heatmap.Coord>[sessions.sessions.Count];
+            coordsArray[0] = Heatmap.CoordsDeserialize(sessions.sessions[0].history);
+
+            Session session = sessions.sessions[0];
+            int min_length = coordsArray[0].Count - 1;
+
+            for (int i = 1; i < sessions.sessions.Count; i++)
+            {
+                coordsArray[i] = Heatmap.CoordsDeserialize(sessions.sessions[i].history);
+
+                if (min_length > coordsArray[i].Count)
+                {
+                    min_length = coordsArray[i].Count;
+                }
+            }
+
+            for (int i = 0; i < min_length; i++)
+            {
+                for (int k = 0; k < 3; k++)
+                {
+                    for (int j = 0; j < sessions.sessions.Count; j++)
+                    {
+                        pitch.Add(coordsArray[j][i].pitch);
+                        yaw.Add(coordsArray[j][i].yaw);
+                        fov.Add(coordsArray[j][i].fov);
+                        //fov.Insert
+                    }
+                }
+            }
 
 
-
-
-			valuePairs.Add("count", 20);
+            valuePairs.Add("count", sessions.sessions.Count);
 			valuePairs.Add("pitch", pitch);
 			valuePairs.Add("yaw", yaw);
 			valuePairs.Add("fov", fov);
