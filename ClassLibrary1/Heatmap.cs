@@ -1,10 +1,12 @@
-﻿using System;
+﻿using Microsoft.Graphics.Canvas;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
 using System.Threading.Tasks;
+using Windows.Graphics.Imaging;
 using Windows.UI.Xaml.Media.Imaging;
 
 namespace BivrostHeatmapViewer
@@ -316,6 +318,8 @@ namespace BivrostHeatmapViewer
 			var heatmap = Generate(coords);
 			var renderedHeatmap = RenderHeatmap(heatmap);
 
+			//CanvasBitmap cb = CanvasBitmap.CreateFromBytes(CanvasDevice.GetSharedDevice(), renderedHeatmap, 64, 64, Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized);
+						
 			return renderedHeatmap;
 		}
 	}

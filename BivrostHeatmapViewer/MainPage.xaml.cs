@@ -50,7 +50,6 @@ using VideoEffectComponent;
 
 namespace BivrostHeatmapViewer
 {
-
 	/// <summary>
 	/// An empty page that can be used on its own or navigated to within a Frame.
 	/// </summary>
@@ -64,11 +63,16 @@ namespace BivrostHeatmapViewer
 		private MediaComposition composition;
 		private MediaComposition mementoComposition;
 		private MediaPlayer mediaPlayer;
-		private Rect rect = new Rect(0, 0, 1280, 720);
+		private Rect rect = new Rect(0, 0, 4096, 2048);
 		MediaClip video;
         public CancellationTokenSource tokenSource = new CancellationTokenSource();
 		public CancellationToken token;
 		Task<MediaOverlayLayer> task;
+
+		bool dotsFlag = false;
+		bool horizonFlag = false;
+
+		public SavingResolutionsCollection resolutions;
 		//private static int heatmapListCounter = 0;
 
 		private ObservableCollection<Session> _items = new ObservableCollection<Session>();
@@ -93,7 +97,8 @@ namespace BivrostHeatmapViewer
             saveCompositionButton.IsEnabled = false;
 			generateVideoButton.IsEnabled = heatmapSessionsListView.SelectedItems.Count > 0;
 			previewButton.IsEnabled = heatmapSessionsListView.SelectedItems.Count > 0;
-
+			
+			
 			token = tokenSource.Token;
 		}
 
@@ -391,39 +396,14 @@ namespace BivrostHeatmapViewer
 			//TODO: 
 		}
 
-		private async void horizonEnableCheckbox_Checked(object sender, RoutedEventArgs e)
+		private void horizonEnableCheckbox_Checked(object sender, RoutedEventArgs e)
 		{
-			if (composition != null)
-			{
-				horizonFile = await StorageFile.GetFileFromApplicationUriAsync(new Uri ("ms-appx:///Assets/horizon3840x2160.png"));
-
-				mementoComposition = composition.Clone();
-
-				MediaOverlayLayer horizonOverlay = new MediaOverlayLayer();
-				MediaOverlay mediaOverlay = new MediaOverlay(await MediaClip.CreateFromImageFileAsync(horizonFile, composition.Duration));//generowanie horyzontu
-				mediaOverlay.Position = rect;
-				mediaOverlay.Opacity = 0.7;
-
-				horizonOverlay.Overlays.Add(mediaOverlay);
-				composition.OverlayLayers.Add(horizonOverlay);
-
-				var res = composition.GeneratePreviewMediaStreamSource(1280, 720);
-				var md = MediaSource.CreateFromMediaStreamSource(res);
-				mediaPlayerElement.Source = md;
-			}
-			//horizonImage.Opacity = 0.7;
-			//horizonImage.Visibility = Visibility.Visible;	
+			horizonFlag = true;
 		}
 
 		private void horizonEnableCheckbox_Unchecked(object sender, RoutedEventArgs e)
 		{
-			if (composition != null && mementoComposition != null)
-			{
-				composition = mementoComposition.Clone();
-				var res = composition.GeneratePreviewMediaStreamSource(1280, 720);
-				var md = MediaSource.CreateFromMediaStreamSource(res);
-				mediaPlayerElement.Source = md;
-			}//horizonImage.Visibility = Visibility.Collapsed;
+			horizonFlag = false;
 		}
 
 		private async void GenerateStaticHeatmap(object sender, RoutedEventArgs e)
@@ -577,11 +557,10 @@ namespace BivrostHeatmapViewer
 
 		}
 
-
 		private async void VideoGenTest2(object sender, RoutedEventArgs e)
 		{
-			horizonEnableCheckbox.IsChecked = false;
-
+			//horizonEnableCheckbox.IsChecked = false;
+			var ep = MediaEncodingProfile.CreateMp4(VideoEncodingQuality.Uhd2160p);
 			saveCompositionButton.IsEnabled = false;
 			composition = new MediaComposition();
 			mediaPlayerElement.Source = null;
@@ -595,6 +574,10 @@ namespace BivrostHeatmapViewer
 				sessionCollection.sessions.Add(s);
 			}
 
+			StaticHeatmapGenerator.CheckHistoryErrors(sessionCollection);
+			int sampleRate;
+			StaticHeatmapGenerator.CheckSampleRate(sessionCollection, out sampleRate);
+
             FillEffectPropertySet(sessionCollection);
 
 
@@ -607,18 +590,32 @@ namespace BivrostHeatmapViewer
 
 			MediaOverlayLayer videoOverlayLayer = new MediaOverlayLayer();
 			TrimVideo(ref video);
+			valuePairs.Add("offset", (int)video.TrimTimeFromStart.TotalSeconds);
+			var enc = video.GetVideoEncodingProperties();
+
+			valuePairs.Add("frameLength", (1 / ((double)enc.FrameRate.Numerator / enc.FrameRate.Denominator)) * 1000);
+
 			composition.Clips.Add(video);
 
+			if (horizonFlag)
+			{
+				composition.OverlayLayers.Add(await generateHorizonLayer((int)video.TrimmedDuration.TotalSeconds, ep.Video.Height, ep.Video.Width));
+				//composition.Clips.Add(await generateHorizonLayer((int)video.TrimmedDuration.TotalSeconds, ep.Video.Height, ep.Video.Width));				
+			}
 
 			var videoEffectDefinition = new VideoEffectDefinition("VideoEffectComponent.HeatmapAddVideoEffect", valuePairs);
 			video.VideoEffectDefinitions.Add(videoEffectDefinition);
 
-
-
 			MediaStreamSource res;
 			try
 			{
-				var ep = MediaEncodingProfile.CreateMp4(VideoEncodingQuality.Uhd2160p);
+
+				valuePairs.Remove("height");
+				valuePairs.Remove("width");
+
+				valuePairs.Add("height", ep.Video.Height);
+				valuePairs.Add("width", ep.Video.Width);
+
 				res = composition.GenerateMediaStreamSource(ep);
 				//res = composition.GeneratePreviewMediaStreamSource(3840, 2160);
 				var md = MediaSource.CreateFromMediaStreamSource(res);
@@ -632,38 +629,55 @@ namespace BivrostHeatmapViewer
 			mediaPlayer = mediaPlayerElement.MediaPlayer;
 			mediaPlayerElement.AreTransportControlsEnabled = true;
 			saveCompositionButton.IsEnabled = true;
+
+			resolutions = new SavingResolutionsCollection(enc);
+			saveResolutionSelector.ItemsSource = resolutions;
+			saveResolutionSelector.SelectedIndex = 0;
+
 		}
 
 		private async void SaveVideo_Click(object sender, RoutedEventArgs e)
 		{
-            var dialog = new MessageDialog("That operation cannot be canceled.");
-            dialog.Title = "Are you sure?";
-            dialog.Commands.Add(new UICommand { Label = "OK", Id = 0 });
-            dialog.Commands.Add(new UICommand { Label = "Cancel", Id = 1 });
-            var idResult = await dialog.ShowAsync();
 
-            if ((int)idResult.Id == 0)
-            {
+			MediaEncodingProfile mediaEncoding = MediaEncodingProfile.CreateMp4(VideoEncodingQuality.Uhd2160p);
 
-                var picker = new Windows.Storage.Pickers.FileSavePicker();
-                picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.VideosLibrary;
-                picker.FileTypeChoices.Add("MP4 files", new List<string>() { ".mp4" });
-                picker.SuggestedFileName = "RenderedVideo.mp4";
-                saveProgressCallback saveProgress = ShowErrorMessage;
+			var enc = video.GetVideoEncodingProperties();
 
-                Windows.Storage.StorageFile file = await picker.PickSaveFileAsync();
-                if (file != null)
-                {
-                    generateVideoButton.IsEnabled = false;
-                    saveCompositionButton.IsEnabled = false;
-                    StaticHeatmapGenerator.RenderCompositionToFile(file, composition, saveProgress, Window.Current);
-                }
-            }
+			mediaEncoding.Video.FrameRate.Denominator = enc.FrameRate.Denominator;
+			mediaEncoding.Video.FrameRate.Numerator = enc.FrameRate.Numerator;
+			mediaEncoding.Video.Width = 4096;
+			mediaEncoding.Video.Height = 2048;
+
+			var picker = new Windows.Storage.Pickers.FileSavePicker();
+			picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.VideosLibrary;
+			picker.FileTypeChoices.Add("MP4 files", new List<string>() { ".mp4" });
+			picker.SuggestedFileName = "RenderedVideo.mp4";
+			saveProgressCallback saveProgress = ShowErrorMessage;
+
+			Windows.Storage.StorageFile file = await picker.PickSaveFileAsync();
+			if (file != null)
+			{
+				valuePairs.Remove("height");
+				valuePairs.Remove("width");
+
+				valuePairs.Add("height", mediaEncoding.Video.Height);
+				valuePairs.Add("width", mediaEncoding.Video.Width);
+				//valuePairs.Add("save", "1");
+				mediaPlayer.Pause();
+				buttonLoadingStop.Visibility = Visibility.Visible;
+				generateVideoButton.IsEnabled = false;
+				saveCompositionButton.IsEnabled = false;
+
+				StaticHeatmapGenerator.RenderCompositionToFile(file, composition, saveProgress, Window.Current, mediaEncoding, token);
+
+
+			}
+			//}
 		}
 
 		private void ShowErrorMessage(double v)
 		{
-			if (Double.Equals(v, 100.0))
+			if (Equals(v, 100.0))
 			{
 				videoLoading.Visibility = Visibility.Collapsed;
 				loadingScreen.Visibility = Visibility.Collapsed;
@@ -717,7 +731,10 @@ namespace BivrostHeatmapViewer
 
         private void ButtonLoadingStop_Click(object sender, RoutedEventArgs e)
         {
-            tokenSource.Cancel();
+			buttonLoadingStop.Visibility = Visibility.Collapsed;
+			//loadingScreen.Visibility = Visibility.Collapsed;
+			ShowErrorMessage(100.0);
+			tokenSource.Cancel();
         }
 
 		private void Page_Unloaded(object sender, RoutedEventArgs e)
@@ -766,13 +783,50 @@ namespace BivrostHeatmapViewer
                 }
             }
 
+		
 
             valuePairs.Add("count", sessions.sessions.Count);
 			valuePairs.Add("pitch", pitch);
 			valuePairs.Add("yaw", yaw);
 			valuePairs.Add("fov", fov);
+			valuePairs.Add("generateDots", dotsFlag);
+
+			var enc = video.GetVideoEncodingProperties();
+
+			valuePairs.Add("height", enc.Height);
+			valuePairs.Add("width", enc.Width);
 		}
 
+		private void dotsEnableCheckbox_Checked(object sender, RoutedEventArgs e)
+		{
+			dotsFlag = true;
+		}
+
+		private void dotsEnableCheckbox_Unchecked(object sender, RoutedEventArgs e)
+		{
+			dotsFlag = false;
+		}
+
+		private async Task<MediaOverlayLayer> generateHorizonLayer (int timeInSeconds, uint height, uint width)
+		{
+			
+
+			horizonFile = await StorageFile.GetFileFromApplicationUriAsync(new Uri("ms-appx:///Assets/horizon3840x2160.png"));
+
+			//img.Source = horizonFile;
+
+			MediaOverlayLayer horizonOverlay = new MediaOverlayLayer();
+
+
+			MediaOverlay mediaOverlay = new MediaOverlay(await MediaClip.CreateFromImageFileAsync(horizonFile, new TimeSpan(0, 0, timeInSeconds))); //generowanie horyzontu
+			mediaOverlay.Position = new Rect(0, 0, width, height);
+			mediaOverlay.Opacity = 0.9;
+
+	
+			horizonOverlay.Overlays.Add(mediaOverlay);
+
+			return horizonOverlay;
+		}
 	}
 
 

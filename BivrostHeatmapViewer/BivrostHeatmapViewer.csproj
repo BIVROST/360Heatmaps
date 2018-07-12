@@ -104,6 +104,7 @@
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SavingResolutions.cs" />
     <Compile Include="StaticHeatmapGenerator.cs" />
     <Compile Include="TextAddConverter.cs" />
   </ItemGroup>
@@ -111,6 +112,7 @@
     <AppxManifest Include="Package.appxmanifest">
       <SubType>Designer</SubType>
     </AppxManifest>
+    <Content Include="Assets\horizon-alpha.png" />
     <Content Include="Assets\horizon3840x2160.png" />
     <Content Include="Sessions\sessions-okrutna.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

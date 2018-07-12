@@ -31,6 +31,8 @@ namespace VideoEffectComponent
 	public sealed class HeatmapAddVideoEffect : IBasicVideoEffect
 	{
 		//public static IDictionary<string, List<int>> coords;
+		private Color[] colors = new Color[5] { Colors.Orange, Colors.Purple, Colors.Brown, Colors.LightGreen, Colors.DarkSalmon };
+
 
 		public HeatmapAddVideoEffect()
 		{
@@ -93,9 +95,32 @@ namespace VideoEffectComponent
 				object fov;
 				configuration.TryGetValue("fov", out fov);
 
+				object offset;
+				configuration.TryGetValue("offset", out offset);
+
+				object frameLength;
+				configuration.TryGetValue("frameLength", out frameLength);
+
+				object width;
+				configuration.TryGetValue("width", out width);
+
+				object height;
+				configuration.TryGetValue("height", out height);
+
+				object generateDots;
+				configuration.TryGetValue("generateDots", out generateDots);
+				
 				this.pitch = pitch as List<int>;
 				this.yaw = yaw as List<int>;
 				this.fov = fov as List<int>;
+				this.offset = (int)offset;
+				this.frameLength = (double)frameLength;
+				this.width = (uint)width;
+				this.height = (uint)height;
+				this.generateDots = (bool)generateDots;
+	
+
+				this.offset = this.offset * (int)Math.Round(1000 / this.frameLength);
 
 			}
 		}
@@ -104,8 +129,12 @@ namespace VideoEffectComponent
 		private List<int> yaw;
 		private List<int> fov;
 		private int count;
+		private int offset;
+		private double frameLength;
+		private uint width;
+		private uint height;
+		private bool generateDots;
 
-		private double frameLength = 0;
 
 		public void ProcessFrame(ProcessVideoFrameContext context)
 		{
@@ -115,18 +144,16 @@ namespace VideoEffectComponent
 			using (CanvasDrawingSession ds = renderTarget.CreateDrawingSession())
 			using (var scaleEffect = new ScaleEffect())
 			{
-				if (frameLength == 0)
-				{
-					frameLength = context.InputFrame.Duration.Value.TotalMilliseconds;
-				}
+				//offset = offset * (int)Math.Round(1000 / frameLength);
+
 
 
 				//double dur = context.InputFrame.Duration.Value.TotalMilliseconds;
 				double rel = context.InputFrame.RelativeTime.Value.TotalMilliseconds;
 
-				int frameTimeCounter = (int)Math.Round(rel / frameLength) -1;
+				int frameTimeCounter = (int)Math.Round(rel / frameLength);
 
-				Debug.WriteLine("Frame: " + frameTimeCounter);
+				//Debug.WriteLine("Frame: " + frameTimeCounter);
 
                 int[] pitch = new int[count];
                 int[] yaw = new int[count];
@@ -136,9 +163,9 @@ namespace VideoEffectComponent
                 {
                     try
                     {
-                        pitch[i] = this.pitch[frameTimeCounter + i];
-                        fov[i] = this.fov[frameTimeCounter + i];
-                        yaw[i] = this.yaw[frameTimeCounter + i];
+						pitch[i] = this.pitch[ (frameTimeCounter + offset) * (count) + i];
+                        fov[i] = this.fov[ (frameTimeCounter + offset) * (count) + i];
+						yaw[i] = this.yaw[ (frameTimeCounter + offset) * (count) + i];
                     }
                     catch (ArgumentOutOfRangeException ex)
                     {
@@ -152,17 +179,22 @@ namespace VideoEffectComponent
 				byte[] tab = Heatmap.GenerateHeatmap(pitch, yaw, fov);
 				CanvasBitmap cb = CanvasBitmap.CreateFromBytes(canvasDevice, tab, 64, 64, Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized, 96, CanvasAlphaMode.Premultiplied);
 				scaleEffect.Source = cb;
-				scaleEffect.Scale = new System.Numerics.Vector2(3840 / 64, 2160 / 64);
-				scaleEffect.InterpolationMode = CanvasImageInterpolation.Linear;
+				scaleEffect.Scale = new System.Numerics.Vector2(width / 64, height / 64);
+				scaleEffect.InterpolationMode = CanvasImageInterpolation.Cubic;
 				scaleEffect.BorderMode = EffectBorderMode.Hard;
 				ds.DrawImage(inputBitmap);
-				ds.DrawImage(scaleEffect, 0, 120, new Windows.Foundation.Rect { Height = 2160, Width = 3840 }, 0.35f);
+				ds.DrawImage(scaleEffect, 0, 0, new Windows.Foundation.Rect { Height = height, Width = width }, 0.35f);
+
+				if (generateDots)
+				{
+					for (int i = 0; i < count; i++)
+					{
+						ds.FillCircle(yaw[i] * width / 64, pitch[i] * height / 64, 20, colors[i % 5]);
+					}
+				}
+				//ds.FillCircle()
 				ds.Flush();
 			}
-
-
-			//Debug.Write(dur + "ms ===> ");
-			//Debug.WriteLine(rel + "ms ");			
 
 		}
 	}

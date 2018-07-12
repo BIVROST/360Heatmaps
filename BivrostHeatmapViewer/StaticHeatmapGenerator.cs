@@ -25,6 +25,8 @@ using Windows.UI.Xaml.Media.Imaging;
 namespace BivrostHeatmapViewer
 {
 
+
+
 	public class StaticHeatmapGenerator
 	{
 		//MemoryCache
@@ -327,13 +329,31 @@ namespace BivrostHeatmapViewer
 
 			return mediaOverlayLayer;
 		}
-
-
-		public static void RenderCompositionToFile(StorageFile file, MediaComposition composition, saveProgressCallback ShowErrorMessage, Window window)
+		
+		public static void RenderCompositionToFile(StorageFile file, MediaComposition composition, saveProgressCallback ShowErrorMessage, Window window, MediaEncodingProfile encodingProfile, CancellationToken token)
 		{
 			// Call RenderToFileAsync
-			MediaEncodingProfile encodingProfile = MediaEncodingProfile.CreateMp4(VideoEncodingQuality.Uhd2160p);
-			
+
+			//encodingProfile.Video.FrameRate.Denominator = 1001;
+			//encodingProfile.Video.FrameRate.Numerator = 30000;
+
+			var enc = composition.Clips[0].GetVideoEncodingProperties();
+
+			if (enc.Width / enc.Height == 2)
+			{
+				encodingProfile.Video.Height = encodingProfile.Video.Width / 2;
+			}
+			else if (Equals(enc.Width / enc.Height, 16 / 9))
+			{
+				encodingProfile.Video.Height = encodingProfile.Video.Width * 9 / 16;
+			}
+			else if (Equals(enc.Width / enc.Height, 4 / 3))
+			{
+				encodingProfile.Video.Height = encodingProfile.Video.Width * 3 / 4;
+			}
+
+
+			Debug.WriteLine((double)encodingProfile.Video.FrameRate.Numerator / encodingProfile.Video.FrameRate.Denominator);
 
 			var saveOperation = composition.RenderToFileAsync(file, MediaTrimmingPreference.Precise, encodingProfile);
 
@@ -342,38 +362,53 @@ namespace BivrostHeatmapViewer
 				await window.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, new DispatchedHandler(() =>
 				{
 					ShowErrorMessage(progress);
+					try
+					{
+						if (token.IsCancellationRequested)
+						{
+							saveOperation.Cancel();
+							ShowErrorMessage(100.0);
+							//token.ThrowIfCancellationRequested();
+						}
+					}
+					catch (OperationCanceledException)
+					{
+					}
 				}));
 			});
 
 			saveOperation.Completed = new AsyncOperationWithProgressCompletedHandler<TranscodeFailureReason, double>(async (info, status) =>
-			{
-				await window.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, new DispatchedHandler(() =>
 				{
-					try
+					await window.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, new DispatchedHandler(() =>
 					{
-						var results = info.GetResults();
-						if (results != TranscodeFailureReason.None || status != AsyncStatus.Completed)
+						if (saveOperation.Status != AsyncStatus.Canceled)
 						{
-							//ShowErrorMessage("Saving was unsuccessful");
+							try
+							{
+								var results = info.GetResults();
+								if (results != TranscodeFailureReason.None || status != AsyncStatus.Completed)
+								{
+									//ShowErrorMessage("Saving was unsuccessful");
+								}
+								else
+								{
+									//ShowErrorMessage("Trimmed clip saved to file");
+								}
+							}
+							catch (Exception e)
+							{
+								Debug.WriteLine("Saving exception: " + e.Message);
+							}
+							finally
+							{
+								// Update UI whether the operation succeeded or not
+							}
 						}
-						else
-						{
-							//ShowErrorMessage("Trimmed clip saved to file");
-						}
-					}
-					finally
-					{
-						// Update UI whether the operation succeeded or not
-					}
-
-				}));
-			});
-
-			//button.IsEnabled = true;
-			//await saveOperation;
+					}));
+				});
 		}
 		
-		private static bool CheckSampleRate (SessionCollection sessions, out int sampleRate)
+		public static bool CheckSampleRate (SessionCollection sessions, out int sampleRate)
         {
             sampleRate = sessions.sessions[0].sample_rate;
             foreach (Session x in sessions.sessions)
@@ -387,29 +422,29 @@ namespace BivrostHeatmapViewer
             return true;
         }
 
-		private static async void CheckHistoryErrors (SessionCollection sessions)
+		public static async void CheckHistoryErrors (SessionCollection sessions)
 		{
-			bool flag;
+			bool flag = false;
 
 			foreach (Session s in sessions.sessions)
 			{
 				if (s.history.Contains("--"))
 				{
 					flag = true;
+					break;
 				}
 				else
 				{
 					flag = false;
 				}
+			}
 
-				if (flag)
-				{
-					var dialog = new MessageDialog("Sessions contains time errors. Added empty heatmaps to repair it.");
-					dialog.Title = "Error";
-					dialog.Commands.Add(new UICommand { Label = "OK", Id = 0 });
-					await dialog.ShowAsync();
-				}
-
+			if (flag)
+			{
+				var dialog = new MessageDialog("Sessions contains time errors. Added empty heatmaps to repair it.");
+				dialog.Title = "Warning";
+				dialog.Commands.Add(new UICommand { Label = "OK", Id = 0 });
+				await dialog.ShowAsync();
 			}
 		}
 
