@@ -193,6 +193,10 @@ namespace BivrostHeatmapViewer
 					video = await MediaClip.CreateFromFileAsync(videoFile);
 					SetTimeSliders(video.OriginalDuration);
 					GenerateButtonEnable();
+					var enc = video.GetVideoEncodingProperties();
+					resolutions = new SavingResolutionsCollection(enc);
+					saveResolutionSelector.ItemsSource = resolutions;
+					saveResolutionSelector.SelectedIndex = 0;
 				}
 			}
 		}
@@ -236,6 +240,10 @@ namespace BivrostHeatmapViewer
 						video = await MediaClip.CreateFromFileAsync(videoFile);
 						SetTimeSliders(video.OriginalDuration);
 						GenerateButtonEnable();
+						var enc = video.GetVideoEncodingProperties();
+						resolutions = new SavingResolutionsCollection(enc);
+						saveResolutionSelector.ItemsSource = resolutions;
+						saveResolutionSelector.SelectedIndex = 0;
 					}
 				}
 			}
@@ -631,9 +639,7 @@ namespace BivrostHeatmapViewer
 			mediaPlayerElement.AreTransportControlsEnabled = true;
 			saveCompositionButton.IsEnabled = true;
 
-			resolutions = new SavingResolutionsCollection(enc);
-			saveResolutionSelector.ItemsSource = resolutions;
-			saveResolutionSelector.SelectedIndex = 0;
+
 
 		}
 
@@ -650,8 +656,8 @@ namespace BivrostHeatmapViewer
 
 			mediaEncoding.Video.FrameRate.Denominator = enc.FrameRate.Denominator;
 			mediaEncoding.Video.FrameRate.Numerator = enc.FrameRate.Numerator;
-			mediaEncoding.Video.Width = 4096;
-			mediaEncoding.Video.Height = 2048;
+			mediaEncoding.Video.Bitrate = enc.Bitrate;
+
 
 			var picker = new Windows.Storage.Pickers.FileSavePicker();
 			picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.VideosLibrary;
@@ -662,11 +668,22 @@ namespace BivrostHeatmapViewer
 			Windows.Storage.StorageFile file = await picker.PickSaveFileAsync();
 			if (file != null)
 			{
+				var temp = saveResolutionSelector.SelectedItem as Resolutions;
+
 				valuePairs.Remove("height");
 				valuePairs.Remove("width");
 
-				valuePairs.Add("height", mediaEncoding.Video.Height);
-				valuePairs.Add("width", mediaEncoding.Video.Width);
+				valuePairs.Add("height", temp.Resolution.height);
+				valuePairs.Add("width", temp.Resolution.width);
+
+				if (dotsFlag)
+				{
+					valuePairs.Remove("dotsRadius");
+					valuePairs.Add("dotsRadius", (float)temp.Resolution.width / 4096 *20);
+				}
+
+				mediaEncoding.Video.Width = temp.Resolution.width;
+				mediaEncoding.Video.Height = temp.Resolution.height;
 				//valuePairs.Add("save", "1");
 				mediaPlayer.Pause();
 				buttonLoadingStop.Visibility = Visibility.Visible;
@@ -789,8 +806,10 @@ namespace BivrostHeatmapViewer
                 }
             }
 
-		
+			float dotsRadius = 20f;
 
+
+			valuePairs.Add("dotsRadius", dotsRadius);
             valuePairs.Add("count", sessions.sessions.Count);
 			valuePairs.Add("pitch", pitch);
 			valuePairs.Add("yaw", yaw);

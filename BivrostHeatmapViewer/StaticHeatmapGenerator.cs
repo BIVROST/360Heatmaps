@@ -342,6 +342,7 @@ namespace BivrostHeatmapViewer
 
 			encodingProfile.Video.Height = temp.Resolution.height;
 			encodingProfile.Video.Width = temp.Resolution.width;
+			//encodingProfile.Video.Bitrate = 1000000000;
 
 
 			Debug.WriteLine((double)encodingProfile.Video.FrameRate.Numerator / encodingProfile.Video.FrameRate.Denominator);

@@ -109,6 +109,9 @@ namespace VideoEffectComponent
 
 				object generateDots;
 				configuration.TryGetValue("generateDots", out generateDots);
+
+				object dotsRadius;
+				configuration.TryGetValue("dotsRadius", out dotsRadius);
 				
 				this.pitch = pitch as List<int>;
 				this.yaw = yaw as List<int>;
@@ -118,6 +121,7 @@ namespace VideoEffectComponent
 				this.width = (uint)width;
 				this.height = (uint)height;
 				this.generateDots = (bool)generateDots;
+				this.dotsRadius = (float)dotsRadius;
 	
 
 				this.offset = this.offset * (int)Math.Round(1000 / this.frameLength);
@@ -134,7 +138,7 @@ namespace VideoEffectComponent
 		private uint width;
 		private uint height;
 		private bool generateDots;
-
+		private float dotsRadius;
 
 		public void ProcessFrame(ProcessVideoFrameContext context)
 		{
@@ -189,7 +193,7 @@ namespace VideoEffectComponent
 				{
 					for (int i = 0; i < count; i++)
 					{
-						ds.FillCircle(yaw[i] * width / 64, pitch[i] * height / 64, 20, colors[i % 5]);
+						ds.FillCircle(yaw[i] * width / 64, pitch[i] * height / 64, dotsRadius, colors[i % 5]);
 					}
 				}
 				//ds.FillCircle()
