@@ -612,6 +612,8 @@ namespace BivrostHeatmapViewer
 				//composition.Clips.Add(await generateHorizonLayer((int)video.TrimmedDuration.TotalSeconds, ep.Video.Height, ep.Video.Width));				
 			}
 
+			//composition.OverlayLayers.Add(generateOverlayColor((int)video.TrimmedDuration.TotalSeconds, ep.Video.Height, ep.Video.Width));
+
 			var videoEffectDefinition = new VideoEffectDefinition("VideoEffectComponent.HeatmapAddVideoEffect", valuePairs);
 			video.VideoEffectDefinitions.Add(videoEffectDefinition);
 
@@ -668,6 +670,8 @@ namespace BivrostHeatmapViewer
 			Windows.Storage.StorageFile file = await picker.PickSaveFileAsync();
 			if (file != null)
 			{
+				mediaPlayer.Pause();
+
 				var temp = saveResolutionSelector.SelectedItem as Resolutions;
 
 				valuePairs.Remove("height");
@@ -682,10 +686,12 @@ namespace BivrostHeatmapViewer
 					valuePairs.Add("dotsRadius", (float)temp.Resolution.width / 4096 *20);
 				}
 
+				//composition.OverlayLayers[0] = generateOverlayColor((int)video.TrimmedDuration.TotalSeconds, temp.Resolution.height, temp.Resolution.width);
+
 				mediaEncoding.Video.Width = temp.Resolution.width;
 				mediaEncoding.Video.Height = temp.Resolution.height;
 				//valuePairs.Add("save", "1");
-				mediaPlayer.Pause();
+				
 				buttonLoadingStop.Visibility = Visibility.Visible;
 				generateVideoButton.IsEnabled = false;
 				saveCompositionButton.IsEnabled = false;
@@ -772,6 +778,8 @@ namespace BivrostHeatmapViewer
 		{
             valuePairs.Clear();
 
+			var enc = video.GetVideoEncodingProperties();
+
 			var pitch = new List<int>();
 			var yaw = new List<int>();
 			var fov = new List<int>();
@@ -808,7 +816,8 @@ namespace BivrostHeatmapViewer
 
 			float dotsRadius = 20f;
 
-
+			valuePairs.Add("backgroundColor", videoBackgroundPicker.Color);
+			valuePairs.Add("backgroundOpacity", (float)(1 - videoOpacity.Value / 100));
 			valuePairs.Add("dotsRadius", dotsRadius);
             valuePairs.Add("count", sessions.sessions.Count);
 			valuePairs.Add("pitch", pitch);
@@ -816,7 +825,7 @@ namespace BivrostHeatmapViewer
 			valuePairs.Add("fov", fov);
 			valuePairs.Add("generateDots", dotsFlag);
 
-			var enc = video.GetVideoEncodingProperties();
+			
 
 			valuePairs.Add("height", enc.Height);
 			valuePairs.Add("width", enc.Width);
@@ -848,6 +857,21 @@ namespace BivrostHeatmapViewer
 			mediaOverlay.Opacity = 0.9;
 
 	
+			horizonOverlay.Overlays.Add(mediaOverlay);
+
+			return horizonOverlay;
+		}
+
+		private MediaOverlayLayer generateOverlayColor (int timeInSeconds, uint height, uint width)
+		{
+			MediaOverlayLayer horizonOverlay = new MediaOverlayLayer();
+			
+
+			MediaOverlay mediaOverlay = new MediaOverlay(MediaClip.CreateFromColor(videoBackgroundPicker.Color, new TimeSpan(0, 0, timeInSeconds))); //generowanie horyzontu
+			mediaOverlay.Position = new Rect(0, 0, width, height);
+			mediaOverlay.Opacity = 1 - videoOpacity.Value / 100;
+
+
 			horizonOverlay.Overlays.Add(mediaOverlay);
 
 			return horizonOverlay;

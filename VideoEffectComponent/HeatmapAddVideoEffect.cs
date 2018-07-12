@@ -15,6 +15,8 @@ using Windows.Graphics.Imaging;
 using System.Diagnostics;
 using BivrostHeatmapViewer;
 using System.Collections;
+using Microsoft.Graphics.Canvas.Geometry;
+using Microsoft.Graphics.Canvas.Brushes;
 
 namespace VideoEffectComponent
 {
@@ -88,43 +90,49 @@ namespace VideoEffectComponent
 
 				object pitch;
 				configuration.TryGetValue("pitch", out pitch);
+				this.pitch = pitch as List<int>;
 
 				object yaw;
 				configuration.TryGetValue("yaw", out yaw);
+				this.yaw = yaw as List<int>;
 
 				object fov;
 				configuration.TryGetValue("fov", out fov);
+				this.fov = fov as List<int>;
 
 				object offset;
 				configuration.TryGetValue("offset", out offset);
+				this.offset = (int)offset;
+				this.offset = this.offset * (int)Math.Round(1000 / this.frameLength);
 
 				object frameLength;
 				configuration.TryGetValue("frameLength", out frameLength);
+				this.frameLength = (double)frameLength;
 
 				object width;
 				configuration.TryGetValue("width", out width);
+				this.width = (uint)width;
 
 				object height;
 				configuration.TryGetValue("height", out height);
+				this.height = (uint)height;
 
 				object generateDots;
 				configuration.TryGetValue("generateDots", out generateDots);
+				this.generateDots = (bool)generateDots;
 
 				object dotsRadius;
 				configuration.TryGetValue("dotsRadius", out dotsRadius);
-				
-				this.pitch = pitch as List<int>;
-				this.yaw = yaw as List<int>;
-				this.fov = fov as List<int>;
-				this.offset = (int)offset;
-				this.frameLength = (double)frameLength;
-				this.width = (uint)width;
-				this.height = (uint)height;
-				this.generateDots = (bool)generateDots;
 				this.dotsRadius = (float)dotsRadius;
-	
 
-				this.offset = this.offset * (int)Math.Round(1000 / this.frameLength);
+				object backgroundColor;
+				configuration.TryGetValue("backgroundColor", out backgroundColor);
+				this.backgroundColor = (Color) backgroundColor;
+
+				object backgroundOpacity;
+				configuration.TryGetValue("backgroundOpacity", out backgroundOpacity);
+				this.backgroundOpacity = (float)backgroundOpacity;
+
 
 			}
 		}
@@ -139,6 +147,8 @@ namespace VideoEffectComponent
 		private uint height;
 		private bool generateDots;
 		private float dotsRadius;
+		private Color backgroundColor;
+		private float backgroundOpacity;
 
 		public void ProcessFrame(ProcessVideoFrameContext context)
 		{
@@ -147,10 +157,11 @@ namespace VideoEffectComponent
 			using (CanvasRenderTarget renderTarget = CanvasRenderTarget.CreateFromDirect3D11Surface(canvasDevice, context.OutputFrame.Direct3DSurface))
 			using (CanvasDrawingSession ds = renderTarget.CreateDrawingSession())
 			using (var scaleEffect = new ScaleEffect())
+			using (CanvasSolidColorBrush solidColorBrush = new CanvasSolidColorBrush(canvasDevice, backgroundColor))
 			{
 				//offset = offset * (int)Math.Round(1000 / frameLength);
 
-
+				solidColorBrush.Opacity = backgroundOpacity;
 
 				//double dur = context.InputFrame.Duration.Value.TotalMilliseconds;
 				double rel = context.InputFrame.RelativeTime.Value.TotalMilliseconds;
@@ -181,7 +192,7 @@ namespace VideoEffectComponent
                 }
 
 				byte[] tab = Heatmap.GenerateHeatmap(pitch, yaw, fov);
-				CanvasBitmap cb = CanvasBitmap.CreateFromBytes(canvasDevice, tab, 64, 64, Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8X8UIntNormalized, 96, CanvasAlphaMode.Ignore);
+				CanvasBitmap cb = CanvasBitmap.CreateFromBytes(canvasDevice, tab, 64, 64, Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized, 96, CanvasAlphaMode.Premultiplied);
 				scaleEffect.Source = cb;
 				scaleEffect.Scale = new System.Numerics.Vector2(width / 64, height / 64);
 				scaleEffect.InterpolationMode = CanvasImageInterpolation.Cubic;
@@ -196,7 +207,11 @@ namespace VideoEffectComponent
 						ds.FillCircle(yaw[i] * width / 64, pitch[i] * height / 64, dotsRadius, colors[i % 5]);
 					}
 				}
-				//ds.FillCircle()
+
+				CanvasImageBrush canvasImageBrush = new CanvasImageBrush(canvasDevice);
+
+				ds.FillRectangle(new Windows.Foundation.Rect { Height = height, Width = width }, solidColorBrush);
+
 				ds.Flush();
 			}
 
