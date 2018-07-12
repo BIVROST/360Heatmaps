@@ -177,7 +177,7 @@ namespace VideoEffectComponent
                 }
 
 				byte[] tab = Heatmap.GenerateHeatmap(pitch, yaw, fov);
-				CanvasBitmap cb = CanvasBitmap.CreateFromBytes(canvasDevice, tab, 64, 64, Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized, 96, CanvasAlphaMode.Premultiplied);
+				CanvasBitmap cb = CanvasBitmap.CreateFromBytes(canvasDevice, tab, 64, 64, Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8X8UIntNormalized, 96, CanvasAlphaMode.Ignore);
 				scaleEffect.Source = cb;
 				scaleEffect.Scale = new System.Numerics.Vector2(width / 64, height / 64);
 				scaleEffect.InterpolationMode = CanvasImageInterpolation.Cubic;

@@ -330,27 +330,18 @@ namespace BivrostHeatmapViewer
 			return mediaOverlayLayer;
 		}
 		
-		public static void RenderCompositionToFile(StorageFile file, MediaComposition composition, saveProgressCallback ShowErrorMessage, Window window, MediaEncodingProfile encodingProfile, CancellationToken token)
+		public static void RenderCompositionToFile(StorageFile file, MediaComposition composition, saveProgressCallback ShowErrorMessage, Window window, MediaEncodingProfile encodingProfile, CancellationToken token, object selectedResolution)
 		{
+
 			// Call RenderToFileAsync
 
 			//encodingProfile.Video.FrameRate.Denominator = 1001;
 			//encodingProfile.Video.FrameRate.Numerator = 30000;
 
-			var enc = composition.Clips[0].GetVideoEncodingProperties();
+			var temp = selectedResolution as Resolutions;
 
-			if (enc.Width / enc.Height == 2)
-			{
-				encodingProfile.Video.Height = encodingProfile.Video.Width / 2;
-			}
-			else if (Equals(enc.Width / enc.Height, 16 / 9))
-			{
-				encodingProfile.Video.Height = encodingProfile.Video.Width * 9 / 16;
-			}
-			else if (Equals(enc.Width / enc.Height, 4 / 3))
-			{
-				encodingProfile.Video.Height = encodingProfile.Video.Width * 3 / 4;
-			}
+			encodingProfile.Video.Height = temp.Resolution.height;
+			encodingProfile.Video.Width = temp.Resolution.width;
 
 
 			Debug.WriteLine((double)encodingProfile.Video.FrameRate.Numerator / encodingProfile.Video.FrameRate.Denominator);

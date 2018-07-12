@@ -112,7 +112,6 @@
     <AppxManifest Include="Package.appxmanifest">
       <SubType>Designer</SubType>
     </AppxManifest>
-    <Content Include="Assets\horizon-alpha.png" />
     <Content Include="Assets\horizon3840x2160.png" />
     <Content Include="Sessions\sessions-okrutna.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

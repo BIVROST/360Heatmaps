@@ -61,7 +61,7 @@ namespace BivrostHeatmapViewer
 		StorageFile videoFile;
 		StorageFile horizonFile;
 		private MediaComposition composition;
-		private MediaComposition mementoComposition;
+		//private MediaComposition mementoComposition;
 		private MediaPlayer mediaPlayer;
 		private Rect rect = new Rect(0, 0, 4096, 2048);
 		MediaClip video;
@@ -595,6 +595,7 @@ namespace BivrostHeatmapViewer
 
 			valuePairs.Add("frameLength", (1 / ((double)enc.FrameRate.Numerator / enc.FrameRate.Denominator)) * 1000);
 
+			//composition.Clips.Add(MediaClip.CreateFromColor(videoBackgroundPicker.Color, video.TrimmedDuration));
 			composition.Clips.Add(video);
 
 			if (horizonFlag)
@@ -639,6 +640,10 @@ namespace BivrostHeatmapViewer
 		private async void SaveVideo_Click(object sender, RoutedEventArgs e)
 		{
 
+			tokenSource.Dispose();
+			tokenSource = new CancellationTokenSource();
+			token = tokenSource.Token;
+
 			MediaEncodingProfile mediaEncoding = MediaEncodingProfile.CreateMp4(VideoEncodingQuality.Uhd2160p);
 
 			var enc = video.GetVideoEncodingProperties();
@@ -668,7 +673,7 @@ namespace BivrostHeatmapViewer
 				generateVideoButton.IsEnabled = false;
 				saveCompositionButton.IsEnabled = false;
 
-				StaticHeatmapGenerator.RenderCompositionToFile(file, composition, saveProgress, Window.Current, mediaEncoding, token);
+				StaticHeatmapGenerator.RenderCompositionToFile(file, composition, saveProgress, Window.Current, mediaEncoding, token, saveResolutionSelector.SelectedItem);
 
 
 			}
@@ -681,6 +686,7 @@ namespace BivrostHeatmapViewer
 			{
 				videoLoading.Visibility = Visibility.Collapsed;
 				loadingScreen.Visibility = Visibility.Collapsed;
+				buttonLoadingStop.Visibility = Visibility.Collapsed;
 				GenerateButtonEnable();
 			}
 			else
