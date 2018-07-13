@@ -133,6 +133,10 @@ namespace VideoEffectComponent
 				configuration.TryGetValue("backgroundOpacity", out backgroundOpacity);
 				this.backgroundOpacity = (float)backgroundOpacity;
 
+				object heatmapOpacity;
+				configuration.TryGetValue("heatmapOpacity", out heatmapOpacity);
+				this.heatmapOpacity = (float)heatmapOpacity;
+
 
 			}
 		}
@@ -149,6 +153,7 @@ namespace VideoEffectComponent
 		private float dotsRadius;
 		private Color backgroundColor;
 		private float backgroundOpacity;
+		private float heatmapOpacity;
 
 		public void ProcessFrame(ProcessVideoFrameContext context)
 		{
@@ -194,11 +199,11 @@ namespace VideoEffectComponent
 				byte[] tab = Heatmap.GenerateHeatmap(pitch, yaw, fov);
 				CanvasBitmap cb = CanvasBitmap.CreateFromBytes(canvasDevice, tab, 64, 64, Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized, 96, CanvasAlphaMode.Premultiplied);
 				scaleEffect.Source = cb;
-				scaleEffect.Scale = new System.Numerics.Vector2(width / 64, height / 64);
+				scaleEffect.Scale = new System.Numerics.Vector2( (float)width / 64, (float)height / 64);
 				scaleEffect.InterpolationMode = CanvasImageInterpolation.Cubic;
 				scaleEffect.BorderMode = EffectBorderMode.Hard;
 				ds.DrawImage(inputBitmap);
-				ds.DrawImage(scaleEffect, 0, 0, new Windows.Foundation.Rect { Height = height, Width = width }, 0.35f);
+				ds.DrawImage(scaleEffect, 0, 0, new Windows.Foundation.Rect { Height = height, Width = width }, heatmapOpacity);
 
 				if (generateDots)
 				{
@@ -208,7 +213,8 @@ namespace VideoEffectComponent
 					}
 				}
 
-				CanvasImageBrush canvasImageBrush = new CanvasImageBrush(canvasDevice);
+				//CanvasImageBrush canvasImageBrush = new CanvasImageBrush(canvasDevice);
+				//CanvasImage canvasImage = new CanvasImage
 
 				ds.FillRectangle(new Windows.Foundation.Rect { Height = height, Width = width }, solidColorBrush);
 

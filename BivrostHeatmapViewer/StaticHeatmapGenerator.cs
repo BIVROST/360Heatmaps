@@ -333,19 +333,18 @@ namespace BivrostHeatmapViewer
 		public static void RenderCompositionToFile(StorageFile file, MediaComposition composition, saveProgressCallback ShowErrorMessage, Window window, MediaEncodingProfile encodingProfile, CancellationToken token, object selectedResolution)
 		{
 
-			// Call RenderToFileAsync
+			//var temp = selectedResolution as Resolutions;
 
-			//encodingProfile.Video.FrameRate.Denominator = 1001;
-			//encodingProfile.Video.FrameRate.Numerator = 30000;
+			//encodingProfile.Video.Height = temp.Resolution.height;
+			//encodingProfile.Video.Width = temp.Resolution.width;
 
-			var temp = selectedResolution as Resolutions;
-
-			encodingProfile.Video.Height = temp.Resolution.height;
-			encodingProfile.Video.Width = temp.Resolution.width;
-			//encodingProfile.Video.Bitrate = 1000000000;
-
+			Debug.WriteLine("Save type: " + encodingProfile.Video.Type);
+			Debug.WriteLine("Save sub: " + encodingProfile.Video.Subtype);
+			Debug.WriteLine("Save id: " + encodingProfile.Video.ProfileId);
 
 			Debug.WriteLine((double)encodingProfile.Video.FrameRate.Numerator / encodingProfile.Video.FrameRate.Denominator);
+
+			//encodingProfile.Video.Bitrate = 12_000_000;
 
 			var saveOperation = composition.RenderToFileAsync(file, MediaTrimmingPreference.Precise, encodingProfile);
 
@@ -360,7 +359,6 @@ namespace BivrostHeatmapViewer
 						{
 							saveOperation.Cancel();
 							ShowErrorMessage(100.0);
-							//token.ThrowIfCancellationRequested();
 						}
 					}
 					catch (OperationCanceledException)

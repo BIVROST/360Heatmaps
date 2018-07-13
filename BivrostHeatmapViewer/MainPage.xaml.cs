@@ -656,9 +656,16 @@ namespace BivrostHeatmapViewer
 
 			var enc = video.GetVideoEncodingProperties();
 
+			Debug.WriteLine("Vid type: " + enc.Type);
+			Debug.WriteLine("Vid sub: " + enc.Subtype);
+			Debug.WriteLine("Vid id: " + enc.ProfileId);
+
+
 			mediaEncoding.Video.FrameRate.Denominator = enc.FrameRate.Denominator;
 			mediaEncoding.Video.FrameRate.Numerator = enc.FrameRate.Numerator;
-			mediaEncoding.Video.Bitrate = enc.Bitrate;
+			
+			
+			
 
 
 			var picker = new Windows.Storage.Pickers.FileSavePicker();
@@ -690,8 +697,18 @@ namespace BivrostHeatmapViewer
 
 				mediaEncoding.Video.Width = temp.Resolution.width;
 				mediaEncoding.Video.Height = temp.Resolution.height;
+
+				long inputVideo = enc.Width * enc.Height;
+				long outputVideo = temp.Resolution.width * temp.Resolution.height;
+
+				mediaEncoding.Video.Bitrate = (uint)(enc.Bitrate * outputVideo / inputVideo);
 				//valuePairs.Add("save", "1");
-				
+
+				if (horizonFlag)
+				{
+					composition.OverlayLayers[0] = await generateHorizonLayer((int)video.TrimmedDuration.TotalSeconds, temp.Resolution.height, temp.Resolution.width);
+				}
+
 				buttonLoadingStop.Visibility = Visibility.Visible;
 				generateVideoButton.IsEnabled = false;
 				saveCompositionButton.IsEnabled = false;
@@ -790,6 +807,8 @@ namespace BivrostHeatmapViewer
             Session session = sessions.sessions[0];
             int min_length = coordsArray[0].Count - 1;
 
+			int interpolationCounter = (int)Math.Round( (float) enc.FrameRate.Numerator / enc.FrameRate.Denominator) / session.sample_rate;
+
             for (int i = 1; i < sessions.sessions.Count; i++)
             {
                 coordsArray[i] = Heatmap.CoordsDeserialize(sessions.sessions[i].history);
@@ -802,7 +821,7 @@ namespace BivrostHeatmapViewer
 
             for (int i = 0; i < min_length; i++)
             {
-                for (int k = 0; k < 3; k++)
+                for (int k = 0; k < interpolationCounter; k++)
                 {
                     for (int j = 0; j < sessions.sessions.Count; j++)
                     {
@@ -824,7 +843,7 @@ namespace BivrostHeatmapViewer
 			valuePairs.Add("yaw", yaw);
 			valuePairs.Add("fov", fov);
 			valuePairs.Add("generateDots", dotsFlag);
-
+			valuePairs.Add("heatmapOpacity", (float)(heatmapOpacity.Value / 100));
 			
 
 			valuePairs.Add("height", enc.Height);
@@ -841,41 +860,26 @@ namespace BivrostHeatmapViewer
 			dotsFlag = false;
 		}
 
-		private async Task<MediaOverlayLayer> generateHorizonLayer (int timeInSeconds, uint height, uint width)
+		private async Task<MediaOverlayLayer> generateHorizonLayer(int timeInSeconds, uint height, uint width)
 		{
-			
 
-			horizonFile = await StorageFile.GetFileFromApplicationUriAsync(new Uri("ms-appx:///Assets/horizon3840x2160.png"));
-
+			CanvasBitmap cb = await CanvasBitmap.LoadAsync(CanvasDevice.GetSharedDevice(), new Uri("ms-appx:///Assets/horizon3840x2160.png"));
+			//cb.AlphaMode = CanvasAlphaMode.Straight;
 			//img.Source = horizonFile;
 
 			MediaOverlayLayer horizonOverlay = new MediaOverlayLayer();
 
 
-			MediaOverlay mediaOverlay = new MediaOverlay(await MediaClip.CreateFromImageFileAsync(horizonFile, new TimeSpan(0, 0, timeInSeconds))); //generowanie horyzontu
+			MediaOverlay mediaOverlay = new MediaOverlay(MediaClip.CreateFromSurface(cb, new TimeSpan(0, 0, timeInSeconds))); //generowanie horyzontu
 			mediaOverlay.Position = new Rect(0, 0, width, height);
-			mediaOverlay.Opacity = 0.9;
-
-	
-			horizonOverlay.Overlays.Add(mediaOverlay);
-
-			return horizonOverlay;
-		}
-
-		private MediaOverlayLayer generateOverlayColor (int timeInSeconds, uint height, uint width)
-		{
-			MediaOverlayLayer horizonOverlay = new MediaOverlayLayer();
-			
-
-			MediaOverlay mediaOverlay = new MediaOverlay(MediaClip.CreateFromColor(videoBackgroundPicker.Color, new TimeSpan(0, 0, timeInSeconds))); //generowanie horyzontu
-			mediaOverlay.Position = new Rect(0, 0, width, height);
-			mediaOverlay.Opacity = 1 - videoOpacity.Value / 100;
+			mediaOverlay.Opacity = 1;
 
 
 			horizonOverlay.Overlays.Add(mediaOverlay);
 
 			return horizonOverlay;
 		}
+
 	}
 
 
