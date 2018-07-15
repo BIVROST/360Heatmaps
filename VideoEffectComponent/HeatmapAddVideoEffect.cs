@@ -8,20 +8,14 @@ using Windows.Graphics.DirectX.Direct3D11;
 using System.Runtime.InteropServices;
 using Microsoft.Graphics.Canvas.Effects;
 using Windows.UI;
-using Windows.UI.Xaml.Media.Imaging;
-using System.IO;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.Graphics.Imaging;
 using System.Diagnostics;
 using BivrostHeatmapViewer;
-using System.Collections;
-using Microsoft.Graphics.Canvas.Geometry;
 using Microsoft.Graphics.Canvas.Brushes;
 
 namespace VideoEffectComponent
 {
 
-	[ComImport]
+    [ComImport]
 	[Guid("5B0D3235-4DBA-4D44-865E-8F1D0E4FD04D")]
 	[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 	unsafe interface IMemoryBufferByteAccess
@@ -157,6 +151,7 @@ namespace VideoEffectComponent
 
 		public void ProcessFrame(ProcessVideoFrameContext context)
 		{
+
 
 			using (CanvasBitmap inputBitmap = CanvasBitmap.CreateFromDirect3D11Surface(canvasDevice, context.InputFrame.Direct3DSurface))
 			using (CanvasRenderTarget renderTarget = CanvasRenderTarget.CreateFromDirect3D11Surface(canvasDevice, context.OutputFrame.Direct3DSurface))

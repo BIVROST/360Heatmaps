@@ -388,6 +388,7 @@ namespace BivrostHeatmapViewer
 							catch (Exception e)
 							{
 								Debug.WriteLine("Saving exception: " + e.Message);
+                                ShowErrorMessage(100.0);
 							}
 							finally
 							{
