@@ -97,7 +97,7 @@ namespace VideoEffectComponent
 				object offset;
 				configuration.TryGetValue("offset", out offset);
 				this.offset = (int)offset;
-				this.offset = this.offset * (int)Math.Round(1000 / this.frameLength);
+				
 
 				object frameLength;
 				configuration.TryGetValue("frameLength", out frameLength);
@@ -131,7 +131,7 @@ namespace VideoEffectComponent
 				configuration.TryGetValue("heatmapOpacity", out heatmapOpacity);
 				this.heatmapOpacity = (float)heatmapOpacity;
 
-
+				this.offset = this.offset * (int)Math.Round(1000 / this.frameLength);
 			}
 		}
 
