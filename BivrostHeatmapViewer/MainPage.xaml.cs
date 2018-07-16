@@ -500,7 +500,7 @@ namespace BivrostHeatmapViewer
 
 			if (horizonFlag)
 			{
-				composition.OverlayLayers.Add(await generateHorizonLayer((int)video.TrimmedDuration.TotalSeconds, ep.Video.Height, ep.Video.Width));
+				composition.OverlayLayers.Add(await GenerateHorizonLayer((int)video.TrimmedDuration.TotalSeconds, ep.Video.Height, ep.Video.Width));
 				//composition.Clips.Add(await generateHorizonLayer((int)video.TrimmedDuration.TotalSeconds, ep.Video.Height, ep.Video.Width));				
 			}
 
@@ -544,17 +544,21 @@ namespace BivrostHeatmapViewer
 			tokenSource = new CancellationTokenSource();
 			token = tokenSource.Token;
 
-			MediaEncodingProfile mediaEncoding = MediaEncodingProfile.CreateMp4(VideoEncodingQuality.Uhd2160p);
+            var temp = saveResolutionSelector.SelectedItem as Resolutions;
+            var enc = video.GetVideoEncodingProperties();
 
-			var enc = video.GetVideoEncodingProperties();
+            MediaEncodingProfile mediaEncoding = GetMediaEncoding(temp, enc);
+
+
+            
 
 			Debug.WriteLine("Vid type: " + enc.Type);
 			Debug.WriteLine("Vid sub: " + enc.Subtype);
 			Debug.WriteLine("Vid id: " + enc.ProfileId);
 
 
-			mediaEncoding.Video.FrameRate.Denominator = enc.FrameRate.Denominator;
-			mediaEncoding.Video.FrameRate.Numerator = enc.FrameRate.Numerator;
+			//mediaEncoding.Video.FrameRate.Denominator = enc.FrameRate.Denominator;
+			//mediaEncoding.Video.FrameRate.Numerator = enc.FrameRate.Numerator;
 			
 			
 			
@@ -571,7 +575,7 @@ namespace BivrostHeatmapViewer
 			{
 				mediaPlayer.Pause();
 
-				var temp = saveResolutionSelector.SelectedItem as Resolutions;
+				
 
 				valuePairs.Remove("height");
 				valuePairs.Remove("width");
@@ -587,18 +591,18 @@ namespace BivrostHeatmapViewer
 
 				//composition.OverlayLayers[0] = generateOverlayColor((int)video.TrimmedDuration.TotalSeconds, temp.Resolution.height, temp.Resolution.width);
 
-				mediaEncoding.Video.Width = temp.Resolution.width;
-				mediaEncoding.Video.Height = temp.Resolution.height;
+				//mediaEncoding.Video.Width = temp.Resolution.width;
+				//mediaEncoding.Video.Height = temp.Resolution.height;
 
-				long inputVideo = enc.Width * enc.Height;
-				long outputVideo = temp.Resolution.width * temp.Resolution.height;
+				//long inputVideo = enc.Width * enc.Height;
+				//long outputVideo = temp.Resolution.width * temp.Resolution.height;
 
-				mediaEncoding.Video.Bitrate = (uint)(enc.Bitrate * outputVideo / inputVideo);
+				//mediaEncoding.Video.Bitrate = (uint)(enc.Bitrate * outputVideo / inputVideo);
 				//valuePairs.Add("save", "1");
 
 				if (horizonFlag)
 				{
-					composition.OverlayLayers[0] = await generateHorizonLayer((int)video.TrimmedDuration.TotalSeconds, temp.Resolution.height, temp.Resolution.width);
+					composition.OverlayLayers[0] = await GenerateHorizonLayer((int)video.TrimmedDuration.TotalSeconds, temp.Resolution.height, temp.Resolution.width);
 				}
 
 				buttonLoadingStop.Visibility = Visibility.Visible;
@@ -741,7 +745,7 @@ namespace BivrostHeatmapViewer
 				int currentOriginal = 1;
 				for (int i = 1; i < afterAr.Length - 1; i++)
 				{
-					int nextIndex = findNext(currentOriginal, step, lastCalculatedIndex, afterAr.Length - 1);
+					int nextIndex = FindNext(currentOriginal, step, lastCalculatedIndex, afterAr.Length - 1);
 					Heatmap.Coord nextKnownValue = afterAr[nextIndex];
 					Heatmap.Coord currentValue = afterAr[i - 1];
 
@@ -829,7 +833,7 @@ namespace BivrostHeatmapViewer
 			dotsFlag = false;
 		}
 
-		private async Task<MediaOverlayLayer> generateHorizonLayer(int timeInSeconds, uint height, uint width)
+		private async Task<MediaOverlayLayer> GenerateHorizonLayer(int timeInSeconds, uint height, uint width)
 		{
 
 			CanvasBitmap cb = await CanvasBitmap.LoadAsync(CanvasDevice.GetSharedDevice(), new Uri("ms-appx:///Assets/horizon3840x2160.png"));
@@ -849,12 +853,44 @@ namespace BivrostHeatmapViewer
 			return horizonOverlay;
 		}
 
-		public static int findNext(int current, float step, int lastCalculated, int lastExisting)
+		private int FindNext(int current, float step, int lastCalculated, int lastExisting)
 		{
 			int ret = (int)Math.Round(current * step);
 
 			return ret > lastCalculated ? lastExisting : ret;
 		}
+
+        private MediaEncodingProfile GetMediaEncoding (Resolutions resolution, VideoEncodingProperties videoEncoding)
+        {
+            MediaEncodingProfile mediaEncoding;
+
+            if (resolution.Resolution.width >= 2560)
+            {
+                mediaEncoding = MediaEncodingProfile.CreateMp4(VideoEncodingQuality.Uhd2160p);
+            }
+            else if (resolution.Resolution.width <= 1280)
+            {
+                mediaEncoding = MediaEncodingProfile.CreateMp4(VideoEncodingQuality.HD720p);
+            }
+            else
+            {
+                mediaEncoding = MediaEncodingProfile.CreateMp4(VideoEncodingQuality.HD1080p);
+            }
+
+            mediaEncoding.Video.FrameRate.Denominator = videoEncoding.FrameRate.Denominator;
+            mediaEncoding.Video.FrameRate.Numerator = videoEncoding.FrameRate.Numerator;
+
+
+            mediaEncoding.Video.Width = resolution.Resolution.width;
+            mediaEncoding.Video.Height = resolution.Resolution.height;
+
+            long inputVideo = videoEncoding.Width * videoEncoding.Height;
+            long outputVideo = resolution.Resolution.width * resolution.Resolution.height;
+
+            mediaEncoding.Video.Bitrate = (uint)(videoEncoding.Bitrate * outputVideo / inputVideo);
+
+            return mediaEncoding;
+        }
 
 	}
 
