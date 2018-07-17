@@ -181,9 +181,6 @@
 
 				<StackPanel Grid.Column="0" HorizontalAlignment="Center">
 					<TextBlock x:Name="fpsLabel"></TextBlock>
-					<!--<Button x:Name="playButton" HorizontalAlignment="Center" VerticalAlignment="Bottom" Click="playButton_Click" Width="200" Height="40">
-						<SymbolIcon Symbol="Play" />
-					</Button>-->
 
 					<StackPanel Width="300">
 						<TextBlock>heatmap opacity</TextBlock>
@@ -194,7 +191,6 @@
 						<CheckBox x:Name="dotsEnableCheckbox" HorizontalAlignment="Left" Content="Enable Dots" Checked="dotsEnableCheckbox_Checked" Unchecked="dotsEnableCheckbox_Unchecked"/>
 						<StackPanel Orientation="Horizontal">
 							<CheckBox x:Name="forceFovCheckbox" HorizontalAlignment="Left" Content="Force fov" Checked="forceFovCheckbox_Checked" Unchecked="forceFovCheckbox_Unchecked"/>
-							<!--<TextBox Visibility="{Binding ElementName=forceFovCheckbox, Path=IsChecked, Converter=checkboxConverter}"></TextBox>-->
 							<TextBox Visibility="{Binding ElementName=forceFovCheckbox, Path=IsChecked, Converter={StaticResource ResourceKey=checkboxConverter}}" />
 						</StackPanel>
 					</StackPanel>

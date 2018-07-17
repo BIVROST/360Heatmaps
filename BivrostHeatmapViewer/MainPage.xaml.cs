@@ -77,7 +77,7 @@ namespace BivrostHeatmapViewer
 		{
 			this.InitializeComponent();
 			//InitializeFrostedGlass(mediaPlayerElement);
-			InitializeDropShadow(mainPanel, previewImage);
+			//InitializeDropShadow(mainPanel, previewImage);
 
             heatmapSessionsListView.SelectionChanged += (s, e) =>
             {

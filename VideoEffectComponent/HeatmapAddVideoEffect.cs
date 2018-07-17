@@ -73,9 +73,6 @@ namespace VideoEffectComponent
 		public void SetProperties(IPropertySet configuration)
 		{
 			this.configuration = configuration;
-			//this.pitch = new List<int>();
-			//this.yaw = new List<int>();
-			//this.fov = new List<int>();
 
 			object count;
 			if (configuration.TryGetValue("count", out count))
@@ -159,16 +156,11 @@ namespace VideoEffectComponent
 			using (var scaleEffect = new ScaleEffect())
 			using (CanvasSolidColorBrush solidColorBrush = new CanvasSolidColorBrush(canvasDevice, backgroundColor))
 			{
-				//offset = offset * (int)Math.Round(1000 / frameLength);
-
 				solidColorBrush.Opacity = backgroundOpacity;
 
-				//double dur = context.InputFrame.Duration.Value.TotalMilliseconds;
 				double rel = context.InputFrame.RelativeTime.Value.TotalMilliseconds;
 
 				int frameTimeCounter = (int)Math.Round(rel / frameLength);
-
-				//Debug.WriteLine("Frame: " + frameTimeCounter);
 
                 int[] pitch = new int[count];
                 int[] yaw = new int[count];
@@ -207,9 +199,6 @@ namespace VideoEffectComponent
 						ds.FillCircle(yaw[i] * width / 64, pitch[i] * height / 64, dotsRadius, colors[i % 5]);
 					}
 				}
-
-				//CanvasImageBrush canvasImageBrush = new CanvasImageBrush(canvasDevice);
-				//CanvasImage canvasImage = new CanvasImage
 
 				ds.FillRectangle(new Windows.Foundation.Rect { Height = height, Width = width }, solidColorBrush);
 
