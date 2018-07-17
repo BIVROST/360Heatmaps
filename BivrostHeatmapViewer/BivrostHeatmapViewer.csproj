@@ -106,6 +106,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SavingResolutions.cs" />
     <Compile Include="StaticHeatmapGenerator.cs" />
+    <Compile Include="CheckboxToVisibilityConverter.cs" />
     <Compile Include="TextAddConverter.cs" />
   </ItemGroup>
   <ItemGroup>

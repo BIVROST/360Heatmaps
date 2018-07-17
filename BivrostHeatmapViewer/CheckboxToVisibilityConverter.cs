@@ -4,22 +4,19 @@ using Windows.UI.Xaml.Data;
 
 namespace BivrostHeatmapViewer
 {
-	public class TextAddConverter : IValueConverter
-    {
+
+	public class CheckboxToVisibilityConverter : IValueConverter
+	{
 		public object Convert(object value, Type targetType, object parameter, string language)
 		{
-			String result = String.Empty;
-			if (parameter != null)
+			bool isChecked = false;
+
+			if (bool.TryParse(value.ToString(), out isChecked))
 			{
-				result = parameter.ToString();
+				return isChecked ? Visibility.Visible : Visibility.Collapsed;	
 			}
 
-			if (value != null)
-			{
-				result += value.ToString();
-			}
-
-			return result;
+			return Visibility.Collapsed;
 		}
 
 		public object ConvertBack(object value, Type targetType, object parameter, string language)
@@ -27,5 +24,4 @@ namespace BivrostHeatmapViewer
 			throw new NotImplementedException();
 		}
 	}
-
 }

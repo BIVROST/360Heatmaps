@@ -1,17 +1,17 @@
 ﻿<Page
     x:Class="BivrostHeatmapViewer.MainPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:BivrostHeatmapViewer"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"    
+	xmlns:local="using:BivrostHeatmapViewer"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-	xmlns:canvas="using:Microsoft.Graphics.Canvas.UI.Xaml"
 	DataContext="{Binding RelativeSource={RelativeSource Self}}"
 	Unloaded="Page_Unloaded"
     mc:Ignorable="d">
 
 	<Page.Resources>
 		<local:TextAddConverter x:Key="textConverter"/>
+		<local:CheckboxToVisibilityConverter x:Key="checkboxConverter"/>
 	</Page.Resources>
 	
 
@@ -126,7 +126,7 @@
 				<RowDefinition Height="Auto" />
 			</Grid.RowDefinitions>
 
-			<TextBlock Margin="16" Grid.Row="0" x:Name="debugInfo">Preview</TextBlock>
+			<TextBlock Visibility="Collapsed" Margin="16" Grid.Row="0" x:Name="debugInfo">Preview</TextBlock>
 
 
 			<Viewbox Stretch="Uniform" x:Name="previewViewBox" Grid.Row="1" Margin="64,32">
@@ -141,8 +141,7 @@
 										AllowDrop="True" Drop="SelectedVideo_Drop" 
 										DragOver="SelectedVideo_DragOver"  
 										Width="1280" Height="720" 
-										AreTransportControlsEnabled="True"
-										Loading="mediaPlayerElement_Loading">
+										AreTransportControlsEnabled="True">
 
 						<MediaPlayerElement.TransportControls>
 							<MediaTransportControls 
@@ -193,7 +192,11 @@
 						<Slider x:Name="videoOpacity" Minimum="0" Maximum="100" Value="75" TickPlacement="Inline" TickFrequency="5"/>
 						<CheckBox x:Name="horizonEnableCheckbox" HorizontalAlignment="Left" Content="Enable Horizon" Checked="horizonEnableCheckbox_Checked" Unchecked="horizonEnableCheckbox_Unchecked"/>
 						<CheckBox x:Name="dotsEnableCheckbox" HorizontalAlignment="Left" Content="Enable Dots" Checked="dotsEnableCheckbox_Checked" Unchecked="dotsEnableCheckbox_Unchecked"/>
-
+						<StackPanel Orientation="Horizontal">
+							<CheckBox x:Name="forceFovCheckbox" HorizontalAlignment="Left" Content="Force fov" Checked="forceFovCheckbox_Checked" Unchecked="forceFovCheckbox_Unchecked"/>
+							<!--<TextBox Visibility="{Binding ElementName=forceFovCheckbox, Path=IsChecked, Converter=checkboxConverter}"></TextBox>-->
+							<TextBox Visibility="{Binding ElementName=forceFovCheckbox, Path=IsChecked, Converter={StaticResource ResourceKey=checkboxConverter}}" />
+						</StackPanel>
 					</StackPanel>
 
 				</StackPanel>
@@ -204,10 +207,11 @@
 					<Slider x:Name="videoStartSlider" HorizontalAlignment="Left" Width="300" Minimum="0" Value="0" TickPlacement="Inline" TickFrequency="5"/>
 					<TextBlock>stop</TextBlock>
 					<Slider x:Name="videoStopSlider" HorizontalAlignment="Left" Width="300" Minimum="{Binding ElementName=videoStartSlider, Path=Value}" TickPlacement="Inline" TickFrequency="5" />
-					<Button x:Name="videoBackgroundColorButton" Style="{ThemeResource ButtonRevealStyle}" Width="200" Height="40" HorizontalAlignment="Center" Content="Background Color">
-						<Button.Flyout>
-							<Flyout>
-								<ColorPicker x:Name="videoBackgroundPicker" ColorChanged="videoBackgroundPicker_ColorChanged"
+					<StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+						<Button x:Name="videoBackgroundColorButton" Style="{ThemeResource ButtonRevealStyle}" Width="200" Height="40" HorizontalAlignment="Center" Content="Background Color" VerticalAlignment="Center">
+							<Button.Flyout>
+								<Flyout>
+									<ColorPicker x:Name="videoBackgroundPicker" ColorChanged="videoBackgroundPicker_ColorChanged"
 						Height="auto"
 						IsColorSliderVisible="True"
 						IsColorChannelTextInputVisible="False"
@@ -215,14 +219,13 @@
 						IsAlphaEnabled="False"
 						IsAlphaSliderVisible="False"
 						IsAlphaTextInputVisible="False" />
-							</Flyout>
-						</Button.Flyout>
-					</Button>
-					<TextBlock/>
-					<Rectangle x:Name="colorRect" Width="{Binding ElementName=videoBackgroundColorButton, Path=ActualWidth}" Height="40" Fill="White"/>
-					<TextBlock/>
-
+								</Flyout>
+							</Button.Flyout>
+						</Button>
+						<Rectangle x:Name="colorRect" Width="50" Height="40" Fill="White" Margin="20, 5, 5, 5"/>
+					</StackPanel>
 				</StackPanel>
+
 
 			</Grid>
 
@@ -235,11 +238,18 @@
 				<SolidColorBrush Color="Gray"/>
 			</Rectangle.Fill>
 		</Rectangle>
-		
+
+		<Rectangle IsHitTestVisible="True" Grid.ColumnSpan="2" Width="600" Height="200" Opacity="1" Visibility="{Binding ElementName=loadingScreen, Path=Visibility}">
+			<Rectangle.Fill>
+				<SolidColorBrush Color="DarkGray"/>
+			</Rectangle.Fill>
+		</Rectangle>
+
 		<StackPanel Grid.ColumnSpan="2" VerticalAlignment="Center">
+			<TextBlock HorizontalAlignment="Center" Margin="5,5,5,20" Visibility="{Binding ElementName=videoLoading, Path=Visibility}">Saving progress</TextBlock>
 			<ProgressBar x:Name="videoLoading" HorizontalAlignment="Center" Width="500" Value="0" Visibility="Collapsed" />
 			<TextBlock Visibility="Collapsed"/>
-			<Button x:Name="buttonLoadingStop" HorizontalAlignment="Center" Style="{ThemeResource ButtonRevealStyle}" Width="40" Height="40" Visibility="Collapsed" Click="ButtonLoadingStop_Click" Margin="5,5,5,5">
+			<Button x:Name="buttonLoadingStop" HorizontalAlignment="Center" Style="{ThemeResource ButtonRevealStyle}" Width="40" Height="40" Visibility="Collapsed" Click="ButtonLoadingStop_Click" Margin="5,15,5,5">
 				<SymbolIcon Symbol="Stop" />
 			</Button>
 		</StackPanel>

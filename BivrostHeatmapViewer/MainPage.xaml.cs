@@ -9,7 +9,6 @@ using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 using Windows.Media.Core;
 using Windows.Storage;
-using Windows.Storage.AccessCache;
 using Windows.Storage.Pickers;
 using Windows.Storage.Streams;
 using Windows.UI.Composition;
@@ -17,28 +16,17 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Hosting;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Shapes;
-
-using Windows.UI;
 //camera capture
 using System.Threading.Tasks;
-using Windows.UI.Xaml.Media.Imaging;
 using System.Diagnostics;
 using Windows.Media.Editing;
 using Windows.Media.Playback;
 using System.Collections.ObjectModel;
 using System.Threading;
-using System.Net.Http;
-using Windows.UI.Popups;
-using Windows.Graphics.Imaging;
 using Microsoft.Graphics.Canvas;
-using System.Runtime.InteropServices.WindowsRuntime;
-using System.IO;
-using Microsoft.Graphics.Canvas.UI.Composition;
-using System.Runtime.InteropServices;
 using Windows.Media.Effects;
 using Windows.Foundation.Collections;
 using Windows.Media.MediaProperties;
-using VideoEffectComponent;
 
 
 /* TODO: 
@@ -74,7 +62,7 @@ namespace BivrostHeatmapViewer
 		bool forceFovFlag = false;
 
 		int forcedFov = 0;
-
+		//fov 20-180
 		public SavingResolutionsCollection resolutions;
 		//private static int heatmapListCounter = 0;
 
@@ -401,12 +389,6 @@ namespace BivrostHeatmapViewer
 			colorRect.Fill = new SolidColorBrush(videoBackgroundPicker.Color);
 		}
 
-		private void mediaPlayerElement_Loading(FrameworkElement sender, object args)
-		{
-			//throw new NotImplementedException();
-			//TODO: 
-		}
-
 		private void horizonEnableCheckbox_Checked(object sender, RoutedEventArgs e)
 		{
 			horizonFlag = true;
@@ -452,14 +434,11 @@ namespace BivrostHeatmapViewer
 
 			mediaPlayerElement.Source = MediaSource.CreateFromMediaStreamSource(result);
 
-			//mediaPlayerElement.Visibility = Visibility.Visible;
-
 			HideHeatmapGenerating();
 		}
 
 		private async void VideoGenTest2(object sender, RoutedEventArgs e)
 		{
-			//horizonEnableCheckbox.IsChecked = false;
 			var ep = MediaEncodingProfile.CreateMp4(VideoEncodingQuality.Uhd2160p);
 			saveCompositionButton.IsEnabled = false;
 			composition = new MediaComposition();
@@ -475,8 +454,6 @@ namespace BivrostHeatmapViewer
 			}
 
 			StaticHeatmapGenerator.CheckHistoryErrors(sessionCollection);
-			int sampleRate;
-			StaticHeatmapGenerator.CheckSampleRate(sessionCollection, out sampleRate);
 
             FillEffectPropertySet(sessionCollection);
 
@@ -495,16 +472,12 @@ namespace BivrostHeatmapViewer
 
 			valuePairs.Add("frameLength", (1 / ((double)enc.FrameRate.Numerator / enc.FrameRate.Denominator)) * 1000);
 
-			//composition.Clips.Add(MediaClip.CreateFromColor(videoBackgroundPicker.Color, video.TrimmedDuration));
 			composition.Clips.Add(video);
 
 			if (horizonFlag)
 			{
-				composition.OverlayLayers.Add(await GenerateHorizonLayer((int)video.TrimmedDuration.TotalSeconds, ep.Video.Height, ep.Video.Width));
-				//composition.Clips.Add(await generateHorizonLayer((int)video.TrimmedDuration.TotalSeconds, ep.Video.Height, ep.Video.Width));				
+				composition.OverlayLayers.Add(await GenerateHorizonLayer((int)video.TrimmedDuration.TotalSeconds, ep.Video.Height, ep.Video.Width));			
 			}
-
-			//composition.OverlayLayers.Add(generateOverlayColor((int)video.TrimmedDuration.TotalSeconds, ep.Video.Height, ep.Video.Width));
 
 			var videoEffectDefinition = new VideoEffectDefinition("VideoEffectComponent.HeatmapAddVideoEffect", valuePairs);
 			video.VideoEffectDefinitions.Add(videoEffectDefinition);
@@ -520,7 +493,6 @@ namespace BivrostHeatmapViewer
 				valuePairs.Add("width", ep.Video.Width);
 
 				res = composition.GenerateMediaStreamSource(ep);
-				//res = composition.GeneratePreviewMediaStreamSource(3840, 2160);
 				var md = MediaSource.CreateFromMediaStreamSource(res);
 				mediaPlayerElement.Source = md;
 			}
@@ -548,21 +520,10 @@ namespace BivrostHeatmapViewer
             var enc = video.GetVideoEncodingProperties();
 
             MediaEncodingProfile mediaEncoding = GetMediaEncoding(temp, enc);
-
-
-            
-
+    
 			Debug.WriteLine("Vid type: " + enc.Type);
 			Debug.WriteLine("Vid sub: " + enc.Subtype);
 			Debug.WriteLine("Vid id: " + enc.ProfileId);
-
-
-			//mediaEncoding.Video.FrameRate.Denominator = enc.FrameRate.Denominator;
-			//mediaEncoding.Video.FrameRate.Numerator = enc.FrameRate.Numerator;
-			
-			
-			
-
 
 			var picker = new Windows.Storage.Pickers.FileSavePicker();
 			picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.VideosLibrary;
@@ -574,8 +535,6 @@ namespace BivrostHeatmapViewer
 			if (file != null)
 			{
 				mediaPlayer.Pause();
-
-				
 
 				valuePairs.Remove("height");
 				valuePairs.Remove("width");
@@ -589,17 +548,6 @@ namespace BivrostHeatmapViewer
 					valuePairs.Add("dotsRadius", (float)temp.Resolution.width / 4096 *20);
 				}
 
-				//composition.OverlayLayers[0] = generateOverlayColor((int)video.TrimmedDuration.TotalSeconds, temp.Resolution.height, temp.Resolution.width);
-
-				//mediaEncoding.Video.Width = temp.Resolution.width;
-				//mediaEncoding.Video.Height = temp.Resolution.height;
-
-				//long inputVideo = enc.Width * enc.Height;
-				//long outputVideo = temp.Resolution.width * temp.Resolution.height;
-
-				//mediaEncoding.Video.Bitrate = (uint)(enc.Bitrate * outputVideo / inputVideo);
-				//valuePairs.Add("save", "1");
-
 				if (horizonFlag)
 				{
 					composition.OverlayLayers[0] = await GenerateHorizonLayer((int)video.TrimmedDuration.TotalSeconds, temp.Resolution.height, temp.Resolution.width);
@@ -611,9 +559,7 @@ namespace BivrostHeatmapViewer
 
 				StaticHeatmapGenerator.RenderCompositionToFile(file, composition, saveProgress, Window.Current, mediaEncoding, token, saveResolutionSelector.SelectedItem);
 
-
 			}
-			//}
 		}
 
 		private void ShowErrorMessage(double v)
@@ -892,6 +838,15 @@ namespace BivrostHeatmapViewer
             return mediaEncoding;
         }
 
+		private void forceFovCheckbox_Checked(object sender, RoutedEventArgs e)
+		{
+
+		}
+
+		private void forceFovCheckbox_Unchecked(object sender, RoutedEventArgs e)
+		{
+
+		}
 	}
 
 
