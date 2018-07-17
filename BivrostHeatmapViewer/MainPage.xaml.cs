@@ -27,6 +27,7 @@ using Microsoft.Graphics.Canvas;
 using Windows.Media.Effects;
 using Windows.Foundation.Collections;
 using Windows.Media.MediaProperties;
+using Windows.UI.Popups;
 
 
 /* TODO: 
@@ -653,7 +654,10 @@ namespace BivrostHeatmapViewer
 
 
 
-
+			if (forceFovFlag)
+			{
+				GetForcedFov();
+			}
 
 
 
@@ -662,6 +666,15 @@ namespace BivrostHeatmapViewer
 			{
 				List<Heatmap.Coord> coords = Heatmap.CoordsDeserialize(before.history);
 				Heatmap.Coord[] afterAr = new Heatmap.Coord[(int)Math.Round(fps) * coords.Count / before.sample_rate];
+
+
+				if (forceFovFlag)
+				{
+					foreach (Heatmap.Coord x in coords)
+					{
+						x.fov = forcedFov;
+					}
+				}
 
 				for (int i = 0; i < afterAr.Length; i++)
 				{
@@ -698,16 +711,11 @@ namespace BivrostHeatmapViewer
 					int interpolationStepYaw = (nextKnownValue.yaw - currentValue.yaw) / (nextIndex - (i - 1));
 					int interpolationStepPitch = (nextKnownValue.pitch - currentValue.pitch) / (nextIndex - (i - 1));
 
+
 					while (i < nextIndex)
 					{
-						if (forceFovFlag)
-						{
-							afterAr[i].fov = forcedFov;
-						}
-						else
-						{
-							afterAr[i].fov = afterAr[i - 1].fov;
-						}
+						afterAr[i].fov = afterAr[i - 1].fov;
+
 						afterAr[i].pitch = afterAr[i - 1].pitch + interpolationStepPitch;
 						afterAr[i].yaw = afterAr[i - 1].yaw + interpolationStepYaw;
 						i++;
@@ -840,12 +848,42 @@ namespace BivrostHeatmapViewer
 
 		private void forceFovCheckbox_Checked(object sender, RoutedEventArgs e)
 		{
-
+			forceFovFlag = true;
 		}
 
 		private void forceFovCheckbox_Unchecked(object sender, RoutedEventArgs e)
 		{
+			forceFovFlag = false;
+		}
 
+		private async void GetForcedFov ()
+		{
+			if (int.TryParse(forcedFovTextBox.Text, out forcedFov))
+			{
+				if (forcedFov > 20 && forcedFov < 180)
+				{
+					var dialog = new MessageDialog("Forced fov set correctly to " + forcedFov);
+					dialog.Title = "Ok";
+					dialog.Commands.Add(new UICommand { Label = "OK", Id = 0 });
+					await dialog.ShowAsync();
+				}
+				else
+				{
+					forcedFov = 75;
+					var dialog = new MessageDialog("Value should be in 20-180 range.");
+					dialog.Title = "Warning";
+					dialog.Commands.Add(new UICommand { Label = "OK", Id = 0 });
+					await dialog.ShowAsync();					
+				}
+			}
+			else
+			{
+				forcedFov = 75;
+				var dialog = new MessageDialog("Please set value in 20-180 range.");
+				dialog.Title = "Warning";
+				dialog.Commands.Add(new UICommand { Label = "OK", Id = 0 });
+				await dialog.ShowAsync();
+			}
 		}
 	}
 
