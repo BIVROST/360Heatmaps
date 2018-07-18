@@ -78,7 +78,7 @@ namespace BivrostHeatmapViewer
 		{
 			this.InitializeComponent();
 			//InitializeFrostedGlass(mediaPlayerElement);
-			InitializeDropShadow(mainPanel, previewImage);
+			//InitializeDropShadow(mainPanel, previewImage);
 
             heatmapSessionsListView.SelectionChanged += (s, e) =>
             {
@@ -641,7 +641,8 @@ namespace BivrostHeatmapViewer
 
 			var enc = video.GetVideoEncodingProperties();
 
-			float fps = enc.FrameRate.Numerator / enc.FrameRate.Denominator;
+            //float fps = (float)enc.FrameRate.Numerator / enc.FrameRate.Denominator;
+            float fps = 60;
 
 			var pitch = new List<int>();
 			var yaw = new List<int>();
@@ -667,7 +668,6 @@ namespace BivrostHeatmapViewer
 			{
 				List<Heatmap.Coord> coords = Heatmap.CoordsDeserialize(before.history);
 				Heatmap.Coord[] afterAr = new Heatmap.Coord[(int)Math.Round(fps) * coords.Count / before.sample_rate];
-
 
 				if (forceFovFlag)
 				{
@@ -709,20 +709,39 @@ namespace BivrostHeatmapViewer
 					Heatmap.Coord nextKnownValue = afterAr[nextIndex];
 					Heatmap.Coord currentValue = afterAr[i - 1];
 
-					int interpolationStepYaw = (nextKnownValue.yaw - currentValue.yaw) / (nextIndex - (i - 1));
-					int interpolationStepPitch = (nextKnownValue.pitch - currentValue.pitch) / (nextIndex - (i - 1));
+                    int length = Math.Abs((nextKnownValue.yaw - currentValue.yaw));
+
+                    int interpolationStepYaw = (nextKnownValue.yaw - currentValue.yaw) / (nextIndex - (i - 1));
+                    int interpolationStepPitch = (nextKnownValue.pitch - currentValue.pitch) / (nextIndex - (i - 1));
+
+                    if (length > 31)
+                    {
+                        interpolationStepYaw = (64 - length) / (nextIndex - (i - 1));
+                    }
+
+                    if (nextKnownValue.fov == 0)
+                    {
+                        interpolationStepPitch = 0;
+                        interpolationStepYaw = 0;
+                    }
 
 
 					while (i < nextIndex)
 					{
 						afterAr[i].fov = afterAr[i - 1].fov;
+                        afterAr[i].pitch = afterAr[i - 1].pitch + interpolationStepPitch;
+                        afterAr[i].yaw = (afterAr[i - 1].yaw + interpolationStepYaw) % 64;
 
-						afterAr[i].pitch = afterAr[i - 1].pitch + interpolationStepPitch;
-						afterAr[i].yaw = afterAr[i - 1].yaw + interpolationStepYaw;
+                        if (length > 31 && nextKnownValue.yaw > currentValue.yaw)
+                        {
+                            afterAr[i].yaw = ((afterAr[i - 1].yaw - interpolationStepYaw) + 10*64) % 64;
+                        }
+
+
 						i++;
 					}
 					currentOriginal++;
-
+                    //2124
 				}
 
 
@@ -758,7 +777,6 @@ namespace BivrostHeatmapViewer
 				}
 
 			}
-
 
 
 			float dotsRadius = 20f;
