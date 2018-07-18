@@ -5,6 +5,7 @@
 	xmlns:local="using:BivrostHeatmapViewer"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="using:Microsoft.Toolkit.Uwp.UI.Controls"
 	DataContext="{Binding RelativeSource={RelativeSource Self}}"
 	Unloaded="Page_Unloaded"
     mc:Ignorable="d">
@@ -131,30 +132,33 @@
 
 			<Viewbox Stretch="Uniform" x:Name="previewViewBox" Grid.Row="1" Margin="64,32">
 				<Grid Padding="0" Margin="0">
-					
-					<Rectangle Fill="White" x:Name="previewImage" 
+
+                    <controls:DropShadowPanel BlurRadius="25.0" ShadowOpacity="1"
+                          OffsetX="2.5" OffsetY="2.5" Color="#4b4b50">
+                        <Rectangle Fill="White" x:Name="previewImage" 
 							   Width="{Binding ElementName=mediaPlayerElement, Path=ActualWidth}"
 							   Height="{Binding ElementName=mediaPlayerElement, Path=ActualHeight}"
 							   />
+                    </controls:DropShadowPanel>
 
-					<MediaPlayerElement x:Name="mediaPlayerElement" 
+                        <MediaPlayerElement x:Name="mediaPlayerElement" 
 										AllowDrop="True" Drop="SelectedVideo_Drop" 
 										DragOver="SelectedVideo_DragOver"  
 										Width="1280" Height="720" 
 										AreTransportControlsEnabled="True">
 
-						<MediaPlayerElement.TransportControls>
-							<MediaTransportControls 
+                            <MediaPlayerElement.TransportControls>
+                                <MediaTransportControls 
 								IsZoomEnabled="False"
 								IsZoomButtonVisible="False"
 								/>
-						</MediaPlayerElement.TransportControls>
+                            </MediaPlayerElement.TransportControls>
 
-					</MediaPlayerElement>
+                        </MediaPlayerElement>
 
-					<Canvas x:Name="mainPanel" Margin="-16" Visibility="Collapsed" Opacity="0.5" IsHitTestVisible="False" Background="White"
-							Width="{Binding ElementName=mediaPlayerElement, Path=ActualWidth}"
-							Height="{Binding ElementName=mediaPlayerElement, Path=ActualHeight}"
+                    <Canvas x:Name="mainPanel" Margin="-16" Visibility="Collapsed" Opacity="0.5" IsHitTestVisible="False" Background="White"
+							Width="1400"
+							Height="800"
 							/>
 
 					<ProgressRing x:Name="heatmapLoadingIndicator"  IsActive="False" Width="64" Height="64"/>
