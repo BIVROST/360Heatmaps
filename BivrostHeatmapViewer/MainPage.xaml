@@ -16,6 +16,8 @@
 	</Page.Resources>
 	
 
+	
+
 	<Grid Background="{ThemeResource SidePanelAcrylicBrush}" x:Name="mainGridControl">
 		<Grid.ColumnDefinitions>
 			<ColumnDefinition Width="350" />
@@ -128,7 +130,7 @@
 			</Grid.RowDefinitions>
 
 			<TextBlock Visibility="Collapsed" Margin="16" Grid.Row="0" x:Name="debugInfo">Preview</TextBlock>
-
+			
 
 			<Viewbox Stretch="Uniform" x:Name="previewViewBox" Grid.Row="1" Margin="64,32">
 				<Grid Padding="0" Margin="0">
@@ -141,27 +143,30 @@
 							   />
                     </controls:DropShadowPanel>
 
-                        <MediaPlayerElement x:Name="mediaPlayerElement" 
+					<MediaPlayerElement x:Name="mediaPlayerElement" 
 										AllowDrop="True" Drop="SelectedVideo_Drop" 
 										DragOver="SelectedVideo_DragOver"  
 										Width="1280" Height="720" 
 										AreTransportControlsEnabled="True">
 
-                            <MediaPlayerElement.TransportControls>
-                                <MediaTransportControls 
+						<MediaPlayerElement.TransportControls>
+							<MediaTransportControls 
+								ShowAndHideAutomatically="True"
 								IsZoomEnabled="False"
 								IsZoomButtonVisible="False"
 								/>
-                            </MediaPlayerElement.TransportControls>
+						</MediaPlayerElement.TransportControls>
 
-                        </MediaPlayerElement>
+					</MediaPlayerElement>
 
-                    <Canvas x:Name="mainPanel" Margin="-16" Visibility="Collapsed" Opacity="0.5" IsHitTestVisible="False" Background="White"
+					<!-- <Canvas x:Name="mainPanel" Margin="-16" Visibility="Collapsed" Opacity="0.5" IsHitTestVisible="False" Background="White"
 							Width="1400"
 							Height="800"
-							/>
+							/>-->
 
 					<ProgressRing x:Name="heatmapLoadingIndicator"  IsActive="False" Width="64" Height="64"/>
+					
+					<!--
 					<Image x:Name="heatImage" Stretch="Fill" Opacity="0.5" IsHitTestVisible="False">
 
 					</Image>
@@ -170,6 +175,7 @@
 							Height="{Binding ElementName=mediaPlayerElement, Path=ActualHeight}"
 		
 						   />
+					-->
 
 				</Grid>
 			</Viewbox>
@@ -183,6 +189,8 @@
 					<ColumnDefinition Width="*"/>
 				</Grid.ColumnDefinitions>
 
+				
+				
 				<StackPanel Grid.Column="0" HorizontalAlignment="Center">
 					<TextBlock x:Name="fpsLabel"></TextBlock>
 
@@ -203,10 +211,9 @@
 
 				<StackPanel Grid.Column="1" HorizontalAlignment="Center" Width="300">
 					<TextBlock/>
-					<TextBlock>start</TextBlock>
-					<Slider x:Name="videoStartSlider" HorizontalAlignment="Left" Width="300" Minimum="0" Value="0" TickPlacement="Inline" TickFrequency="5"/>
-					<TextBlock>stop</TextBlock>
-					<Slider x:Name="videoStopSlider" HorizontalAlignment="Left" Width="300" Minimum="{Binding ElementName=videoStartSlider, Path=Value}" TickPlacement="Inline" TickFrequency="5" />
+					<TextBlock HorizontalAlignment="Center">Time range selector</TextBlock>
+					<controls:RangeSelector x:Name="rangeSelector" StepFrequency="1" ValueChanged="rangeSelector_ValueChanged" />
+					<TextBlock/>
 					<StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
 						<Button x:Name="videoBackgroundColorButton" Style="{ThemeResource ButtonRevealStyle}" Width="200" Height="40" HorizontalAlignment="Center" Content="Background Color" VerticalAlignment="Center">
 							<Button.Flyout>
@@ -222,7 +229,21 @@
 								</Flyout>
 							</Button.Flyout>
 						</Button>
-						<Rectangle x:Name="colorRect" Width="50" Height="40" Fill="White" Margin="20, 5, 5, 5"/>
+						<Button x:Name="colorRect" Margin="20, 5, 5, 5"  Width="50" Height="40" Background="White">
+							<Button.Flyout>
+								<Flyout>
+									<ColorPicker ColorChanged="ColorPicker_ColorChanged"
+						Height="auto"
+						IsColorSliderVisible="True"
+						IsColorChannelTextInputVisible="False"
+						IsHexInputVisible="False"
+						IsAlphaEnabled="False"
+						IsAlphaSliderVisible="False"
+						IsAlphaTextInputVisible="False" />
+								</Flyout>
+							</Button.Flyout>
+						</Button>
+
 					</StackPanel>
 				</StackPanel>
 
@@ -239,9 +260,9 @@
 			</Rectangle.Fill>
 		</Rectangle>
 
-		<Rectangle IsHitTestVisible="True" Grid.ColumnSpan="2" Width="600" Height="200" Opacity="1" Visibility="{Binding ElementName=loadingScreen, Path=Visibility}">
+		<Rectangle IsHitTestVisible="True" Grid.ColumnSpan="2" Width="600" Height="200" Opacity="1" Visibility="{Binding ElementName=videoLoading, Path=Visibility}">
 			<Rectangle.Fill>
-				<SolidColorBrush Color="DarkGray"/>
+				<SolidColorBrush Color="{ThemeResource SystemRevealChromeMediumColor}"/>
 			</Rectangle.Fill>
 		</Rectangle>
 
@@ -249,8 +270,11 @@
 			<TextBlock HorizontalAlignment="Center" Margin="5,5,5,20" Visibility="{Binding ElementName=videoLoading, Path=Visibility}">Saving progress</TextBlock>
 			<ProgressBar x:Name="videoLoading" HorizontalAlignment="Center" Width="500" Value="0" Visibility="Collapsed" />
 			<TextBlock Visibility="Collapsed"/>
-			<Button x:Name="buttonLoadingStop" HorizontalAlignment="Center" Style="{ThemeResource ButtonRevealStyle}" Width="40" Height="40" Visibility="Collapsed" Click="ButtonLoadingStop_Click" Margin="5,15,5,5">
-				<SymbolIcon Symbol="Stop" />
+			<Button x:Name="buttonLoadingStop" HorizontalAlignment="Center" Style="{ThemeResource ButtonRevealStyle}" Width="auto" Height="auto" Visibility="Collapsed" Click="ButtonLoadingStop_Click" Margin="5,15,5,5">
+				<StackPanel Orientation="Horizontal">
+					<TextBlock Text="&#xE10A;" FontFamily="Segoe MDL2 Assets" VerticalAlignment="Center" Margin="0,0,5,0"/>
+					<TextBlock Text="Cancel" VerticalAlignment="Center"/>
+				</StackPanel>
 			</Button>
 		</StackPanel>
 		

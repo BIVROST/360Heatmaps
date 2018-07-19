@@ -388,7 +388,15 @@ namespace BivrostHeatmapViewer
 
 		private void videoBackgroundPicker_ColorChanged(ColorPicker sender, ColorChangedEventArgs args)
 		{
-			colorRect.Fill = new SolidColorBrush(videoBackgroundPicker.Color);
+			colorRect.Background = new SolidColorBrush(sender.Color);
+			Debug.WriteLine("videoBackgroundPicker: " + videoBackgroundPicker.Color);
+		}
+
+		private void ColorPicker_ColorChanged(ColorPicker sender, ColorChangedEventArgs args)
+		{
+			Debug.WriteLine("Rect: " + sender.Color);
+			videoBackgroundPicker.Color = sender.Color;
+			//videoBackgroundPicker_ColorChanged(sender, args);
 		}
 
 		private void horizonEnableCheckbox_Checked(object sender, RoutedEventArgs e)
@@ -596,26 +604,27 @@ namespace BivrostHeatmapViewer
 
 		private void SetTimeSliders (TimeSpan time)
 		{
-			videoStartSlider.Maximum = time.TotalSeconds;
-			videoStopSlider.Maximum = time.TotalSeconds;
-			videoStopSlider.Value = videoStopSlider.Maximum;
+			rangeSelector.Maximum = time.TotalSeconds;
+			rangeSelector.Minimum = 0;
+			rangeSelector.RangeMax = rangeSelector.Maximum;
+			rangeSelector.RangeMin = rangeSelector.Minimum;
+
+
+			//videoStartSlider.Maximum = time.TotalSeconds;
+			//videoStopSlider.Maximum = time.TotalSeconds;
+			//videoStopSlider.Value = videoStopSlider.Maximum;
 		}
 
-		private void TrimVideo (ref MediaClip video)
+		private void TrimVideo(ref MediaClip video)
 		{
-			int start = (int)videoStartSlider.Value;
-			int stop = (int)videoStopSlider.Value;
+			//int start = (int)videoStartSlider.Value;
+			//int stop = (int)videoStopSlider.Value;
 
-			if (start > stop)
-			{
-				videoStopSlider.Value = videoStopSlider.Maximum;
-				videoStartSlider.Value = 0;
-			}
-			else
-			{
-				video.TrimTimeFromStart = new TimeSpan(0, 0, start);
-				video.TrimTimeFromEnd = new TimeSpan(0, 0, (int)(video.OriginalDuration.TotalSeconds - stop));
-			}
+			int start = (int)rangeSelector.RangeMin;
+			int stop = (int)rangeSelector.RangeMax;
+
+			video.TrimTimeFromStart = new TimeSpan(0, 0, start);
+			video.TrimTimeFromEnd = new TimeSpan(0, 0, (int)(video.OriginalDuration.TotalSeconds - stop));
 
 		}
 
@@ -903,6 +912,13 @@ namespace BivrostHeatmapViewer
 				dialog.Commands.Add(new UICommand { Label = "OK", Id = 0 });
 				await dialog.ShowAsync();
 			}
+		}
+
+		private void rangeSelector_ValueChanged(object sender, Microsoft.Toolkit.Uwp.UI.Controls.RangeChangedEventArgs e)
+		{
+			Debug.WriteLine(rangeSelector.RangeMin);
+			Debug.WriteLine(rangeSelector.RangeMax);
+
 		}
 	}
 
