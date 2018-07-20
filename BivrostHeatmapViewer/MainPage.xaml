@@ -121,11 +121,12 @@
 
 
 
-		<Grid Grid.Column="2" Background="{ThemeResource MainPanelAcrylicBrush}" >
+		<Grid x:Name="playerGrid" Grid.Column="2" Background="{ThemeResource MainPanelAcrylicBrush}" >
 			<Grid.RowDefinitions>
 				<RowDefinition Height="Auto" />
 				<RowDefinition Height="*" />
-				<RowDefinition Height="Auto" />
+				<RowDefinition Height="auto" />
+				<RowDefinition Height="Auto" /> 
 				<RowDefinition Height="Auto" />
 			</Grid.RowDefinitions>
 
@@ -146,7 +147,7 @@
 					<MediaPlayerElement x:Name="mediaPlayerElement" 
 										AllowDrop="True" Drop="SelectedVideo_Drop" 
 										DragOver="SelectedVideo_DragOver"  
-										Width="1280" Height="720" 
+										Width="1200" Height="600" 
 										AreTransportControlsEnabled="True">
 
 						<MediaPlayerElement.TransportControls>
@@ -183,7 +184,10 @@
 			<!--<Rectangle Grid.Row="1" AllowDrop="True" Drop="SelectedVideo_Drop" DragOver="SelectedVideo_DragOver" IsHitTestVisible="False" Fill="Transparent" Opacity="0.3"/>-->
 
 
-			<Grid Grid.Column="1" Padding="32" Grid.Row="2">
+			<controls:RangeSelector StepFrequency="1" ValueChanged="rangeSelector_ValueChanged" Grid.Row="2" Width="{Binding ElementName=previewImage, Path=ActualWidth}" />
+			
+			
+			<Grid Grid.Column="1" Padding="32" Grid.Row="3">
 				<Grid.ColumnDefinitions>
 					<ColumnDefinition Width="*"/>
 					<ColumnDefinition Width="*"/>
@@ -250,7 +254,7 @@
 
 			</Grid>
 
-			<Button Grid.Row="3" Style="{ThemeResource ButtonRevealStyle}" Margin="0, 0, 0, 30" x:Name="previewButton" Width="200" Height="40" HorizontalAlignment="Center" Click="GenerateStaticHeatmap">Generate Heatmap Image</Button>
+			<Button Grid.Row="4" Style="{ThemeResource ButtonRevealStyle}" Margin="0, 0, 0, 30" x:Name="previewButton" Width="200" Height="40" HorizontalAlignment="Center" Click="GenerateStaticHeatmap">Generate Heatmap Image</Button>
 
 		</Grid>
 

@@ -449,7 +449,10 @@ namespace BivrostHeatmapViewer
 
 		private async void VideoGenTest2(object sender, RoutedEventArgs e)
 		{
-			var ep = MediaEncodingProfile.CreateMp4(VideoEncodingQuality.Uhd2160p);
+			var ep = MediaEncodingProfile.CreateMp4(VideoEncodingQuality.HD1080p);
+			ep.Video.Height = 600;
+			ep.Video.Width = 1200;
+
 			saveCompositionButton.IsEnabled = false;
 			composition = new MediaComposition();
 			mediaPlayerElement.Source = null;
@@ -647,11 +650,15 @@ namespace BivrostHeatmapViewer
 		private void FillEffectPropertySet (SessionCollection sessions)
 		{
             valuePairs.Clear();
+		
 
 			var enc = video.GetVideoEncodingProperties();
 
-            //float fps = (float)enc.FrameRate.Numerator / enc.FrameRate.Denominator;
-            float fps = 60;
+			interpolateSession(sessions.sessions[0], enc.FrameRate.Numerator, enc.FrameRate.Denominator, video.TrimmedDuration);
+
+
+			//float fps = (float)enc.FrameRate.Numerator / enc.FrameRate.Denominator;
+			float fps = 60;
 
 			var pitch = new List<int>();
 			var yaw = new List<int>();
@@ -805,6 +812,45 @@ namespace BivrostHeatmapViewer
 			valuePairs.Add("width", enc.Width);
 		}
 
+
+		private Heatmap.Coord[] interpolateSession (Session session, uint videoFrameNumerator, uint videoFrameDenominator, TimeSpan videoDuration)
+		{
+			long framesCount = videoFrameNumerator * videoDuration.Ticks / TimeSpan.TicksPerSecond / videoFrameDenominator;
+			Heatmap.Coord[] interpolated = new Heatmap.Coord[framesCount];
+
+			int coordsLength;
+			List<Heatmap.Coord> coords = Heatmap.CoordsDeserialize(session.history);
+			coordsLength = coords.Count;
+
+			float inOutProportion = session.Length.Ticks / videoDuration.Ticks;
+			if (inOutProportion > 1)
+			{
+				inOutProportion = 1;
+			}
+
+
+			int lastFramePosition = (int)(inOutProportion * framesCount); //represenst the value last position of last coord in new interpolated array
+
+			float origTransformationStep = (float)lastFramePosition / coordsLength; //represents the value of the transformation step coords[x*k] -> inteprpolated[x + origTransformationStep*k] [-2 because first and last position are set manually below]
+
+			//interpolated[0] = coords[0];
+			//interpolated[lastFramePosition] = coords[coordsLength - 1];
+
+			for(int i = 0; i < coordsLength; i++)
+			{
+				float temp = i * origTransformationStep;
+				int newPosition = (int)Math.Round(temp, 0);
+
+				interpolated[newPosition] = coords[i];
+
+
+			}
+
+			return interpolated;
+		}
+		
+
+
 		private void dotsEnableCheckbox_Checked(object sender, RoutedEventArgs e)
 		{
 			dotsFlag = true;
@@ -918,6 +964,10 @@ namespace BivrostHeatmapViewer
 		{
 			Debug.WriteLine(rangeSelector.RangeMin);
 			Debug.WriteLine(rangeSelector.RangeMax);
+
+			//Debug.WriteLine(playerGrid.ActualWidth);
+			Debug.WriteLine(playerGrid.ActualWidth);
+
 
 		}
 	}
