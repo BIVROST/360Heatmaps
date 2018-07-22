@@ -654,7 +654,7 @@ namespace BivrostHeatmapViewer
 
 			var enc = video.GetVideoEncodingProperties();
 
-			interpolateSession(sessions.sessions[0], enc.FrameRate.Numerator, enc.FrameRate.Denominator, video.TrimmedDuration);
+			//interpolateSession(sessions.sessions[0], enc.FrameRate.Numerator, enc.FrameRate.Denominator, video.TrimmedDuration);
 
 
 			//float fps = (float)enc.FrameRate.Numerator / enc.FrameRate.Denominator;
@@ -778,11 +778,11 @@ namespace BivrostHeatmapViewer
 			}
 
 
+            
 
 
 
-
-			for (int i = 0; i < min_length; i++)
+			/*for (int i = 0; i < min_length; i++)
 			{
 				for (int j = 0; j < sessions.sessions.Count; j++)
 				{
@@ -792,10 +792,35 @@ namespace BivrostHeatmapViewer
 					//fov.Insert
 				}
 
-			}
+			}*/
+
+            Heatmap.Coord[] test = interpolateSession(sessions.sessions[0], enc.FrameRate.Numerator, enc.FrameRate.Denominator, video.TrimmedDuration);
 
 
-			float dotsRadius = 20f;
+            //tu dodać try/catch 
+            for (int i = 0; i < test.Length; i++)
+            {
+                for (int j = 0; j < sessions.sessions.Count; j++)
+                {
+                    try
+                    {
+                        pitch.Add(test[i].pitch);
+                        yaw.Add(test[i].yaw);
+                        fov.Add(test[i].fov);
+                    }
+                    catch (ArgumentOutOfRangeException)
+                    {
+                        pitch.Add(0);
+                        yaw.Add(0);
+                        fov.Add(0);
+                    }
+                    //fov.Insert
+                }
+
+            }
+
+
+            float dotsRadius = 20f;
 
 			valuePairs.Add("backgroundColor", videoBackgroundPicker.Color);
 			valuePairs.Add("backgroundOpacity", (float)(1 - videoOpacity.Value / 100));
@@ -822,29 +847,79 @@ namespace BivrostHeatmapViewer
 			List<Heatmap.Coord> coords = Heatmap.CoordsDeserialize(session.history);
 			coordsLength = coords.Count;
 
-			float inOutProportion = session.Length.Ticks / videoDuration.Ticks;
+			float inOutProportion = (float)session.Length.Ticks / videoDuration.Ticks;
 			if (inOutProportion > 1)
 			{
 				inOutProportion = 1;
 			}
 
 
-			int lastFramePosition = (int)(inOutProportion * framesCount); //represenst the value last position of last coord in new interpolated array
+			int lastFramePosition = (int)(inOutProportion * (framesCount-1)); //represenst the value last position of last coord in new interpolated array
 
-			float origTransformationStep = (float)lastFramePosition / coordsLength; //represents the value of the transformation step coords[x*k] -> inteprpolated[x + origTransformationStep*k] [-2 because first and last position are set manually below]
+			float origTransformationStep = (float)lastFramePosition / (coordsLength-1); //represents the value of the transformation step coords[x*k] -> inteprpolated[x + origTransformationStep*k] [-2 because first and last position are set manually below]
 
-			//interpolated[0] = coords[0];
-			//interpolated[lastFramePosition] = coords[coordsLength - 1];
 
-			for(int i = 0; i < coordsLength; i++)
+            //fill array with known values
+            for (int i = 0; i < coordsLength; i++)
 			{
 				float temp = i * origTransformationStep;
 				int newPosition = (int)Math.Round(temp, 0);
 
 				interpolated[newPosition] = coords[i];
 
+            }
 
-			}
+            //fill rest of time with empty heatmaps
+            for (int i = lastFramePosition+1; i <interpolated.Length; i++)
+            {
+                interpolated[i] = new Heatmap.Coord { fov = 0, pitch = 0, yaw = 0 };
+            }
+
+            int originalFrameCount = 1;
+            for (int i = 0; i < lastFramePosition-1; i++)
+            {
+                int interpolationFromIndex = i;
+                Heatmap.Coord valueFrom = interpolated[i];
+
+                int interpolationToIndex = (int)Math.Round((originalFrameCount) * origTransformationStep);
+                Heatmap.Coord valueTo = interpolated[interpolationToIndex];
+
+                int interpolationLength = interpolationToIndex - i - 1;
+
+                if (interpolationLength == 0)
+                {
+                    continue;
+                }
+
+                float yawStepValue = (valueTo.yaw - valueFrom.yaw) / (float)interpolationLength;
+                float pitchStepValue = (valueTo.pitch - valueFrom.pitch) / (float)interpolationLength;
+
+                int yawLength = valueTo.yaw - valueFrom.yaw;
+                if (Math.Abs(yawLength) > 31)
+                {
+                    yawStepValue = (64 - Math.Abs(yawLength)) / (float)interpolationLength;
+                }
+
+                int internalCounter = 1;
+                while (interpolationLength > 0)
+                {
+                    
+                    i++;
+                    interpolated[i] = new Heatmap.Coord();
+                    interpolated[i].fov = interpolated[interpolationFromIndex].fov;
+                    interpolated[i].pitch = (int)Math.Round(interpolated[interpolationFromIndex].pitch + pitchStepValue*internalCounter, 0);
+                    interpolated[i].yaw = (int)Math.Round(interpolated[interpolationFromIndex].yaw + yawStepValue*internalCounter, 0) % 64;
+
+                    if (Math.Abs(yawLength) > 31 && valueFrom.yaw < valueTo.yaw)
+                    {
+                        interpolated[i].yaw = ((int)Math.Round(interpolated[interpolationFromIndex].yaw - yawStepValue*internalCounter, 0) + 10*64) % 64;
+                    }
+                    interpolationLength--;
+                    internalCounter++;
+                }
+                originalFrameCount++;
+
+            }
 
 			return interpolated;
 		}
