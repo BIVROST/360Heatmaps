@@ -50,22 +50,18 @@ namespace BivrostHeatmapViewer
 		StorageFile videoFile;
 		StorageFile horizonFile;
 		private MediaComposition composition;
-		//private MediaComposition mementoComposition;
 		private MediaPlayer mediaPlayer;
 		private Rect rect = new Rect(0, 0, 4096, 2048);
 		MediaClip video;
         public CancellationTokenSource tokenSource = new CancellationTokenSource();
 		public CancellationToken token;
-		Task<MediaOverlayLayer> task;
 
 		bool dotsFlag = false;
 		bool horizonFlag = false;
 		bool forceFovFlag = false;
 
 		int forcedFov = 0;
-		//fov 20-180
 		public SavingResolutionsCollection resolutions;
-		//private static int heatmapListCounter = 0;
 
 		private ObservableCollection<Session> _items = new ObservableCollection<Session>();
 
@@ -480,7 +476,7 @@ namespace BivrostHeatmapViewer
 
 			MediaOverlayLayer videoOverlayLayer = new MediaOverlayLayer();
 			TrimVideo(ref video);
-			valuePairs.Add("offset", (int)video.TrimTimeFromStart.TotalSeconds);
+			valuePairs.Add("offset", video.TrimTimeFromStart.Ticks);
 			var enc = video.GetVideoEncodingProperties();
 
 			valuePairs.Add("frameLength", (1 / ((double)enc.FrameRate.Numerator / enc.FrameRate.Denominator)) * 1000);
@@ -607,10 +603,27 @@ namespace BivrostHeatmapViewer
 
 		private void SetTimeSliders (TimeSpan time)
 		{
-			rangeSelector.Maximum = time.TotalSeconds;
+			
+			rangeSelector.Maximum = time.TotalMilliseconds;
 			rangeSelector.Minimum = 0;
 			rangeSelector.RangeMax = rangeSelector.Maximum;
 			rangeSelector.RangeMin = rangeSelector.Minimum;
+
+			double rangemax = rangeSelector.RangeMax / 1000;
+
+			int stopHour = (int)rangemax / 3600;
+			int stopMinute = (int)(rangemax - stopHour * 3600) / 60;
+			int stopSecond = (int)(rangemax - stopMinute * 60);
+			int stopMili = (int)((rangemax - stopMinute * 60 - stopSecond) * 1000);
+
+			TimeSpan stopTime = new TimeSpan(0, stopHour, stopMinute, stopSecond, stopMili);
+
+			timeRangeStart.Text = "00:00:00";
+			timeRangeStop.Text = stopTime.ToString(@"m\:ss\:fff");
+
+			var enc = video.GetVideoEncodingProperties();
+
+			rangeSelector.StepFrequency = 1 / ((double)enc.FrameRate.Numerator / enc.FrameRate.Denominator) *1000;
 
 
 			//videoStartSlider.Maximum = time.TotalSeconds;
@@ -626,8 +639,8 @@ namespace BivrostHeatmapViewer
 			int start = (int)rangeSelector.RangeMin;
 			int stop = (int)rangeSelector.RangeMax;
 
-			video.TrimTimeFromStart = new TimeSpan(0, 0, start);
-			video.TrimTimeFromEnd = new TimeSpan(0, 0, (int)(video.OriginalDuration.TotalSeconds - stop));
+			video.TrimTimeFromStart = new TimeSpan(0, 0, 0,0, start);
+			video.TrimTimeFromEnd = new TimeSpan(0, 0, 0, 0, (int)(video.OriginalDuration.TotalMilliseconds - stop));
 
 		}
 
@@ -657,8 +670,8 @@ namespace BivrostHeatmapViewer
 			//interpolateSession(sessions.sessions[0], enc.FrameRate.Numerator, enc.FrameRate.Denominator, video.TrimmedDuration);
 
 
-			//float fps = (float)enc.FrameRate.Numerator / enc.FrameRate.Denominator;
-			float fps = 60;
+			float fps = (float)enc.FrameRate.Numerator / enc.FrameRate.Denominator;
+			//float fps = 60;
 
 			var pitch = new List<int>();
 			var yaw = new List<int>();
@@ -778,7 +791,7 @@ namespace BivrostHeatmapViewer
 			}
 
 
-            
+
 
 
 
@@ -794,19 +807,26 @@ namespace BivrostHeatmapViewer
 
 			}*/
 
-            Heatmap.Coord[] test = interpolateSession(sessions.sessions[0], enc.FrameRate.Numerator, enc.FrameRate.Denominator, video.TrimmedDuration);
+			List<Heatmap.Coord []> test = new List<Heatmap.Coord[]>();
+
+			foreach (Session s in sessions.sessions)
+			{
+				test.Add(interpolateSession(s, enc.FrameRate.Numerator, enc.FrameRate.Denominator, video.OriginalDuration));
+			}
+			long framesCount = enc.FrameRate.Numerator * video.OriginalDuration.Ticks / TimeSpan.TicksPerSecond / enc.FrameRate.Denominator;
 
 
-            //tu dodać try/catch 
-            for (int i = 0; i < test.Length; i++)
+
+			//tu dodać try/catch 
+			for (int i = 0; i < framesCount; i++)
             {
                 for (int j = 0; j < sessions.sessions.Count; j++)
                 {
                     try
                     {
-                        pitch.Add(test[i].pitch);
-                        yaw.Add(test[i].yaw);
-                        fov.Add(test[i].fov);
+                        pitch.Add(test[j][i].pitch);
+                        yaw.Add(test[j][i].yaw);
+                        fov.Add(test[j][i].fov);
                     }
                     catch (ArgumentOutOfRangeException)
                     {
@@ -836,8 +856,7 @@ namespace BivrostHeatmapViewer
 			valuePairs.Add("height", enc.Height);
 			valuePairs.Add("width", enc.Width);
 		}
-
-
+		
 		private Heatmap.Coord[] interpolateSession (Session session, uint videoFrameNumerator, uint videoFrameDenominator, TimeSpan videoDuration)
 		{
 			long framesCount = videoFrameNumerator * videoDuration.Ticks / TimeSpan.TicksPerSecond / videoFrameDenominator;
@@ -924,8 +943,6 @@ namespace BivrostHeatmapViewer
 			return interpolated;
 		}
 		
-
-
 		private void dotsEnableCheckbox_Checked(object sender, RoutedEventArgs e)
 		{
 			dotsFlag = true;
@@ -1037,13 +1054,64 @@ namespace BivrostHeatmapViewer
 
 		private void rangeSelector_ValueChanged(object sender, Microsoft.Toolkit.Uwp.UI.Controls.RangeChangedEventArgs e)
 		{
+			int stopHour = (int)rangeSelector.RangeMax / 3600;
+			int stopMinute = (int)(rangeSelector.RangeMax - stopHour * 3600) / 60;
+			int stopSecond = (int)(rangeSelector.RangeMax - stopMinute * 60);
+			int stopMili = (int)((rangeSelector.RangeMax - stopMinute * 60 - stopSecond) * 1000);
+
+			TimeSpan stopTime = new TimeSpan(0, stopHour, stopMinute, stopSecond, stopMili);
+
+			int startHour = (int)rangeSelector.RangeMin / 3600;
+			int startMinute = (int)rangeSelector.RangeMin / 60;
+			int startSecond = (int)(rangeSelector.RangeMin - startMinute * 60);
+			int startMili = (int)((rangeSelector.RangeMin - startMinute * 60 - startSecond) * 1000);
+
+			TimeSpan startTime = new TimeSpan(0, startHour, startMinute, startSecond, startMili);
+
+			string format = @"h\:mm\:ss\:fff";
+			if (stopHour == 0 && startHour == 0)
+			{
+				format = @"m\:ss\:fff";
+			}
+
+			timeRangeStart.Text = startTime.ToString(format);
+			timeRangeStop.Text = stopTime.ToString(format);
+
 			Debug.WriteLine(rangeSelector.RangeMin);
 			Debug.WriteLine(rangeSelector.RangeMax);
 
 			//Debug.WriteLine(playerGrid.ActualWidth);
 			Debug.WriteLine(playerGrid.ActualWidth);
 
+		}
 
+		private void rangeSelector_PointerMoved(object sender, Windows.UI.Xaml.Input.PointerRoutedEventArgs e)
+		{
+			double rangemax = rangeSelector.RangeMax / 1000;
+			double rangemin = rangeSelector.RangeMin / 1000;
+
+			int stopHour = (int)rangemax / 3600;
+			int stopMinute = (int)(rangemax - stopHour * 3600) / 60;
+			int stopSecond = (int)(rangemax - stopMinute * 60);
+			int stopMili = (int)((rangemax - stopMinute * 60 - stopSecond) * 1000);
+
+			TimeSpan stopTime = new TimeSpan(0, stopHour, stopMinute, stopSecond, stopMili);
+
+			int startHour = (int)rangemin / 3600;
+			int startMinute = (int)rangemin / 60;
+			int startSecond = (int)(rangemin - startMinute * 60);
+			int startMili = (int)((rangemin - startMinute * 60 - startSecond) * 1000);
+
+			TimeSpan startTime = new TimeSpan(0, startHour, startMinute, startSecond, startMili);
+
+			string format = @"h\:mm\:ss\:fff";
+			if (stopHour == 0 && startHour == 0)
+			{
+				format = @"m\:ss\:fff";
+			}
+
+			timeRangeStart.Text = startTime.ToString(format);
+			timeRangeStop.Text = stopTime.ToString(format);
 		}
 	}
 

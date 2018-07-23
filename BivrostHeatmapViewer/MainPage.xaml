@@ -125,7 +125,6 @@
 			<Grid.RowDefinitions>
 				<RowDefinition Height="Auto" />
 				<RowDefinition Height="*" />
-				<RowDefinition Height="auto" />
 				<RowDefinition Height="Auto" /> 
 				<RowDefinition Height="Auto" />
 			</Grid.RowDefinitions>
@@ -184,10 +183,9 @@
 			<!--<Rectangle Grid.Row="1" AllowDrop="True" Drop="SelectedVideo_Drop" DragOver="SelectedVideo_DragOver" IsHitTestVisible="False" Fill="Transparent" Opacity="0.3"/>-->
 
 
-			<controls:RangeSelector StepFrequency="1" ValueChanged="rangeSelector_ValueChanged" Grid.Row="2" Width="{Binding ElementName=previewImage, Path=ActualWidth}" />
 			
 			
-			<Grid Grid.Column="1" Padding="32" Grid.Row="3">
+			<Grid Grid.Column="1" Padding="32" Grid.Row="2">
 				<Grid.ColumnDefinitions>
 					<ColumnDefinition Width="*"/>
 					<ColumnDefinition Width="*"/>
@@ -213,10 +211,14 @@
 
 				</StackPanel>
 
-				<StackPanel Grid.Column="1" HorizontalAlignment="Center" Width="300">
+				<StackPanel Grid.Column="1" HorizontalAlignment="Center" Width="500">
 					<TextBlock/>
 					<TextBlock HorizontalAlignment="Center">Time range selector</TextBlock>
-					<controls:RangeSelector x:Name="rangeSelector" StepFrequency="1" ValueChanged="rangeSelector_ValueChanged" />
+					<StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+						<TextBlock x:Name="timeRangeStart" Text="0" Margin="0,0,10,0"/>
+						<controls:RangeSelector x:Name="rangeSelector" StepFrequency="1" Width="300" PointerMoved="rangeSelector_PointerMoved"/>
+						<TextBlock x:Name="timeRangeStop" Text="1" Margin="10,0,0,0"/>
+					</StackPanel>
 					<TextBlock/>
 					<StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
 						<Button x:Name="videoBackgroundColorButton" Style="{ThemeResource ButtonRevealStyle}" Width="200" Height="40" HorizontalAlignment="Center" Content="Background Color" VerticalAlignment="Center">
@@ -254,7 +256,7 @@
 
 			</Grid>
 
-			<Button Grid.Row="4" Style="{ThemeResource ButtonRevealStyle}" Margin="0, 0, 0, 30" x:Name="previewButton" Width="200" Height="40" HorizontalAlignment="Center" Click="GenerateStaticHeatmap">Generate Heatmap Image</Button>
+			<Button Grid.Row="3" Style="{ThemeResource ButtonRevealStyle}" Margin="0, 0, 0, 30" x:Name="previewButton" Width="200" Height="40" HorizontalAlignment="Center" Click="GenerateStaticHeatmap">Generate Heatmap Image</Button>
 
 		</Grid>
 

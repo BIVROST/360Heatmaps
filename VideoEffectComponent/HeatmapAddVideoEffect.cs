@@ -93,7 +93,7 @@ namespace VideoEffectComponent
 
 				object offset;
 				configuration.TryGetValue("offset", out offset);
-				this.offset = (int)offset;
+				this.offset = (long)offset;
 				
 
 				object frameLength;
@@ -128,7 +128,7 @@ namespace VideoEffectComponent
 				configuration.TryGetValue("heatmapOpacity", out heatmapOpacity);
 				this.heatmapOpacity = (float)heatmapOpacity;
 
-				this.offset = this.offset * (int)Math.Round(1000 / this.frameLength);
+				this.offset = (long)((double)(this.offset / TimeSpan.TicksPerMillisecond) / this.frameLength);
 			}
 		}
 
@@ -136,7 +136,7 @@ namespace VideoEffectComponent
 		private List<int> yaw;
 		private List<int> fov;
 		private int count;
-		private int offset;
+		private long offset;
 		private double frameLength;
 		private uint width;
 		private uint height;
@@ -145,6 +145,7 @@ namespace VideoEffectComponent
 		private Color backgroundColor;
 		private float backgroundOpacity;
 		private float heatmapOpacity;
+		private bool correctionFlag = false;
 
 		public void ProcessFrame(ProcessVideoFrameContext context)
 		{
@@ -157,10 +158,14 @@ namespace VideoEffectComponent
 			using (CanvasSolidColorBrush solidColorBrush = new CanvasSolidColorBrush(canvasDevice, backgroundColor))
 			{
 				solidColorBrush.Opacity = backgroundOpacity;
+				double rel = context.InputFrame.RelativeTime.Value.Ticks/ (double)TimeSpan.TicksPerMillisecond;
 
-				double rel = context.InputFrame.RelativeTime.Value.TotalMilliseconds;
+				context.OutputFrame.Duration = new TimeSpan( (long)(frameLength * TimeSpan.TicksPerMillisecond));
 
-				int frameTimeCounter = (int)Math.Round(rel / frameLength);
+				
+				
+
+				int frameTimeCounter = (int)Math.Round(rel / frameLength, 0);
 
                 int[] pitch = new int[count];
                 int[] yaw = new int[count];
@@ -170,10 +175,14 @@ namespace VideoEffectComponent
                 {
                     try
                     {
-						pitch[i] = this.pitch[ (frameTimeCounter + offset) * (count) + i];
-                        fov[i] = this.fov[ (frameTimeCounter + offset) * (count) + i];
-						yaw[i] = this.yaw[ (frameTimeCounter + offset) * (count) + i];
-                    }
+						//pitch[i] = this.pitch[ (frameTimeCounter + (int)Math.Round(offset, 0)) * (count) + i];
+                        //fov[i] = this.fov[ (frameTimeCounter + (int)Math.Round(offset, 0)) * (count) + i];
+						//yaw[i] = this.yaw[ (frameTimeCounter + (int)Math.Round(offset, 0)) * (count) + i];
+
+						pitch[i] = this.pitch[(frameTimeCounter + (int)offset) * (count) + i];
+						fov[i] = this.fov[(frameTimeCounter + (int)offset) * (count) + i];
+						yaw[i] = this.yaw[(frameTimeCounter + (int)offset) * (count) + i];
+					}
                     catch (ArgumentOutOfRangeException ex)
                     {
                         Debug.WriteLine(ex.Message);

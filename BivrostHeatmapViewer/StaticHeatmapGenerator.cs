@@ -139,7 +139,7 @@ namespace BivrostHeatmapViewer
 			Debug.WriteLine("Save type: " + encodingProfile.Video.Type);
 			Debug.WriteLine("Save sub: " + encodingProfile.Video.Subtype);
 			Debug.WriteLine("Save id: " + encodingProfile.Video.ProfileId);
-
+			Debug.WriteLine("numerator: " + encodingProfile.Video.FrameRate.Numerator + " denominator: " + encodingProfile.Video.FrameRate.Denominator);
 			Debug.WriteLine((double)encodingProfile.Video.FrameRate.Numerator / encodingProfile.Video.FrameRate.Denominator);
 
 			//encodingProfile.Video.Bitrate = 12_000_000;
