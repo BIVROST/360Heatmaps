@@ -788,6 +788,13 @@ namespace BivrostHeatmapViewer
 
 				interpolated[newPosition] = coords[i];
 
+                if (forceFovFlag)
+                {
+                    if (interpolated[newPosition].fov != 0)
+                    {
+                        interpolated[newPosition].fov = forcedFov;
+                    }
+                }
             }
 
             //fill rest of time with empty heatmaps
@@ -921,7 +928,7 @@ namespace BivrostHeatmapViewer
 		{
 			if (int.TryParse(forcedFovTextBox.Text, out forcedFov))
 			{
-				if (forcedFov > 20 && forcedFov < 180)
+				if (forcedFov > 19 && forcedFov < 181)
 				{
 					var dialog = new MessageDialog("Forced fov set correctly to " + forcedFov);
 					dialog.Title = "Ok";
@@ -940,7 +947,7 @@ namespace BivrostHeatmapViewer
 			else
 			{
 				forcedFov = 75;
-				var dialog = new MessageDialog("Please set value in 20-180 range.");
+				var dialog = new MessageDialog("Please set the value in 20-180 range.");
 				dialog.Title = "Warning";
 				dialog.Commands.Add(new UICommand { Label = "OK", Id = 0 });
 				await dialog.ShowAsync();
@@ -1008,7 +1015,12 @@ namespace BivrostHeatmapViewer
 			timeRangeStart.Text = startTime.ToString(format);
 			timeRangeStop.Text = stopTime.ToString(format);
 		}
-	}
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            forcedFovTextBox.Text = "75";
+        }
+    }
 
 
 }

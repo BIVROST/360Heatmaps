@@ -200,15 +200,23 @@
 						<TextBlock>heatmap opacity</TextBlock>
 						<Slider x:Name="heatmapOpacity" Minimum="0" Maximum="100" Value="30" TickPlacement="Inline" TickFrequency="5"/>
 						<TextBlock>video opacity</TextBlock>
-						<Slider x:Name="videoOpacity" Minimum="0" Maximum="100" Value="75" TickPlacement="Inline" TickFrequency="5"/>
-						<CheckBox x:Name="horizonEnableCheckbox" HorizontalAlignment="Left" Content="Enable Horizon" Checked="horizonEnableCheckbox_Checked" Unchecked="horizonEnableCheckbox_Unchecked"/>
-						<CheckBox x:Name="dotsEnableCheckbox" HorizontalAlignment="Left" Content="Enable Dots" Checked="dotsEnableCheckbox_Checked" Unchecked="dotsEnableCheckbox_Unchecked"/>
-						<StackPanel Orientation="Horizontal">
+                        <Slider x:Name="videoOpacity" Minimum="0" Maximum="100" Value="75" TickPlacement="Inline" TickFrequency="5"/>
+                        <StackPanel Orientation="Horizontal">
 							<CheckBox x:Name="forceFovCheckbox" HorizontalAlignment="Left" Content="Force fov" Checked="forceFovCheckbox_Checked" Unchecked="forceFovCheckbox_Unchecked"/>
-							<TextBox x:Name="forcedFovTextBox" Visibility="{Binding ElementName=forceFovCheckbox, Path=IsChecked, Converter={StaticResource ResourceKey=checkboxConverter}}" />
-						</StackPanel>
+                            <TextBox x:Name="forcedFovTextBox" HorizontalAlignment="Center" Visibility="{Binding ElementName=forceFovCheckbox, Path=IsChecked, Converter={StaticResource ResourceKey=checkboxConverter}}" />
+                            <Button Visibility="{Binding ElementName=forceFovCheckbox, Path=IsChecked, Converter={StaticResource ResourceKey=checkboxConverter}}" Style="{ThemeResource ButtonRevealStyle}" HorizontalAlignment="Left" Margin="10,0,0,0" Height="{Binding ElementName=forcedFovTextBox, Path=Height}"
+                                    Width="35" Click="Button_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE149;" FontFamily="Segoe MDL2 Assets" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                        <StackPanel>
+                            <CheckBox x:Name="scaleFoveCheckbox" HorizontalAlignment="Left" Content="Scale fov" Checked="forceFovCheckbox_Checked" Unchecked="forceFovCheckbox_Unchecked"/>
+                            <Slider x:Name="scaleFovSlider" Minimum="0" Maximum="100" Value="75" TickPlacement="Inline" TickFrequency="5"/>
+                        </StackPanel>
 					</StackPanel>
-
+                    <!--{Binding ElementName=forceFovCheckbox, Path=IsChecked, Converter={StaticResource ResourceKey=checkboxConverter}}-->
 				</StackPanel>
 
 				<StackPanel Grid.Column="1" HorizontalAlignment="Center" Width="500">
@@ -220,11 +228,11 @@
 						<TextBlock x:Name="timeRangeStop" Text="1" Margin="10,0,0,0"/>
 					</StackPanel>
 					<TextBlock/>
-					<StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-						<Button x:Name="videoBackgroundColorButton" Style="{ThemeResource ButtonRevealStyle}" Width="200" Height="40" HorizontalAlignment="Center" Content="Background Color" VerticalAlignment="Center">
-							<Button.Flyout>
-								<Flyout>
-									<ColorPicker x:Name="videoBackgroundPicker" ColorChanged="videoBackgroundPicker_ColorChanged"
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Button x:Name="videoBackgroundColorButton" Style="{ThemeResource ButtonRevealStyle}" Width="200" Height="40" HorizontalAlignment="Center" Content="Background Color" VerticalAlignment="Center">
+                            <Button.Flyout>
+                                <Flyout>
+                                    <ColorPicker x:Name="videoBackgroundPicker" ColorChanged="videoBackgroundPicker_ColorChanged"
 						Height="auto"
 						IsColorSliderVisible="True"
 						IsColorChannelTextInputVisible="False"
@@ -232,13 +240,13 @@
 						IsAlphaEnabled="False"
 						IsAlphaSliderVisible="False"
 						IsAlphaTextInputVisible="False" />
-								</Flyout>
-							</Button.Flyout>
-						</Button>
-						<Button x:Name="colorRect" Margin="20, 5, 5, 5"  Width="50" Height="40" Background="White">
-							<Button.Flyout>
-								<Flyout>
-									<ColorPicker ColorChanged="ColorPicker_ColorChanged"
+                                </Flyout>
+                            </Button.Flyout>
+                        </Button>
+                        <Button x:Name="colorRect" Margin="20, 5, 5, 5"  Width="50" Height="40" Background="White">
+                            <Button.Flyout>
+                                <Flyout>
+                                    <ColorPicker ColorChanged="ColorPicker_ColorChanged"
 						Height="auto"
 						IsColorSliderVisible="True"
 						IsColorChannelTextInputVisible="False"
@@ -246,12 +254,18 @@
 						IsAlphaEnabled="False"
 						IsAlphaSliderVisible="False"
 						IsAlphaTextInputVisible="False" />
-								</Flyout>
-							</Button.Flyout>
-						</Button>
+                                </Flyout>
+                            </Button.Flyout>
+                        </Button>
 
-					</StackPanel>
-				</StackPanel>
+                    </StackPanel>
+                    <StackPanel Width="300">
+                        <TextBlock/>
+                        <CheckBox x:Name="horizonEnableCheckbox" HorizontalAlignment="Left" Content="Enable Horizon" Checked="horizonEnableCheckbox_Checked" Unchecked="horizonEnableCheckbox_Unchecked"/>
+                        <CheckBox x:Name="dotsEnableCheckbox" HorizontalAlignment="Left" Content="Enable Dots" Checked="dotsEnableCheckbox_Checked" Unchecked="dotsEnableCheckbox_Unchecked"/>
+                    </StackPanel>
+
+                </StackPanel>
 
 
 			</Grid>
