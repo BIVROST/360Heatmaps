@@ -48,7 +48,7 @@ namespace BivrostHeatmapViewer
 	{
 		public PropertySet valuePairs = new PropertySet();
 		StorageFile videoFile;
-		StorageFile horizonFile;
+		//StorageFile horizonFile;
 		private MediaComposition composition;
 		private MediaPlayer mediaPlayer;
 		private Rect rect = new Rect(0, 0, 4096, 2048);
@@ -139,7 +139,6 @@ namespace BivrostHeatmapViewer
 			glassVisual.StartAnimation("Size", bindSizeAnimation);
 		}
 
-
 		private void InitializeDropShadow(UIElement shadowHost, Shape shadowTarget)
 		{
 			Visual hostVisual = ElementCompositionPreview.GetElementVisual(shadowHost);
@@ -188,25 +187,6 @@ namespace BivrostHeatmapViewer
 					saveResolutionSelector.SelectedIndex = 0;
 				}
 			}
-		}
-
-		private async void Rectangle_Drop(object sender, DragEventArgs e)
-		{
-			if (e.DataView.Contains(StandardDataFormats.StorageItems))
-			{
-				var items = await e.DataView.GetStorageItemsAsync();
-				if (items.Count > 0)
-				{
-					var storageFile = items[0] as StorageFile;
-
-					IRandomAccessStream f = await storageFile.OpenAsync(FileAccessMode.Read);
-				}
-			}
-		}
-
-		private void Rectangle_DragOver(object sender, DragEventArgs e)
-		{
-			e.AcceptedOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy;
 		}
 
 		private void SelectedVideo_DragOver(object sender, DragEventArgs e)
@@ -445,9 +425,11 @@ namespace BivrostHeatmapViewer
 
 		private async void VideoGenTest2(object sender, RoutedEventArgs e)
 		{
-			var ep = MediaEncodingProfile.CreateMp4(VideoEncodingQuality.HD1080p);
-			ep.Video.Height = 600;
-			ep.Video.Width = 1200;
+
+            var ep = SetVideoPlayer();
+			//var ep = MediaEncodingProfile.CreateMp4(VideoEncodingQuality.HD1080p);
+			//ep.Video.Height = 600;
+			//ep.Video.Width = 1200;
 
 			saveCompositionButton.IsEnabled = false;
 			composition = new MediaComposition();
@@ -517,6 +499,54 @@ namespace BivrostHeatmapViewer
 
 
 		}
+
+        private MediaEncodingProfile SetVideoPlayer()
+        {
+            MediaEncodingProfile result;
+
+            uint width = (uint)mediaPlayerElement.ActualWidth;
+            uint height = (uint)mediaPlayerElement.ActualHeight;
+
+            if (width % 2 != 0)
+            {
+                width = width - 1;
+            }
+
+            if (height % 2 != 0)
+            {
+                height = height - 1;
+            }
+
+            var enc = video.GetVideoEncodingProperties();
+
+            if (width/height == enc.Width/enc.Height)
+            {
+                result = GetMediaEncoding(new Resolutions(new SavingResolutions { height = height, width = width }, false), enc);
+                mediaPlayerElement.Width = width;
+                mediaPlayerElement.Height = height;
+            }
+            else
+            {
+                double temp = (double)enc.Width / enc.Height;
+                uint newHeight = (uint)(width / temp);
+
+                if (newHeight % 2 != 0)
+                {
+                    newHeight = newHeight - 1;
+                }
+
+                result = GetMediaEncoding(new Resolutions(new SavingResolutions { width = width, height = newHeight }, false), enc);
+                mediaPlayerElement.Width = width;
+                mediaPlayerElement.Height = newHeight;
+            }
+
+            //mediaPlayerElement.Width = width;
+            //result.Video.Height = height;
+            //result.Video.Width = width;
+
+            return result;
+
+        }
 
 		private async void SaveVideo_Click(object sender, RoutedEventArgs e)
 		{
@@ -667,145 +697,16 @@ namespace BivrostHeatmapViewer
 
 			var enc = video.GetVideoEncodingProperties();
 
-			//interpolateSession(sessions.sessions[0], enc.FrameRate.Numerator, enc.FrameRate.Denominator, video.TrimmedDuration);
-
-
-			float fps = (float)enc.FrameRate.Numerator / enc.FrameRate.Denominator;
-			//float fps = 60;
 
 			var pitch = new List<int>();
 			var yaw = new List<int>();
 			var fov = new List<int>();
-
-            List<Heatmap.Coord>[] coordsArray = new List<Heatmap.Coord>[sessions.sessions.Count];
-
-			int min_length = 0;
-
-			//int interpolationCounter = (int)Math.Round( (float) enc.FrameRate.Numerator / enc.FrameRate.Denominator) / session.sample_rate;
-
 
 
 			if (forceFovFlag)
 			{
 				GetForcedFov();
 			}
-
-
-
-			int interpolationCounterLoop = 0;
-			foreach(Session before in sessions.sessions)
-			{
-				List<Heatmap.Coord> coords = Heatmap.CoordsDeserialize(before.history);
-				Heatmap.Coord[] afterAr = new Heatmap.Coord[(int)Math.Round(fps) * coords.Count / before.sample_rate];
-
-				if (forceFovFlag)
-				{
-					foreach (Heatmap.Coord x in coords)
-					{
-						x.fov = forcedFov;
-					}
-				}
-
-				for (int i = 0; i < afterAr.Length; i++)
-				{
-					afterAr[i] = new Heatmap.Coord();
-				}
-
-				int interpolationFirstVal = (int)Math.Round(fps) / before.sample_rate;
-				int interpolationSecondVal = (int)Math.Round(fps) % before.sample_rate;
-
-				float step = fps / before.sample_rate;
-
-				afterAr[0] = coords[0];
-				afterAr[afterAr.Length - 1] = coords[coords.Count - 1];
-
-				int lastCalculatedIndex = 0;
-
-				for (int i = 1; i < coords.Count - 1; i++)
-				{
-					afterAr[(int)Math.Round(i * step)] = coords[i];
-
-					if (i == coords.Count - 2)
-					{
-						lastCalculatedIndex = (int)Math.Round(i * step);
-					}
-				}
-
-				int currentOriginal = 1;
-				for (int i = 1; i < afterAr.Length - 1; i++)
-				{
-					int nextIndex = FindNext(currentOriginal, step, lastCalculatedIndex, afterAr.Length - 1);
-					Heatmap.Coord nextKnownValue = afterAr[nextIndex];
-					Heatmap.Coord currentValue = afterAr[i - 1];
-
-                    int length = Math.Abs((nextKnownValue.yaw - currentValue.yaw));
-
-                    int interpolationStepYaw = (nextKnownValue.yaw - currentValue.yaw) / (nextIndex - (i - 1));
-                    int interpolationStepPitch = (nextKnownValue.pitch - currentValue.pitch) / (nextIndex - (i - 1));
-
-                    if (length > 31)
-                    {
-                        interpolationStepYaw = (64 - length) / (nextIndex - (i - 1));
-                    }
-
-                    if (nextKnownValue.fov == 0)
-                    {
-                        interpolationStepPitch = 0;
-                        interpolationStepYaw = 0;
-                    }
-
-
-					while (i < nextIndex)
-					{
-						afterAr[i].fov = afterAr[i - 1].fov;
-                        afterAr[i].pitch = afterAr[i - 1].pitch + interpolationStepPitch;
-                        afterAr[i].yaw = (afterAr[i - 1].yaw + interpolationStepYaw) % 64;
-
-                        if (length > 31 && nextKnownValue.yaw > currentValue.yaw)
-                        {
-                            afterAr[i].yaw = ((afterAr[i - 1].yaw - interpolationStepYaw) + 10*64) % 64;
-                        }
-
-
-						i++;
-					}
-					currentOriginal++;
-                    //2124
-				}
-
-
-
-				coordsArray[interpolationCounterLoop] = afterAr.ToList<Heatmap.Coord>();
-
-				if (interpolationCounterLoop == 0)
-				{
-					min_length = coordsArray[interpolationCounterLoop].Count;
-				}
-
-				if (min_length > coordsArray[interpolationCounterLoop].Count)
-				{
-					min_length = coordsArray[interpolationCounterLoop].Count;
-				}
-
-				interpolationCounterLoop++;
-			}
-
-
-
-
-
-
-			/*for (int i = 0; i < min_length; i++)
-			{
-				for (int j = 0; j < sessions.sessions.Count; j++)
-				{
-					pitch.Add(coordsArray[j][i].pitch);
-					yaw.Add(coordsArray[j][i].yaw);
-					fov.Add(coordsArray[j][i].fov);
-					//fov.Insert
-				}
-
-			}*/
 
 			List<Heatmap.Coord []> test = new List<Heatmap.Coord[]>();
 
@@ -840,9 +741,10 @@ namespace BivrostHeatmapViewer
             }
 
 
-            float dotsRadius = 20f;
+            float dotsRadius = (float)mediaPlayerElement.ActualWidth / 4096 * 20;
 
-			valuePairs.Add("backgroundColor", videoBackgroundPicker.Color);
+
+            valuePairs.Add("backgroundColor", videoBackgroundPicker.Color);
 			valuePairs.Add("backgroundOpacity", (float)(1 - videoOpacity.Value / 100));
 			valuePairs.Add("dotsRadius", dotsRadius);
             valuePairs.Add("count", sessions.sessions.Count);
@@ -971,13 +873,6 @@ namespace BivrostHeatmapViewer
 			horizonOverlay.Overlays.Add(mediaOverlay);
 
 			return horizonOverlay;
-		}
-
-		private int FindNext(int current, float step, int lastCalculated, int lastExisting)
-		{
-			int ret = (int)Math.Round(current * step);
-
-			return ret > lastCalculated ? lastExisting : ret;
 		}
 
         private MediaEncodingProfile GetMediaEncoding (Resolutions resolution, VideoEncodingProperties videoEncoding)

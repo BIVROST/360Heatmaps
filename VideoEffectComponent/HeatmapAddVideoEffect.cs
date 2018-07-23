@@ -42,10 +42,10 @@ namespace VideoEffectComponent
 			// Dispose of effect resources
 		}
 
-		private int frameCount;
+		//private int frameCount;
 		public void DiscardQueuedFrames()
 		{
-			frameCount = 0;
+			//frameCount = 0;
 		}
 
 		public bool IsReadOnly { get { return false; } }
@@ -145,7 +145,7 @@ namespace VideoEffectComponent
 		private Color backgroundColor;
 		private float backgroundOpacity;
 		private float heatmapOpacity;
-		private bool correctionFlag = false;
+		//private bool correctionFlag = false;
 
 		public void ProcessFrame(ProcessVideoFrameContext context)
 		{
@@ -160,7 +160,7 @@ namespace VideoEffectComponent
 				solidColorBrush.Opacity = backgroundOpacity;
 				double rel = context.InputFrame.RelativeTime.Value.Ticks/ (double)TimeSpan.TicksPerMillisecond;
 
-				context.OutputFrame.Duration = new TimeSpan( (long)(frameLength * TimeSpan.TicksPerMillisecond));
+				//context.OutputFrame.Duration = new TimeSpan( (long)(frameLength * TimeSpan.TicksPerMillisecond));
 
 				
 				

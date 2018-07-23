@@ -138,8 +138,8 @@
                     <controls:DropShadowPanel BlurRadius="25.0" ShadowOpacity="1"
                           OffsetX="2.5" OffsetY="2.5" Color="#4b4b50">
                         <Rectangle Fill="White" x:Name="previewImage" 
-							   Width="{Binding ElementName=mediaPlayerElement, Path=ActualWidth}"
-							   Height="{Binding ElementName=mediaPlayerElement, Path=ActualHeight}"
+							   Width="{Binding ElementName=mediaPlayerElement, Path=Width}"
+							   Height="{Binding ElementName=mediaPlayerElement, Path=Height}"
 							   />
                     </controls:DropShadowPanel>
 
@@ -216,7 +216,7 @@
 					<TextBlock HorizontalAlignment="Center">Time range selector</TextBlock>
 					<StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
 						<TextBlock x:Name="timeRangeStart" Text="0" Margin="0,0,10,0"/>
-						<controls:RangeSelector x:Name="rangeSelector" StepFrequency="1" Width="300" PointerMoved="rangeSelector_PointerMoved"/>
+						<controls:RangeSelector x:Name="rangeSelector" StepFrequency="1" Width="300" PointerMoved="rangeSelector_PointerMoved" />
 						<TextBlock x:Name="timeRangeStop" Text="1" Margin="10,0,0,0"/>
 					</StackPanel>
 					<TextBlock/>
