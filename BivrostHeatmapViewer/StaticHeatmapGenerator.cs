@@ -86,7 +86,6 @@ namespace BivrostHeatmapViewer
 			swb = SoftwareBitmap.Convert(swb, BitmapPixelFormat.Bgra8, BitmapAlphaMode.Ignore);
 
 			CanvasBitmap canvasBitmap = CanvasBitmap.CreateFromSoftwareBitmap(device, swb);
-			
 
 
 			//var a = MediaClip.CreateFromSurface(canvasBitmap, new TimeSpan(0, 0, 0, 0, 1));

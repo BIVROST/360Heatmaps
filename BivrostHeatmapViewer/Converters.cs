@@ -48,4 +48,24 @@ namespace BivrostHeatmapViewer
 		}
 	}
 
+	public class ScaleFovConverter : IValueConverter
+	{
+		public object Convert(object value, Type targetType, object parameter, string language)
+		{
+			int result;
+
+			if (int.TryParse(value.ToString(), out result))
+			{
+				return (int)(result * 90 / 100);
+			}
+
+			return 90;
+		}
+
+		public object ConvertBack(object value, Type targetType, object parameter, string language)
+		{
+			throw new NotImplementedException();
+		}
+	}
+
 }

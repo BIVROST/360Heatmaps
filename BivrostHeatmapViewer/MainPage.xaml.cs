@@ -59,6 +59,7 @@ namespace BivrostHeatmapViewer
 		bool dotsFlag = false;
 		bool horizonFlag = false;
 		bool forceFovFlag = false;
+		bool scaleFovFlag = false;
 
 		int forcedFov = 0;
 		public SavingResolutionsCollection resolutions;
@@ -385,13 +386,13 @@ namespace BivrostHeatmapViewer
 			horizonFlag = false;
 		}
 
-		private async void GenerateStaticHeatmap(object sender, RoutedEventArgs e)
+		private void GenerateStaticHeatmap(object sender, RoutedEventArgs e)
 		{
 			saveCompositionButton.IsEnabled = false;
 			mediaPlayerElement.AreTransportControlsEnabled = false;
 
-
-			ShowHeatmapGenerating();
+			LoadingControl.IsLoading = true;
+			//ShowHeatmapGenerating();
 
 			SessionCollection sessionCollection = new SessionCollection();
 			sessionCollection.sessions = new List<Session>();
@@ -403,7 +404,7 @@ namespace BivrostHeatmapViewer
 				sessionCollection.sessions.Add(s);
 			}
 
-			var result = await StaticHeatmapGenerator.GenerateHeatmap
+			var result = StaticHeatmapGenerator.GenerateHeatmap
 				(
 				sessionCollection,
 				rect,
@@ -418,8 +419,8 @@ namespace BivrostHeatmapViewer
 			}
 
 
-			mediaPlayerElement.Source = MediaSource.CreateFromMediaStreamSource(result);
-
+			mediaPlayerElement.Source = MediaSource.CreateFromMediaStreamSource(result.Result);
+			LoadingControl.IsLoading = false;
 			HideHeatmapGenerating();
 		}
 
@@ -916,19 +917,28 @@ namespace BivrostHeatmapViewer
 
 		private void forceFovCheckbox_Checked(object sender, RoutedEventArgs e)
 		{
+			scaleFovCheckbox.IsChecked = false;
+			scaleFovCheckbox.IsEnabled = false;
 			forceFovFlag = true;
 		}
 
 		private void forceFovCheckbox_Unchecked(object sender, RoutedEventArgs e)
 		{
+			scaleFovCheckbox.IsEnabled = true;
 			forceFovFlag = false;
 		}
 
 		private async void GetForcedFov ()
 		{
+			if (scaleFovFlag)
+			{
+				forcedFov = int.Parse(scaleFovTextBox.Text);
+				return;
+			}
+
 			if (int.TryParse(forcedFovTextBox.Text, out forcedFov))
 			{
-				if (forcedFov > 19 && forcedFov < 181)
+				if (forcedFov > -1 && forcedFov < 181)
 				{
 					var dialog = new MessageDialog("Forced fov set correctly to " + forcedFov);
 					dialog.Title = "Ok";
@@ -937,17 +947,17 @@ namespace BivrostHeatmapViewer
 				}
 				else
 				{
-					forcedFov = 75;
-					var dialog = new MessageDialog("Value should be in 20-180 range.");
+					forcedFov = 90;
+					var dialog = new MessageDialog("Value should be in 0-180 range.");
 					dialog.Title = "Warning";
 					dialog.Commands.Add(new UICommand { Label = "OK", Id = 0 });
-					await dialog.ShowAsync();					
+					await dialog.ShowAsync();
 				}
 			}
 			else
 			{
-				forcedFov = 75;
-				var dialog = new MessageDialog("Please set the value in 20-180 range.");
+				forcedFov = 90;
+				var dialog = new MessageDialog("Please set the value in 0-180 range.");
 				dialog.Title = "Warning";
 				dialog.Commands.Add(new UICommand { Label = "OK", Id = 0 });
 				await dialog.ShowAsync();
@@ -1016,11 +1026,33 @@ namespace BivrostHeatmapViewer
 			timeRangeStop.Text = stopTime.ToString(format);
 		}
 
-        private void Button_Click(object sender, RoutedEventArgs e)
+        private void resetFov_Click(object sender, RoutedEventArgs e)
         {
-            forcedFovTextBox.Text = "75";
+            forcedFovTextBox.Text = "90";
         }
-    }
+
+		private void resetScaleFov_Click(object sender, RoutedEventArgs e)
+		{
+			scaleFovSlider.Value = 100;
+		}
+
+		private void scaleFovCheckbox_Checked(object sender, RoutedEventArgs e)
+		{
+			forceFovCheckbox.IsChecked = false;
+			forceFovCheckbox.IsEnabled = false;
+			forceFovFlag = true;
+			scaleFovFlag = true;
+			forcedFov = int.Parse(scaleFovTextBox.Text);
+		}
+
+		private void scaleFovCheckbox_Unchecked(object sender, RoutedEventArgs e)
+		{
+			forceFovCheckbox.IsEnabled = true;
+			forceFovFlag = false;
+			scaleFovFlag = false;
+		}
+
+	}
 
 
 }

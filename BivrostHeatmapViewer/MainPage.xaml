@@ -13,10 +13,11 @@
 	<Page.Resources>
 		<local:TextAddConverter x:Key="textConverter"/>
 		<local:CheckboxToVisibilityConverter x:Key="checkboxConverter"/>
+		<local:ScaleFovConverter x:Key="scaleFovConverter"/>
 	</Page.Resources>
-	
 
-	
+
+
 
 	<Grid Background="{ThemeResource SidePanelAcrylicBrush}" x:Name="mainGridControl">
 		<Grid.ColumnDefinitions>
@@ -24,7 +25,7 @@
 			<ColumnDefinition Width="*" />
 		</Grid.ColumnDefinitions>
 
-		
+
 
 		<!--
 		<Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" x:Name="GlassHost">
@@ -125,23 +126,23 @@
 			<Grid.RowDefinitions>
 				<RowDefinition Height="Auto" />
 				<RowDefinition Height="*" />
-				<RowDefinition Height="Auto" /> 
+				<RowDefinition Height="Auto" />
 				<RowDefinition Height="Auto" />
 			</Grid.RowDefinitions>
 
 			<TextBlock Visibility="Collapsed" Margin="16" Grid.Row="0" x:Name="debugInfo">Preview</TextBlock>
-			
+
 
 			<Viewbox Stretch="Uniform" x:Name="previewViewBox" Grid.Row="1" Margin="64,32">
 				<Grid Padding="0" Margin="0">
 
-                    <controls:DropShadowPanel BlurRadius="25.0" ShadowOpacity="1"
+					<controls:DropShadowPanel BlurRadius="25.0" ShadowOpacity="1"
                           OffsetX="2.5" OffsetY="2.5" Color="#4b4b50">
-                        <Rectangle Fill="White" x:Name="previewImage" 
+						<Rectangle Fill="White" x:Name="previewImage" 
 							   Width="{Binding ElementName=mediaPlayerElement, Path=Width}"
 							   Height="{Binding ElementName=mediaPlayerElement, Path=Height}"
 							   />
-                    </controls:DropShadowPanel>
+					</controls:DropShadowPanel>
 
 					<MediaPlayerElement x:Name="mediaPlayerElement" 
 										AllowDrop="True" Drop="SelectedVideo_Drop" 
@@ -158,14 +159,15 @@
 						</MediaPlayerElement.TransportControls>
 
 					</MediaPlayerElement>
+					<ProgressRing x:Name="heatmapLoadingIndicator"  IsActive="False" Width="64" Height="64" Visibility="Visible"/>
 
 					<!-- <Canvas x:Name="mainPanel" Margin="-16" Visibility="Collapsed" Opacity="0.5" IsHitTestVisible="False" Background="White"
 							Width="1400"
 							Height="800"
 							/>-->
 
-					<ProgressRing x:Name="heatmapLoadingIndicator"  IsActive="False" Width="64" Height="64"/>
 					
+
 					<!--
 					<Image x:Name="heatImage" Stretch="Fill" Opacity="0.5" IsHitTestVisible="False">
 
@@ -177,46 +179,67 @@
 						   />
 					-->
 
+					
 				</Grid>
+				
 			</Viewbox>
 
 			<!--<Rectangle Grid.Row="1" AllowDrop="True" Drop="SelectedVideo_Drop" DragOver="SelectedVideo_DragOver" IsHitTestVisible="False" Fill="Transparent" Opacity="0.3"/>-->
 
 
-			
-			
+
+
 			<Grid Grid.Column="1" Padding="32" Grid.Row="2">
 				<Grid.ColumnDefinitions>
 					<ColumnDefinition Width="*"/>
 					<ColumnDefinition Width="*"/>
 				</Grid.ColumnDefinitions>
 
-				
-				
+
+
 				<StackPanel Grid.Column="0" HorizontalAlignment="Center">
 					<TextBlock x:Name="fpsLabel"></TextBlock>
 
-					<StackPanel Width="300">
-						<TextBlock>heatmap opacity</TextBlock>
-						<Slider x:Name="heatmapOpacity" Minimum="0" Maximum="100" Value="30" TickPlacement="Inline" TickFrequency="5"/>
-						<TextBlock>video opacity</TextBlock>
-                        <Slider x:Name="videoOpacity" Minimum="0" Maximum="100" Value="75" TickPlacement="Inline" TickFrequency="5"/>
-                        <StackPanel Orientation="Horizontal">
-							<CheckBox x:Name="forceFovCheckbox" HorizontalAlignment="Left" Content="Force fov" Checked="forceFovCheckbox_Checked" Unchecked="forceFovCheckbox_Unchecked"/>
-                            <TextBox x:Name="forcedFovTextBox" HorizontalAlignment="Center" Visibility="{Binding ElementName=forceFovCheckbox, Path=IsChecked, Converter={StaticResource ResourceKey=checkboxConverter}}" />
-                            <Button Visibility="{Binding ElementName=forceFovCheckbox, Path=IsChecked, Converter={StaticResource ResourceKey=checkboxConverter}}" Style="{ThemeResource ButtonRevealStyle}" HorizontalAlignment="Left" Margin="10,0,0,0" Height="{Binding ElementName=forcedFovTextBox, Path=Height}"
-                                    Width="35" Click="Button_Click">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="&#xE149;" FontFamily="Segoe MDL2 Assets" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Button>
-                        </StackPanel>
-                        <StackPanel>
-                            <CheckBox x:Name="scaleFoveCheckbox" HorizontalAlignment="Left" Content="Scale fov" Checked="forceFovCheckbox_Checked" Unchecked="forceFovCheckbox_Unchecked"/>
-                            <Slider x:Name="scaleFovSlider" Minimum="0" Maximum="100" Value="75" TickPlacement="Inline" TickFrequency="5"/>
-                        </StackPanel>
+					<StackPanel Width="500">
+						<StackPanel Width="300">
+							<TextBlock>heatmap opacity</TextBlock>
+							<Slider x:Name="heatmapOpacity" Minimum="0" Maximum="100" Value="30" TickPlacement="Inline" TickFrequency="5"/>
+							<TextBlock>video opacity</TextBlock>
+							<Slider x:Name="videoOpacity" Minimum="0" Maximum="100" Value="75" TickPlacement="Inline" TickFrequency="5"/>
+							<StackPanel Orientation="Horizontal">
+								<CheckBox x:Name="forceFovCheckbox" HorizontalAlignment="Left" Content="Force fov" Checked="forceFovCheckbox_Checked" Unchecked="forceFovCheckbox_Unchecked"/>
+								<TextBox x:Name="forcedFovTextBox" HorizontalAlignment="Center" Visibility="{Binding ElementName=forceFovCheckbox, Path=IsChecked, Converter={StaticResource ResourceKey=checkboxConverter}}"/>
+								<Button x:Name="resetFovButton" Visibility="{Binding ElementName=forceFovCheckbox, Path=IsChecked, Converter={StaticResource ResourceKey=checkboxConverter}}"
+									Background="Transparent"
+									HorizontalAlignment="Left" Margin="10,0,0,0" 
+									Height="{Binding ElementName=forcedFovTextBox, Path=Height}"
+                                    Width="35" Click="resetFov_Click">
+									<StackPanel Orientation="Horizontal">
+										<TextBlock Text="&#xE149;" FontFamily="Segoe MDL2 Assets" VerticalAlignment="Center"/>
+									</StackPanel>
+								</Button>
+							</StackPanel>
+							<StackPanel Orientation="Horizontal">
+								<CheckBox x:Name="scaleFovCheckbox" HorizontalAlignment="Left" Content="Scale fov" Checked="scaleFovCheckbox_Checked" Unchecked="scaleFovCheckbox_Unchecked"/>
+								<TextBox x:Name="scaleFovTextBox" Visibility="{Binding ElementName=scaleFovCheckbox, Path=IsChecked, Converter={StaticResource ResourceKey=checkboxConverter} }" 
+									 Text="{Binding ElementName=scaleFovSlider, Path=Value, Converter={StaticResource ResourceKey=scaleFovConverter}}" VerticalAlignment="Center" HorizontalAlignment="Center" HorizontalTextAlignment="Center"
+									 TextAlignment="Center" Margin="0,0,0,0" IsEnabled="False"/>
+								<Button x:Name="resetScaleFovButton" Visibility="{Binding ElementName=scaleFovCheckbox, Path=IsChecked, Converter={StaticResource ResourceKey=checkboxConverter}}" Background="Transparent"
+									HorizontalAlignment="Left" Margin="10,0,0,0" 
+									Height="{Binding ElementName=scaleFovTextBox, Path=Height}"
+                                    Width="35" Click="resetScaleFov_Click">
+									<StackPanel Orientation="Horizontal">
+										<TextBlock Text="&#xE149;" FontFamily="Segoe MDL2 Assets" VerticalAlignment="Center"/>
+
+									</StackPanel>
+								</Button>
+
+							</StackPanel>
+
+						</StackPanel>
+						<Slider x:Name="scaleFovSlider" HorizontalAlignment="Center" Visibility="{Binding ElementName=scaleFovCheckbox, Path=IsChecked, Converter={StaticResource ResourceKey=checkboxConverter}}" Minimum="0" Maximum="200" Value="100" StepFrequency="1" TickPlacement="None" TickFrequency="1" Width="300"/>
 					</StackPanel>
-                    <!--{Binding ElementName=forceFovCheckbox, Path=IsChecked, Converter={StaticResource ResourceKey=checkboxConverter}}-->
+					<!--{Binding ElementName=forceFovCheckbox, Path=IsChecked, Converter={StaticResource ResourceKey=checkboxConverter}}-->
 				</StackPanel>
 
 				<StackPanel Grid.Column="1" HorizontalAlignment="Center" Width="500">
@@ -228,11 +251,11 @@
 						<TextBlock x:Name="timeRangeStop" Text="1" Margin="10,0,0,0"/>
 					</StackPanel>
 					<TextBlock/>
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                        <Button x:Name="videoBackgroundColorButton" Style="{ThemeResource ButtonRevealStyle}" Width="200" Height="40" HorizontalAlignment="Center" Content="Background Color" VerticalAlignment="Center">
-                            <Button.Flyout>
-                                <Flyout>
-                                    <ColorPicker x:Name="videoBackgroundPicker" ColorChanged="videoBackgroundPicker_ColorChanged"
+					<StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+						<Button x:Name="videoBackgroundColorButton" Style="{ThemeResource ButtonRevealStyle}" Width="200" Height="40" HorizontalAlignment="Center" Content="Background Color" VerticalAlignment="Center">
+							<Button.Flyout>
+								<Flyout>
+									<ColorPicker x:Name="videoBackgroundPicker" ColorChanged="videoBackgroundPicker_ColorChanged"
 						Height="auto"
 						IsColorSliderVisible="True"
 						IsColorChannelTextInputVisible="False"
@@ -240,13 +263,13 @@
 						IsAlphaEnabled="False"
 						IsAlphaSliderVisible="False"
 						IsAlphaTextInputVisible="False" />
-                                </Flyout>
-                            </Button.Flyout>
-                        </Button>
-                        <Button x:Name="colorRect" Margin="20, 5, 5, 5"  Width="50" Height="40" Background="White">
-                            <Button.Flyout>
-                                <Flyout>
-                                    <ColorPicker ColorChanged="ColorPicker_ColorChanged"
+								</Flyout>
+							</Button.Flyout>
+						</Button>
+						<Button x:Name="colorRect" Margin="20, 5, 5, 5"  Width="50" Height="40" Background="White">
+							<Button.Flyout>
+								<Flyout>
+									<ColorPicker ColorChanged="ColorPicker_ColorChanged"
 						Height="auto"
 						IsColorSliderVisible="True"
 						IsColorChannelTextInputVisible="False"
@@ -254,18 +277,18 @@
 						IsAlphaEnabled="False"
 						IsAlphaSliderVisible="False"
 						IsAlphaTextInputVisible="False" />
-                                </Flyout>
-                            </Button.Flyout>
-                        </Button>
+								</Flyout>
+							</Button.Flyout>
+						</Button>
 
-                    </StackPanel>
-                    <StackPanel Width="300">
-                        <TextBlock/>
-                        <CheckBox x:Name="horizonEnableCheckbox" HorizontalAlignment="Left" Content="Enable Horizon" Checked="horizonEnableCheckbox_Checked" Unchecked="horizonEnableCheckbox_Unchecked"/>
-                        <CheckBox x:Name="dotsEnableCheckbox" HorizontalAlignment="Left" Content="Enable Dots" Checked="dotsEnableCheckbox_Checked" Unchecked="dotsEnableCheckbox_Unchecked"/>
-                    </StackPanel>
+					</StackPanel>
+					<StackPanel Width="300">
+						<TextBlock/>
+						<CheckBox x:Name="horizonEnableCheckbox" HorizontalAlignment="Left" Content="Enable Horizon" Checked="horizonEnableCheckbox_Checked" Unchecked="horizonEnableCheckbox_Unchecked"/>
+						<CheckBox x:Name="dotsEnableCheckbox" HorizontalAlignment="Left" Content="Enable Dots" Checked="dotsEnableCheckbox_Checked" Unchecked="dotsEnableCheckbox_Unchecked"/>
+					</StackPanel>
 
-                </StackPanel>
+				</StackPanel>
 
 
 			</Grid>
@@ -279,6 +302,14 @@
 				<SolidColorBrush Color="Gray"/>
 			</Rectangle.Fill>
 		</Rectangle>
+
+		<controls:Loading x:Name="LoadingControl" HorizontalContentAlignment="Center" 
+                          VerticalContentAlignment="Center" Grid.ColumnSpan="2">
+			<controls:Loading.Background>
+				<SolidColorBrush Color="Black" Opacity="0.7"/>
+			</controls:Loading.Background>
+			<ContentControl x:Name="LoadingContentControl"/>
+		</controls:Loading>
 
 		<Rectangle IsHitTestVisible="True" Grid.ColumnSpan="2" Width="600" Height="200" Opacity="1" Visibility="{Binding ElementName=videoLoading, Path=Visibility}">
 			<Rectangle.Fill>
@@ -297,11 +328,10 @@
 				</StackPanel>
 			</Button>
 		</StackPanel>
+
 		
-
-
 
 	</Grid>
 
-	
+
 </Page>
