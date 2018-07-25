@@ -219,6 +219,7 @@
 									</StackPanel>
 								</Button>
 							</StackPanel>
+							<CheckBox x:Name="grayscaleVideo" HorizontalAlignment="Left" Content="Grayscale video" Checked="grayscaleVideo_Checked" Unchecked="grayscaleVideo_Unchecked"/>
 							<StackPanel Orientation="Horizontal" Visibility="Collapsed">
 								<CheckBox x:Name="scaleFovCheckbox" HorizontalAlignment="Left" Content="Scale fov" Checked="scaleFovCheckbox_Checked" Unchecked="scaleFovCheckbox_Unchecked"/>
 								<TextBox x:Name="scaleFovTextBox" Visibility="{Binding ElementName=scaleFovCheckbox, Path=IsChecked, Converter={StaticResource ResourceKey=checkboxConverter} }" 

@@ -75,50 +75,14 @@ namespace BivrostHeatmapViewer
 
 			wb = await GenerateHeatmap(s, forceFov, forcedFov);
 
-			/*
-
-			foreach (Session s in sessions.sessions)
-			{
-				wb.Add(await GenerateHeatmap(s, overlayPosition));
-				//heatmap.Opacity = heatmapOpacity / sessions.sessions.Count;
-				//mediaOverlayLayer.Overlays.Add(heatmap);
-			}
-
-
-			for (int i = 1; i < sessions.sessions.Count; i++)
-			{
-				wb[0].Blit(overlayPosition, wb[i], overlayPosition, WriteableBitmapExtensions.BlendMode.Alpha);
-			}
-
-			//wb[0].Blit(overlayPosition, wb[1], overlayPosition, WriteableBitmapExtensions.BlendMode.Alpha);
-			var clip = await MediaClip.CreateFromImageFileAsync(await WriteableBitmapToStorageFile(wb[0]), new TimeSpan(0, 0, 0, 0, 1));
-			*/
-
 			CanvasDevice device = CanvasDevice.GetSharedDevice();
 
 			SoftwareBitmap swb = SoftwareBitmap.CreateCopyFromBuffer(wb.PixelBuffer, BitmapPixelFormat.Bgra8, wb.PixelWidth, wb.PixelHeight);
 			swb = SoftwareBitmap.Convert(swb, BitmapPixelFormat.Bgra8, BitmapAlphaMode.Ignore);
 
 			CanvasBitmap canvasBitmap = CanvasBitmap.CreateFromSoftwareBitmap(device, swb);
-			//var a = MediaClip.CreateFromSurface(canvasBitmap, new TimeSpan(0, 0, 0, 0, 1));
-
-			//offscreen
-			
-
-			
-
 
 			var clip = MediaClip.CreateFromSurface(canvasBitmap, new TimeSpan(0, 0, 0, 0, 1));
-
-			//CanvasComposition canvasComposition = CanvasComposition.Cr
-
-
-
-			//clip = MediaClip.CreateFromSurface(surface, new TimeSpan(0, 0, 0, 0, 1));
-
-
-
-			//MediaClip.
 
 			MediaOverlay mediaOverlay = new MediaOverlay(clip);
 			mediaOverlay.Position = overlayPosition;
@@ -131,7 +95,7 @@ namespace BivrostHeatmapViewer
 			{
 				CanvasBitmap cb = await CanvasBitmap.LoadAsync(CanvasDevice.GetSharedDevice(), new Uri("ms-appx:///Assets/horizon3840x2160.png"));
 
-				MediaOverlay horizonOverlay = new MediaOverlay(MediaClip.CreateFromSurface(cb, new TimeSpan(0, 0, 0, 0, 1))); //generowanie horyzontu
+				MediaOverlay horizonOverlay = new MediaOverlay(MediaClip.CreateFromSurface(cb, new TimeSpan(0, 0, 0, 0, 1))); 
 				horizonOverlay.Position = overlayPosition;
 				horizonOverlay.Opacity = 1;
 

@@ -61,6 +61,7 @@ namespace BivrostHeatmapViewer
 		bool horizonFlag = false;
 		bool forceFovFlag = false;
 		bool scaleFovFlag = false;
+		bool grayscaleVideoFlag = false;
 
 		int forcedFov = 0;
 		public SavingResolutionsCollection resolutions;
@@ -757,7 +758,7 @@ namespace BivrostHeatmapViewer
 
             float dotsRadius = (float)mediaPlayerElement.ActualWidth / 4096 * 20;
 
-
+			valuePairs.Add("grayscaleVideoFlag", grayscaleVideoFlag);
             valuePairs.Add("backgroundColor", videoBackgroundPicker.Color);
 			valuePairs.Add("backgroundOpacity", (float)(1 - videoOpacity.Value / 100));
 			valuePairs.Add("dotsRadius", dotsRadius);
@@ -1065,6 +1066,15 @@ namespace BivrostHeatmapViewer
 			scaleFovFlag = false;
 		}
 
+		private void grayscaleVideo_Checked(object sender, RoutedEventArgs e)
+		{
+			grayscaleVideoFlag = true;
+		}
+
+		private void grayscaleVideo_Unchecked(object sender, RoutedEventArgs e)
+		{
+			grayscaleVideoFlag = false;
+		}
 	}
 
 

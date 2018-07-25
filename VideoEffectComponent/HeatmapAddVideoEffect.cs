@@ -128,6 +128,10 @@ namespace VideoEffectComponent
 				configuration.TryGetValue("heatmapOpacity", out heatmapOpacity);
 				this.heatmapOpacity = (float)heatmapOpacity;
 
+				object graysclaleVideoFlag;
+				configuration.TryGetValue("grayscaleVideoFlag", out graysclaleVideoFlag);
+				this.graysclaleVideoFlag = (bool)graysclaleVideoFlag;
+
 				this.offset = (long)((double)(this.offset / TimeSpan.TicksPerMillisecond) / this.frameLength);
 			}
 		}
@@ -145,6 +149,7 @@ namespace VideoEffectComponent
 		private Color backgroundColor;
 		private float backgroundOpacity;
 		private float heatmapOpacity;
+		private bool graysclaleVideoFlag;
 		//private bool correctionFlag = false;
 
 		public void ProcessFrame(ProcessVideoFrameContext context)
@@ -198,8 +203,26 @@ namespace VideoEffectComponent
 				scaleEffect.Scale = new System.Numerics.Vector2( (float)width / 64, (float)height / 64);
 				scaleEffect.InterpolationMode = CanvasImageInterpolation.Cubic;
 				scaleEffect.BorderMode = EffectBorderMode.Hard;
-				ds.DrawImage(inputBitmap);
+
+
+				if (graysclaleVideoFlag)
+				{
+					var grayScaleEffect = new GrayscaleEffect
+					{
+						BufferPrecision = CanvasBufferPrecision.Precision8UIntNormalized,
+						CacheOutput = false,
+						Source = inputBitmap
+					};
+					ds.DrawImage(grayScaleEffect);
+				}
+				else
+				{
+					ds.DrawImage(inputBitmap);
+				}
+
 				ds.DrawImage(scaleEffect, 0, 0, new Windows.Foundation.Rect { Height = height, Width = width }, heatmapOpacity);
+
+
 
 				if (generateDots)
 				{
@@ -208,6 +231,8 @@ namespace VideoEffectComponent
 						ds.FillCircle(yaw[i] * width / 64, pitch[i] * height / 64, dotsRadius, colors[i % 5]);
 					}
 				}
+
+
 
 				ds.FillRectangle(new Windows.Foundation.Rect { Height = height, Width = width }, solidColorBrush);
 
