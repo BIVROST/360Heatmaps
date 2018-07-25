@@ -1,6 +1,7 @@
 ﻿using Microsoft.Graphics.Canvas;
 using System;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
@@ -26,10 +27,22 @@ namespace BivrostHeatmapViewer
 
 	public class StaticHeatmapGenerator
 	{
-		private static async Task<WriteableBitmap> GenerateHeatmap(Session session)
+		private static async  Task<WriteableBitmap> GenerateHeatmap(Session session, bool forceFov, int forcedFov)
 		{
 			var deserializedData = Heatmap.CoordsDeserialize(session.history);
-			var heatmap = Heatmap.Generate(deserializedData);
+
+			if (forceFov)
+			{
+				foreach (Heatmap.Coord h in deserializedData)
+				{
+					h.fov = forcedFov;
+				}
+			}
+
+			float[] heatmap = await Task.Factory.StartNew<float[]>(() =>
+				Heatmap.Generate(deserializedData)
+			);
+
 			var renderedHeatmap = Heatmap.RenderHeatmap(heatmap);
 
 			WriteableBitmap wb = new WriteableBitmap(64, 64);
@@ -43,13 +56,14 @@ namespace BivrostHeatmapViewer
 			return wb;
 		}
 
-		public static async Task<MediaStreamSource> GenerateHeatmap(SessionCollection sessions, Rect overlayPosition, ColorPicker colorPicker, double heatmapOpacity)
+		public static async Task<MediaStreamSource> GenerateHeatmap(bool forceFov, int forcedFov, bool horizonFlag, SessionCollection sessions, Rect overlayPosition, Windows.UI.Color colorPickerColor, double heatmapOpacity)
 		{
+
 			CheckHistoryErrors(sessions);
 
 			StringBuilder sb = new StringBuilder();
 			MediaOverlayLayer mediaOverlayLayer = new MediaOverlayLayer();
-			WriteableBitmap wb;// = new List<WriteableBitmap>();
+			WriteableBitmap wb;
 
 			foreach (Session x in sessions.sessions)
 			{
@@ -59,7 +73,7 @@ namespace BivrostHeatmapViewer
 			Session s = new Session();
 			s.history = sb.ToString();
 
-			wb = await GenerateHeatmap(s);
+			wb = await GenerateHeatmap(s, forceFov, forcedFov);
 
 			/*
 
@@ -86,8 +100,6 @@ namespace BivrostHeatmapViewer
 			swb = SoftwareBitmap.Convert(swb, BitmapPixelFormat.Bgra8, BitmapAlphaMode.Ignore);
 
 			CanvasBitmap canvasBitmap = CanvasBitmap.CreateFromSoftwareBitmap(device, swb);
-
-
 			//var a = MediaClip.CreateFromSurface(canvasBitmap, new TimeSpan(0, 0, 0, 0, 1));
 
 			//offscreen
@@ -115,8 +127,24 @@ namespace BivrostHeatmapViewer
 			mediaOverlayLayer.Overlays.Add(mediaOverlay);
 
 
+			if (horizonFlag)
+			{
+				CanvasBitmap cb = await CanvasBitmap.LoadAsync(CanvasDevice.GetSharedDevice(), new Uri("ms-appx:///Assets/horizon3840x2160.png"));
+
+				MediaOverlay horizonOverlay = new MediaOverlay(MediaClip.CreateFromSurface(cb, new TimeSpan(0, 0, 0, 0, 1))); //generowanie horyzontu
+				horizonOverlay.Position = overlayPosition;
+				horizonOverlay.Opacity = 1;
+
+
+				mediaOverlayLayer.Overlays.Add(horizonOverlay);
+
+			}
+
+
+
 			MediaComposition mediaComposition = new MediaComposition();
-			mediaComposition.Clips.Add(MediaClip.CreateFromColor(colorPicker.Color, new TimeSpan(0, 0, 0, 0, 1)));
+
+			mediaComposition.Clips.Add(MediaClip.CreateFromColor(colorPickerColor, new TimeSpan(0, 0, 0, 0, 1)));
 			mediaComposition.OverlayLayers.Add(mediaOverlayLayer);
 
 			return mediaComposition.GeneratePreviewMediaStreamSource
@@ -129,19 +157,6 @@ namespace BivrostHeatmapViewer
 
 		public static void RenderCompositionToFile(StorageFile file, MediaComposition composition, saveProgressCallback ShowErrorMessage, Window window, MediaEncodingProfile encodingProfile, CancellationToken token, object selectedResolution)
 		{
-
-			//var temp = selectedResolution as Resolutions;
-
-			//encodingProfile.Video.Height = temp.Resolution.height;
-			//encodingProfile.Video.Width = temp.Resolution.width;
-
-			Debug.WriteLine("Save type: " + encodingProfile.Video.Type);
-			Debug.WriteLine("Save sub: " + encodingProfile.Video.Subtype);
-			Debug.WriteLine("Save id: " + encodingProfile.Video.ProfileId);
-			Debug.WriteLine("numerator: " + encodingProfile.Video.FrameRate.Numerator + " denominator: " + encodingProfile.Video.FrameRate.Denominator);
-			Debug.WriteLine((double)encodingProfile.Video.FrameRate.Numerator / encodingProfile.Video.FrameRate.Denominator);
-
-			//encodingProfile.Video.Bitrate = 12_000_000;
 
 			var saveOperation = composition.RenderToFileAsync(file, MediaTrimmingPreference.Precise, encodingProfile);
 

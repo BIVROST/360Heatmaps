@@ -28,6 +28,7 @@ using Windows.Media.Effects;
 using Windows.Foundation.Collections;
 using Windows.Media.MediaProperties;
 using Windows.UI.Popups;
+using Windows.UI.Core;
 
 
 /* TODO: 
@@ -386,13 +387,14 @@ namespace BivrostHeatmapViewer
 			horizonFlag = false;
 		}
 
-		private void GenerateStaticHeatmap(object sender, RoutedEventArgs e)
+		private async void GenerateStaticHeatmap(object sender, RoutedEventArgs e)
 		{
+		
 			saveCompositionButton.IsEnabled = false;
 			mediaPlayerElement.AreTransportControlsEnabled = false;
 
-			LoadingControl.IsLoading = true;
-			//ShowHeatmapGenerating();
+			ShowHeatmapGenerating();
+			
 
 			SessionCollection sessionCollection = new SessionCollection();
 			sessionCollection.sessions = new List<Session>();
@@ -404,13 +406,24 @@ namespace BivrostHeatmapViewer
 				sessionCollection.sessions.Add(s);
 			}
 
-			var result = StaticHeatmapGenerator.GenerateHeatmap
-				(
-				sessionCollection,
-				rect,
-				videoBackgroundPicker,
-				heatmapOpacity.Value / 100
-				);
+			if (forceFovFlag)
+			{
+				GetForcedFov();
+			}
+
+			
+			var result = await StaticHeatmapGenerator.GenerateHeatmap
+						  (
+						  forceFovFlag,
+						  forcedFov,
+						  horizonFlag,
+						  sessionCollection,
+						  rect,
+						  videoBackgroundPicker.Color,
+						  heatmapOpacity.Value / 100
+						  );
+			
+		
 
 			if (mediaPlayer == null)
 			{
@@ -419,10 +432,10 @@ namespace BivrostHeatmapViewer
 			}
 
 
-			mediaPlayerElement.Source = MediaSource.CreateFromMediaStreamSource(result.Result);
-			LoadingControl.IsLoading = false;
+			mediaPlayerElement.Source = MediaSource.CreateFromMediaStreamSource(result);
 			HideHeatmapGenerating();
 		}
+
 
 		private async void VideoGenTest2(object sender, RoutedEventArgs e)
 		{
@@ -593,7 +606,7 @@ namespace BivrostHeatmapViewer
 					composition.OverlayLayers[0] = await GenerateHorizonLayer((int)video.TrimmedDuration.TotalSeconds, temp.Resolution.height, temp.Resolution.width);
 				}
 
-				buttonLoadingStop.Visibility = Visibility.Visible;
+				//buttonLoadingStop.Visibility = Visibility.Visible;
 				generateVideoButton.IsEnabled = false;
 				saveCompositionButton.IsEnabled = false;
 

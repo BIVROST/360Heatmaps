@@ -219,7 +219,7 @@
 									</StackPanel>
 								</Button>
 							</StackPanel>
-							<StackPanel Orientation="Horizontal">
+							<StackPanel Orientation="Horizontal" Visibility="Collapsed">
 								<CheckBox x:Name="scaleFovCheckbox" HorizontalAlignment="Left" Content="Scale fov" Checked="scaleFovCheckbox_Checked" Unchecked="scaleFovCheckbox_Unchecked"/>
 								<TextBox x:Name="scaleFovTextBox" Visibility="{Binding ElementName=scaleFovCheckbox, Path=IsChecked, Converter={StaticResource ResourceKey=checkboxConverter} }" 
 									 Text="{Binding ElementName=scaleFovSlider, Path=Value, Converter={StaticResource ResourceKey=scaleFovConverter}}" VerticalAlignment="Center" HorizontalAlignment="Center" HorizontalTextAlignment="Center"
@@ -302,15 +302,8 @@
 				<SolidColorBrush Color="Gray"/>
 			</Rectangle.Fill>
 		</Rectangle>
-
-		<controls:Loading x:Name="LoadingControl" HorizontalContentAlignment="Center" 
-                          VerticalContentAlignment="Center" Grid.ColumnSpan="2">
-			<controls:Loading.Background>
-				<SolidColorBrush Color="Black" Opacity="0.7"/>
-			</controls:Loading.Background>
-			<ContentControl x:Name="LoadingContentControl"/>
-		</controls:Loading>
-
+		
+		
 		<Rectangle IsHitTestVisible="True" Grid.ColumnSpan="2" Width="600" Height="200" Opacity="1" Visibility="{Binding ElementName=videoLoading, Path=Visibility}">
 			<Rectangle.Fill>
 				<SolidColorBrush Color="{ThemeResource SystemRevealChromeMediumColor}"/>
@@ -320,8 +313,7 @@
 		<StackPanel Grid.ColumnSpan="2" VerticalAlignment="Center">
 			<TextBlock HorizontalAlignment="Center" Margin="5,5,5,20" Visibility="{Binding ElementName=videoLoading, Path=Visibility}">Saving progress</TextBlock>
 			<ProgressBar x:Name="videoLoading" HorizontalAlignment="Center" Width="500" Value="0" Visibility="Collapsed" />
-			<TextBlock Visibility="Collapsed"/>
-			<Button x:Name="buttonLoadingStop" HorizontalAlignment="Center" Style="{ThemeResource ButtonRevealStyle}" Width="auto" Height="auto" Visibility="Collapsed" Click="ButtonLoadingStop_Click" Margin="5,15,5,5">
+			<Button x:Name="buttonLoadingStop" HorizontalAlignment="Center" Style="{ThemeResource ButtonRevealStyle}" Width="auto" Height="auto" Visibility="{Binding ElementName=videoLoading, Path=Visibility}" Click="ButtonLoadingStop_Click" Margin="5,15,5,5">
 				<StackPanel Orientation="Horizontal">
 					<TextBlock Text="&#xE10A;" FontFamily="Segoe MDL2 Assets" VerticalAlignment="Center" Margin="0,0,5,0"/>
 					<TextBlock Text="Cancel" VerticalAlignment="Center"/>
