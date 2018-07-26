@@ -388,7 +388,8 @@ namespace BivrostHeatmapViewer
 
 		private async void GenerateStaticHeatmap(object sender, RoutedEventArgs e)
 		{
-		
+
+			mediaPlayerElement.Source = null;
 			saveCompositionButton.IsEnabled = false;
 			mediaPlayerElement.AreTransportControlsEnabled = false;
 
@@ -430,9 +431,8 @@ namespace BivrostHeatmapViewer
 			if (mediaPlayer == null)
 			{
 				mediaPlayer = new MediaPlayer();
-				mediaPlayer = mediaPlayerElement.MediaPlayer;
 			}
-
+			mediaPlayer = mediaPlayerElement.MediaPlayer;
 
 			mediaPlayerElement.Source = MediaSource.CreateFromMediaStreamSource(result);
 			HideHeatmapGenerating();

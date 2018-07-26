@@ -132,59 +132,6 @@ namespace BivrostHeatmapViewer
 				 TrimStaticHeatmap(sessions, startTime, stopTime, video)
 			);
 
-			//List<Heatmap.Coord> inputList = new List<Heatmap.Coord>();
-
-			/*
-			if (video != null)
-			{
-				foreach (Session x in sessions.sessions)
-				{
-					int fps = x.sample_rate;
-					int start = (int)Math.Floor(startTime / 1000 * fps);
-					int stop = (int)Math.Floor(stopTime / 1000 * fps);
-
-					var deserial = Heatmap.CoordsDeserialize(x.history);
-
-					for (int i = start; i < stop; i++)
-					{
-						try
-						{
-							inputList.Add(deserial[i]);
-						}
-						catch
-						{
-							inputList.Add(new Heatmap.Coord { fov = 0, pitch = 0, yaw = 0 });
-						}
-					}
-
-				}
-			}
-			else
-			{
-				foreach (Session x in sessions.sessions)
-				{
-					var deserial = Heatmap.CoordsDeserialize(x.history);
-					inputList.AddRange(deserial);
-				}
-			}
-			*/
-			/*
-			StringBuilder sb = new StringBuilder();
-			MediaOverlayLayer mediaOverlayLayer = new MediaOverlayLayer();
-			WriteableBitmap wb;
-
-			foreach (Session x in sessions.sessions)
-			{
-				sb.Append(x.history);
-			}
-
-			Session s = new Session();
-			s.history = sb.ToString();
-
-			wb = await GenerateHeatmap(s, forceFov, forcedFov);
-			*/
-
-
 			MediaOverlayLayer mediaOverlayLayer = new MediaOverlayLayer();
 			WriteableBitmap wb = await GenerateHeatmap(inputList, forceFov, forcedFov);
 
