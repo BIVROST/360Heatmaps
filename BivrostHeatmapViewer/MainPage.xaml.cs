@@ -58,10 +58,11 @@ namespace BivrostHeatmapViewer
 		bool dotsFlag = false;
 		bool horizonFlag = false;
 		bool forceFovFlag = false;
-		bool scaleFovFlag = false;
 		bool grayscaleVideoFlag = false;
+		bool scaleFovFlag = false;
 
 		int forcedFov = 0;
+		int scaleFovInPercentage = 0;
 		public SavingResolutionsCollection resolutions;
 
 		private ObservableCollection<Session> _items = new ObservableCollection<Session>();
@@ -414,6 +415,8 @@ namespace BivrostHeatmapViewer
 			
 			var result = await StaticHeatmapGenerator.GenerateHeatmap
 						  (
+						  scaleFovFlag,
+						  scaleFovInPercentage,
 						  forceFovFlag,
 						  forcedFov,
 						  horizonFlag,
@@ -443,9 +446,6 @@ namespace BivrostHeatmapViewer
 		{
 
             var ep = SetVideoPlayer();
-			//var ep = MediaEncodingProfile.CreateMp4(VideoEncodingQuality.HD1080p);
-			//ep.Video.Height = 600;
-			//ep.Video.Width = 1200;
 
 			saveCompositionButton.IsEnabled = false;
 			composition = new MediaComposition();
@@ -693,7 +693,6 @@ namespace BivrostHeatmapViewer
         private void ButtonLoadingStop_Click(object sender, RoutedEventArgs e)
         {
 			buttonLoadingStop.Visibility = Visibility.Collapsed;
-			//loadingScreen.Visibility = Visibility.Collapsed;
 			ShowErrorMessage(100.0);
 			tokenSource.Cancel();
         }
@@ -935,6 +934,7 @@ namespace BivrostHeatmapViewer
 			scaleFovCheckbox.IsChecked = false;
 			scaleFovCheckbox.IsEnabled = false;
 			forceFovFlag = true;
+			scaleFovFlag = false;
 		}
 
 		private void forceFovCheckbox_Unchecked(object sender, RoutedEventArgs e)
@@ -945,11 +945,6 @@ namespace BivrostHeatmapViewer
 
 		private async void GetForcedFov ()
 		{
-			if (scaleFovFlag)
-			{
-				forcedFov = int.Parse(scaleFovTextBox.Text);
-				return;
-			}
 
 			if (int.TryParse(forcedFovTextBox.Text, out forcedFov))
 			{
@@ -981,17 +976,20 @@ namespace BivrostHeatmapViewer
 
 		private void rangeSelector_ValueChanged(object sender, Microsoft.Toolkit.Uwp.UI.Controls.RangeChangedEventArgs e)
 		{
-			int stopHour = (int)rangeSelector.RangeMax / 3600;
-			int stopMinute = (int)(rangeSelector.RangeMax - stopHour * 3600) / 60;
-			int stopSecond = (int)(rangeSelector.RangeMax - stopMinute * 60);
-			int stopMili = (int)((rangeSelector.RangeMax - stopMinute * 60 - stopSecond) * 1000);
+			double rangemax = rangeSelector.RangeMax / 1000;
+			double rangemin = rangeSelector.RangeMin / 1000;
+
+			int stopHour = (int)rangemax / 3600;
+			int stopMinute = (int)(rangemax - stopHour * 3600) / 60;
+			int stopSecond = (int)(rangemax - stopMinute * 60);
+			int stopMili = (int)((rangemax - stopMinute * 60 - stopSecond) * 1000);
 
 			TimeSpan stopTime = new TimeSpan(0, stopHour, stopMinute, stopSecond, stopMili);
 
-			int startHour = (int)rangeSelector.RangeMin / 3600;
-			int startMinute = (int)rangeSelector.RangeMin / 60;
-			int startSecond = (int)(rangeSelector.RangeMin - startMinute * 60);
-			int startMili = (int)((rangeSelector.RangeMin - startMinute * 60 - startSecond) * 1000);
+			int startHour = (int)rangemin / 3600;
+			int startMinute = (int)rangemin / 60;
+			int startSecond = (int)(rangemin - startMinute * 60);
+			int startMili = (int)((rangemin - startMinute * 60 - startSecond) * 1000);
 
 			TimeSpan startTime = new TimeSpan(0, startHour, startMinute, startSecond, startMili);
 
@@ -1003,12 +1001,6 @@ namespace BivrostHeatmapViewer
 
 			timeRangeStart.Text = startTime.ToString(format);
 			timeRangeStop.Text = stopTime.ToString(format);
-
-			Debug.WriteLine(rangeSelector.RangeMin);
-			Debug.WriteLine(rangeSelector.RangeMax);
-
-			//Debug.WriteLine(playerGrid.ActualWidth);
-			Debug.WriteLine(playerGrid.ActualWidth);
 
 		}
 
@@ -1051,22 +1043,6 @@ namespace BivrostHeatmapViewer
 			scaleFovSlider.Value = 100;
 		}
 
-		private void scaleFovCheckbox_Checked(object sender, RoutedEventArgs e)
-		{
-			forceFovCheckbox.IsChecked = false;
-			forceFovCheckbox.IsEnabled = false;
-			forceFovFlag = true;
-			scaleFovFlag = true;
-			forcedFov = int.Parse(scaleFovTextBox.Text);
-		}
-
-		private void scaleFovCheckbox_Unchecked(object sender, RoutedEventArgs e)
-		{
-			forceFovCheckbox.IsEnabled = true;
-			forceFovFlag = false;
-			scaleFovFlag = false;
-		}
-
 		private void grayscaleVideo_Checked(object sender, RoutedEventArgs e)
 		{
 			grayscaleVideoFlag = true;
@@ -1075,6 +1051,30 @@ namespace BivrostHeatmapViewer
 		private void grayscaleVideo_Unchecked(object sender, RoutedEventArgs e)
 		{
 			grayscaleVideoFlag = false;
+		}
+
+		private void scaleFovCheckbox_Checked(object sender, RoutedEventArgs e)
+		{
+			forceFovCheckbox.IsChecked = false;
+			forceFovCheckbox.IsEnabled = false;
+			scaleFovFlag = true;
+			forceFovFlag = false;
+		}
+
+		private void scaleFovCheckbox_Unchecked(object sender, RoutedEventArgs e)
+		{
+			forceFovCheckbox.IsEnabled = true;
+			scaleFovFlag = false;
+		}
+
+		private void scaleFovSlider_PointerMoved(object sender, Windows.UI.Xaml.Input.PointerRoutedEventArgs e)
+		{
+			scaleFovInPercentage = (int)(sender as Slider).Value;
+		}
+
+		private void scaleFovSlider_ValueChanged(object sender, Windows.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+		{
+			scaleFovInPercentage = (int)(sender as Slider).Value;
 		}
 	}
 

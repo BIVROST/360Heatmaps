@@ -209,7 +209,7 @@
 							<StackPanel Orientation="Horizontal">
 								<CheckBox x:Name="forceFovCheckbox" HorizontalAlignment="Left" Content="Force fov" Checked="forceFovCheckbox_Checked" Unchecked="forceFovCheckbox_Unchecked"/>
 								<TextBox x:Name="forcedFovTextBox" HorizontalAlignment="Center" Visibility="{Binding ElementName=forceFovCheckbox, Path=IsChecked, Converter={StaticResource ResourceKey=checkboxConverter}}"/>
-								<Button x:Name="resetFovButton" Visibility="{Binding ElementName=forceFovCheckbox, Path=IsChecked, Converter={StaticResource ResourceKey=checkboxConverter}}"
+								<!--<Button x:Name="resetFovButton" Visibility="{Binding ElementName=forceFovCheckbox, Path=IsChecked, Converter={StaticResource ResourceKey=checkboxConverter}}"
 									Background="Transparent"
 									HorizontalAlignment="Left" Margin="10,0,0,0" 
 									Height="{Binding ElementName=forcedFovTextBox, Path=Height}"
@@ -217,30 +217,24 @@
 									<StackPanel Orientation="Horizontal">
 										<TextBlock Text="&#xE149;" FontFamily="Segoe MDL2 Assets" VerticalAlignment="Center"/>
 									</StackPanel>
-								</Button>
+								</Button>-->
 							</StackPanel>
-							<CheckBox x:Name="grayscaleVideo" HorizontalAlignment="Left" Content="Grayscale video" Checked="grayscaleVideo_Checked" Unchecked="grayscaleVideo_Unchecked"/>
-							<StackPanel Orientation="Horizontal" Visibility="Collapsed">
+
+							<StackPanel Orientation="Horizontal" Visibility="Visible">
 								<CheckBox x:Name="scaleFovCheckbox" HorizontalAlignment="Left" Content="Scale fov" Checked="scaleFovCheckbox_Checked" Unchecked="scaleFovCheckbox_Unchecked"/>
-								<TextBox x:Name="scaleFovTextBox" Visibility="{Binding ElementName=scaleFovCheckbox, Path=IsChecked, Converter={StaticResource ResourceKey=checkboxConverter} }" 
-									 Text="{Binding ElementName=scaleFovSlider, Path=Value, Converter={StaticResource ResourceKey=scaleFovConverter}}" VerticalAlignment="Center" HorizontalAlignment="Center" HorizontalTextAlignment="Center"
-									 TextAlignment="Center" Margin="0,0,0,0" IsEnabled="False"/>
 								<Button x:Name="resetScaleFovButton" Visibility="{Binding ElementName=scaleFovCheckbox, Path=IsChecked, Converter={StaticResource ResourceKey=checkboxConverter}}" Background="Transparent"
 									HorizontalAlignment="Left" Margin="10,0,0,0" 
 									Height="{Binding ElementName=scaleFovTextBox, Path=Height}"
                                     Width="35" Click="resetScaleFov_Click">
 									<StackPanel Orientation="Horizontal">
 										<TextBlock Text="&#xE149;" FontFamily="Segoe MDL2 Assets" VerticalAlignment="Center"/>
-
 									</StackPanel>
 								</Button>
-
 							</StackPanel>
-
 						</StackPanel>
-						<Slider x:Name="scaleFovSlider" HorizontalAlignment="Center" Visibility="{Binding ElementName=scaleFovCheckbox, Path=IsChecked, Converter={StaticResource ResourceKey=checkboxConverter}}" Minimum="0" Maximum="200" Value="100" StepFrequency="1" TickPlacement="None" TickFrequency="1" Width="300"/>
+						<Slider x:Name="scaleFovSlider" HorizontalAlignment="Center" Visibility="{Binding ElementName=scaleFovCheckbox, Path=IsChecked, Converter={StaticResource ResourceKey=checkboxConverter}}" Minimum="0" Maximum="300" Value="100" StepFrequency="1"
+								TickPlacement="None" TickFrequency="1" Width="300" ValueChanged="scaleFovSlider_ValueChanged"/>
 					</StackPanel>
-					<!--{Binding ElementName=forceFovCheckbox, Path=IsChecked, Converter={StaticResource ResourceKey=checkboxConverter}}-->
 				</StackPanel>
 
 				<StackPanel Grid.Column="1" HorizontalAlignment="Center" Width="500">
@@ -248,7 +242,7 @@
 					<TextBlock HorizontalAlignment="Center">Time range selector</TextBlock>
 					<StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
 						<TextBlock x:Name="timeRangeStart" Text="0" Margin="0,0,10,0"/>
-						<controls:RangeSelector x:Name="rangeSelector" StepFrequency="1" Width="300" PointerMoved="rangeSelector_PointerMoved" />
+						<controls:RangeSelector x:Name="rangeSelector" StepFrequency="1" Width="300" PointerMoved="rangeSelector_PointerMoved" ValueChanged="rangeSelector_ValueChanged" />
 						<TextBlock x:Name="timeRangeStop" Text="1" Margin="10,0,0,0"/>
 					</StackPanel>
 					<TextBlock/>
@@ -283,10 +277,10 @@
 						</Button>
 
 					</StackPanel>
-					<StackPanel Width="300">
-						<TextBlock/>
+					<StackPanel Width="300" Margin="0,7,0,0">
 						<CheckBox x:Name="horizonEnableCheckbox" HorizontalAlignment="Left" Content="Enable Horizon" Checked="horizonEnableCheckbox_Checked" Unchecked="horizonEnableCheckbox_Unchecked"/>
 						<CheckBox x:Name="dotsEnableCheckbox" HorizontalAlignment="Left" Content="Enable Dots" Checked="dotsEnableCheckbox_Checked" Unchecked="dotsEnableCheckbox_Unchecked"/>
+						<CheckBox x:Name="grayscaleVideo" HorizontalAlignment="Left" Content="Grayscale video" Checked="grayscaleVideo_Checked" Unchecked="grayscaleVideo_Unchecked"/>
 					</StackPanel>
 
 				</StackPanel>

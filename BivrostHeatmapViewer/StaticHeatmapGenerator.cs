@@ -25,36 +25,8 @@ namespace BivrostHeatmapViewer
 
 	public class StaticHeatmapGenerator
 	{
-		private static async  Task<WriteableBitmap> GenerateHeatmap(Session session, bool forceFov, int forcedFov)
-		{
-			var deserializedData = Heatmap.CoordsDeserialize(session.history);
 
-			if (forceFov)
-			{
-				foreach (Heatmap.Coord h in deserializedData)
-				{
-					h.fov = forcedFov;
-				}
-			}
-
-			float[] heatmap = await Task.Factory.StartNew<float[]>(() =>
-				Heatmap.Generate(deserializedData)
-			);
-
-			var renderedHeatmap = Heatmap.RenderHeatmap(heatmap);
-
-			WriteableBitmap wb = new WriteableBitmap(64, 64);
-
-
-			using (Stream stream = wb.PixelBuffer.AsStream())
-			{
-				await stream.WriteAsync(renderedHeatmap, 0, renderedHeatmap.Length);
-			}
-
-			return wb;
-		}
-
-		private static async Task<WriteableBitmap> GenerateHeatmap(List<Heatmap.Coord> inputList, bool forceFov, int forcedFov)
+		private static async Task<WriteableBitmap> GenerateHeatmap(List<Heatmap.Coord> inputList, bool forceFov, int forcedFov, bool scaleFovFlag, int scaleInPercentage)
 		{
 			//var deserializedData = Heatmap.CoordsDeserialize(session.history);
 
@@ -62,7 +34,18 @@ namespace BivrostHeatmapViewer
 			{
 				foreach (Heatmap.Coord h in inputList)
 				{
+					if (h.fov == 0)
+					{
+						continue;
+					}
 					h.fov = forcedFov;
+				}
+			}
+			else if (scaleFovFlag)
+			{
+				foreach (Heatmap.Coord h in inputList)
+				{
+					h.fov = scaleFov(h.fov, scaleInPercentage);
 				}
 			}
 
@@ -122,7 +105,7 @@ namespace BivrostHeatmapViewer
 			return inputList;
 		}
 
-		public static async Task<MediaStreamSource> GenerateHeatmap(bool forceFov, int forcedFov, bool horizonFlag, SessionCollection sessions, Rect overlayPosition, Windows.UI.Color colorPickerColor,
+		public static async Task<MediaStreamSource> GenerateHeatmap(bool scaleFovFlag, int scaleInPercentage, bool forceFov, int forcedFov, bool horizonFlag, SessionCollection sessions, Rect overlayPosition, Windows.UI.Color colorPickerColor,
 			double heatmapOpacity, double startTime, double stopTime, MediaClip video)
 		{
 
@@ -133,7 +116,7 @@ namespace BivrostHeatmapViewer
 			);
 
 			MediaOverlayLayer mediaOverlayLayer = new MediaOverlayLayer();
-			WriteableBitmap wb = await GenerateHeatmap(inputList, forceFov, forcedFov);
+			WriteableBitmap wb = await GenerateHeatmap(inputList, forceFov, forcedFov, scaleFovFlag, scaleInPercentage);
 
 
 
@@ -261,6 +244,26 @@ namespace BivrostHeatmapViewer
 				dialog.Commands.Add(new UICommand { Label = "OK", Id = 0 });
 				await dialog.ShowAsync();
 			}
+		}
+
+		private static int scaleFov (int inputFov, int scaleInPercent)
+		{
+			int outputFov;
+
+			double scale = (double)scaleInPercent / 100;
+			outputFov = (int)Math.Round((double)inputFov * scale, 0);
+
+			if (outputFov > 180)
+			{
+				return 180;
+			}
+			else if (outputFov < 0)
+			{
+				return 0;
+			}
+
+
+			return outputFov;
 		}
 
 	}
