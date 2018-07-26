@@ -187,6 +187,8 @@ namespace BivrostHeatmapViewer
 					resolutions = new SavingResolutionsCollection(enc);
 					saveResolutionSelector.ItemsSource = resolutions;
 					saveResolutionSelector.SelectedIndex = 0;
+
+					AllowToWatchVideoBeforeGenerating(true);
 				}
 			}
 		}
@@ -215,10 +217,32 @@ namespace BivrostHeatmapViewer
 						resolutions = new SavingResolutionsCollection(enc);
 						saveResolutionSelector.ItemsSource = resolutions;
 						saveResolutionSelector.SelectedIndex = 0;
+
+						AllowToWatchVideoBeforeGenerating(true);
 					}
 				}
 			}
 			GenerateButtonEnable();
+		}
+
+		private void AllowToWatchVideoBeforeGenerating (bool allowFlag)
+		{
+			MediaComposition comp = new MediaComposition();
+			comp.Clips.Add(video);
+
+			mediaPlayerElement.Source = null;
+			mediaPlayerElement.AreTransportControlsEnabled = true;
+			var ep = SetVideoPlayer();
+
+			if (mediaPlayer == null)
+			{
+				mediaPlayer = new MediaPlayer();
+			}
+
+			var res = comp.GenerateMediaStreamSource(ep);
+			var md = MediaSource.CreateFromMediaStreamSource(res);
+			mediaPlayerElement.Source = md;
+			mediaPlayer = mediaPlayerElement.MediaPlayer;
 		}
 
 		private void selectAllHeatmaps_Click(object sender, RoutedEventArgs e)
@@ -440,7 +464,6 @@ namespace BivrostHeatmapViewer
 			mediaPlayerElement.Source = MediaSource.CreateFromMediaStreamSource(result);
 			HideHeatmapGenerating();
 		}
-
 
 		private async void VideoGenTest2(object sender, RoutedEventArgs e)
 		{
