@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Diagnostics;
-using System.Linq;
+﻿using System.Collections.ObjectModel;
 using System.Text;
-using System.Threading.Tasks;
 using Windows.Media.MediaProperties;
 
 namespace BivrostHeatmapViewer
@@ -69,6 +64,12 @@ namespace BivrostHeatmapViewer
 				if (resolutions[i] != width)
 				{
 					uint calcHeight = resolutions[i] * height / width;
+
+					if (calcHeight % 2 != 0)
+					{
+						calcHeight = calcHeight + 1;
+					}
+
 					Add(new Resolutions(new SavingResolutions {width=resolutions[i], height = calcHeight }, false));
 				}
 				else

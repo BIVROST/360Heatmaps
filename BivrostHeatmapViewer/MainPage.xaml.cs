@@ -10,7 +10,6 @@ using Windows.Foundation;
 using Windows.Media.Core;
 using Windows.Storage;
 using Windows.Storage.Pickers;
-using Windows.Storage.Streams;
 using Windows.UI.Composition;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Hosting;
@@ -28,7 +27,6 @@ using Windows.Media.Effects;
 using Windows.Foundation.Collections;
 using Windows.Media.MediaProperties;
 using Windows.UI.Popups;
-using Windows.UI.Core;
 
 
 /* TODO: 
@@ -421,7 +419,10 @@ namespace BivrostHeatmapViewer
 						  sessionCollection,
 						  rect,
 						  videoBackgroundPicker.Color,
-						  heatmapOpacity.Value / 100
+						  heatmapOpacity.Value / 100,
+						  rangeSelector.RangeMin,
+						  rangeSelector.RangeMax,
+						  video
 						  );
 			
 		

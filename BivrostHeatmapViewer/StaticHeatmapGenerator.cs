@@ -1,10 +1,9 @@
 ﻿using Microsoft.Graphics.Canvas;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
 using System.IO;
 using System.Runtime.InteropServices.WindowsRuntime;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.Foundation;
@@ -17,7 +16,6 @@ using Windows.Storage;
 using Windows.UI.Core;
 using Windows.UI.Popups;
 using Windows.UI.Xaml;
-using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media.Imaging;
 
 namespace BivrostHeatmapViewer
@@ -56,11 +54,121 @@ namespace BivrostHeatmapViewer
 			return wb;
 		}
 
-		public static async Task<MediaStreamSource> GenerateHeatmap(bool forceFov, int forcedFov, bool horizonFlag, SessionCollection sessions, Rect overlayPosition, Windows.UI.Color colorPickerColor, double heatmapOpacity)
+		private static async Task<WriteableBitmap> GenerateHeatmap(List<Heatmap.Coord> inputList, bool forceFov, int forcedFov)
+		{
+			//var deserializedData = Heatmap.CoordsDeserialize(session.history);
+
+			if (forceFov)
+			{
+				foreach (Heatmap.Coord h in inputList)
+				{
+					h.fov = forcedFov;
+				}
+			}
+
+			float[] heatmap = await Task.Factory.StartNew(() =>
+				Heatmap.Generate(inputList)
+			);
+
+			var renderedHeatmap = Heatmap.RenderHeatmap(heatmap);
+
+			WriteableBitmap wb = new WriteableBitmap(64, 64);
+
+
+			using (Stream stream = wb.PixelBuffer.AsStream())
+			{
+				await stream.WriteAsync(renderedHeatmap, 0, renderedHeatmap.Length);
+			}
+
+			return wb;
+		}
+
+		private static List<Heatmap.Coord> TrimStaticHeatmap(SessionCollection sessions, double startTime, double stopTime, MediaClip video)
+		{
+			List<Heatmap.Coord> inputList = new List<Heatmap.Coord>();
+			if (video != null)
+			{
+				foreach (Session x in sessions.sessions)
+				{
+					int fps = x.sample_rate;
+					int start = (int)Math.Floor(startTime / 1000 * fps);
+					int stop = (int)Math.Floor(stopTime / 1000 * fps);
+
+					var deserial = Heatmap.CoordsDeserialize(x.history);
+
+					for (int i = start; i < stop; i++)
+					{
+						try
+						{
+							inputList.Add(deserial[i]);
+						}
+						catch
+						{
+							inputList.Add(new Heatmap.Coord { fov = 0, pitch = 0, yaw = 0 });
+						}
+					}
+
+				}
+			}
+			else
+			{
+				foreach (Session x in sessions.sessions)
+				{
+					var deserial = Heatmap.CoordsDeserialize(x.history);
+					inputList.AddRange(deserial);
+				}
+			}
+
+			return inputList;
+		}
+
+		public static async Task<MediaStreamSource> GenerateHeatmap(bool forceFov, int forcedFov, bool horizonFlag, SessionCollection sessions, Rect overlayPosition, Windows.UI.Color colorPickerColor,
+			double heatmapOpacity, double startTime, double stopTime, MediaClip video)
 		{
 
 			CheckHistoryErrors(sessions);
 
+			List<Heatmap.Coord> inputList = await Task.Factory.StartNew(() =>
+				 TrimStaticHeatmap(sessions, startTime, stopTime, video)
+			);
+
+			//List<Heatmap.Coord> inputList = new List<Heatmap.Coord>();
+
+			/*
+			if (video != null)
+			{
+				foreach (Session x in sessions.sessions)
+				{
+					int fps = x.sample_rate;
+					int start = (int)Math.Floor(startTime / 1000 * fps);
+					int stop = (int)Math.Floor(stopTime / 1000 * fps);
+
+					var deserial = Heatmap.CoordsDeserialize(x.history);
+
+					for (int i = start; i < stop; i++)
+					{
+						try
+						{
+							inputList.Add(deserial[i]);
+						}
+						catch
+						{
+							inputList.Add(new Heatmap.Coord { fov = 0, pitch = 0, yaw = 0 });
+						}
+					}
+
+				}
+			}
+			else
+			{
+				foreach (Session x in sessions.sessions)
+				{
+					var deserial = Heatmap.CoordsDeserialize(x.history);
+					inputList.AddRange(deserial);
+				}
+			}
+			*/
+			/*
 			StringBuilder sb = new StringBuilder();
 			MediaOverlayLayer mediaOverlayLayer = new MediaOverlayLayer();
 			WriteableBitmap wb;
@@ -74,6 +182,13 @@ namespace BivrostHeatmapViewer
 			s.history = sb.ToString();
 
 			wb = await GenerateHeatmap(s, forceFov, forcedFov);
+			*/
+
+
+			MediaOverlayLayer mediaOverlayLayer = new MediaOverlayLayer();
+			WriteableBitmap wb = await GenerateHeatmap(inputList, forceFov, forcedFov);
+
+
 
 			CanvasDevice device = CanvasDevice.GetSharedDevice();
 
