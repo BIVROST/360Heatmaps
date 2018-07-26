@@ -436,8 +436,9 @@ namespace BivrostHeatmapViewer
 				GetForcedFov();
 			}
 
-			
-			var result = await StaticHeatmapGenerator.GenerateHeatmap
+			HeatmapGenerator generator = new HeatmapGenerator();
+
+			var result = await generator.GenerateHeatmap
 						  (
 						  scaleFovFlag,
 						  scaleFovInPercentage,
@@ -483,7 +484,9 @@ namespace BivrostHeatmapViewer
 				sessionCollection.sessions.Add(s);
 			}
 
-			StaticHeatmapGenerator.CheckHistoryErrors(sessionCollection);
+			HeatmapGenerator generator = new HeatmapGenerator();
+
+			generator.CheckHistoryErrors(sessionCollection);
 
             FillEffectPropertySet(sessionCollection);
 
@@ -635,7 +638,9 @@ namespace BivrostHeatmapViewer
 				generateVideoButton.IsEnabled = false;
 				saveCompositionButton.IsEnabled = false;
 
-				StaticHeatmapGenerator.RenderCompositionToFile(file, composition, saveProgress, Window.Current, mediaEncoding, token, saveResolutionSelector.SelectedItem);
+				HeatmapGenerator generator = new HeatmapGenerator();
+
+				generator.RenderCompositionToFile(file, composition, saveProgress, Window.Current, mediaEncoding, token, saveResolutionSelector.SelectedItem);
 
 			}
 		}
