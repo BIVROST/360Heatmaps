@@ -246,7 +246,7 @@ namespace BivrostHeatmapViewer
 			}
 		}
 
-		private int scaleFov (int inputFov, int scaleInPercent)
+		private static int scaleFov (int inputFov, int scaleInPercent)
 		{
 			int outputFov;
 
