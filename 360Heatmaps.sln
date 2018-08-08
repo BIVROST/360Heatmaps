@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27130.2020
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BivrostHeatmapViewer", "BivrostHeatmapViewer\BivrostHeatmapViewer.csproj", "{58B670D2-0D17-46A5-AAD9-E0C8BAC528F3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "360Heatmaps", "BivrostHeatmapViewer\360Heatmaps.csproj", "{58B670D2-0D17-46A5-AAD9-E0C8BAC528F3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VideoEffectComponent", "VideoEffectComponent\VideoEffectComponent.csproj", "{FA74C0E4-2593-499D-9FA3-1FC5672D44F5}"
 EndProject

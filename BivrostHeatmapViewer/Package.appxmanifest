@@ -14,15 +14,15 @@
     <Resource Language="x-generate" />
   </Resources>
   <Applications>
-    <Application Id="App" Executable="$targetnametoken$.exe" EntryPoint="BivrostHeatmapViewer.App">
+    <Application Id="App" Executable="$targetnametoken$.exe" EntryPoint="360Heatmaps.App">
       <Extensions>
+        <desktop:Extension Category="windows.fullTrustProcess" Executable="Win32\SystrayComponent.exe">
+        </desktop:Extension>
         <uap:Extension Category="windows.appService">
           <uap:AppService Name="SystrayExtensionService" />
         </uap:Extension>
-        <desktop:Extension Category="windows.fullTrustProcess" Executable="Win32\SystrayComponent.exe">
-        </desktop:Extension>
       </Extensions>
-      <uap:VisualElements DisplayName="BivrostHeatmapViewer" Square150x150Logo="Assets\Square150x150Logo.png" Square44x44Logo="Assets\Square44x44Logo.png" Description="BivrostHeatmapViewer" BackgroundColor="transparent">
+      <uap:VisualElements DisplayName="360Heatmaps" Square150x150Logo="Assets\Square150x150Logo.png" Square44x44Logo="Assets\Square44x44Logo.png" Description="360Heatmaps" BackgroundColor="transparent">
         <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png">
         </uap:DefaultTile>
         <uap:SplashScreen Image="Assets\SplashScreen.png" />

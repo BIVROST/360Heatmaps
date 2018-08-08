@@ -418,6 +418,9 @@ namespace BivrostHeatmapViewer
 			saveCompositionButton.IsEnabled = false;
 			mediaPlayerElement.AreTransportControlsEnabled = false;
 
+			mediaPlayerElement.Width = 1200;
+			mediaPlayerElement.Height = 600;
+
 			ShowHeatmapGenerating();
 			
 

@@ -7,7 +7,6 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:controls="using:Microsoft.Toolkit.Uwp.UI.Controls"
 	DataContext="{Binding RelativeSource={RelativeSource Self}}"
-	Unloaded="Page_Unloaded"
     mc:Ignorable="d">
 
 	<Page.Resources>
@@ -25,14 +24,6 @@
 			<ColumnDefinition Width="*" />
 		</Grid.ColumnDefinitions>
 
-
-
-		<!--
-		<Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" x:Name="GlassHost">
-			<TextBlock Text="abrakadabra 123666!!!~~~ioneoneone" FontSize="96" VerticalAlignment="Center" HorizontalAlignment="Center" TextWrapping="Wrap"/>
-			<Image x:Name="HeatImage" Source="heatmap.png" Stretch="Fill" Opacity="0.5"/>
-		</Grid>
-		-->
 		<Grid Padding="12,12,0,12">
 			<Grid.RowDefinitions>
 				<RowDefinition Height="auto" />
@@ -161,33 +152,9 @@
 					</MediaPlayerElement>
 					<ProgressRing x:Name="heatmapLoadingIndicator"  IsActive="False" Width="64" Height="64" Visibility="Visible"/>
 
-					<!-- <Canvas x:Name="mainPanel" Margin="-16" Visibility="Collapsed" Opacity="0.5" IsHitTestVisible="False" Background="White"
-							Width="1400"
-							Height="800"
-							/>-->
-
-					
-
-					<!--
-					<Image x:Name="heatImage" Stretch="Fill" Opacity="0.5" IsHitTestVisible="False">
-
-					</Image>
-					<Image x:Name="horizonImage" Source="ms-appx:///Assets/horizon3840x2160.png" Visibility="Collapsed" Stretch="Fill" Opacity="0.5" IsHitTestVisible="False"
-						   Width="{Binding ElementName=mediaPlayerElement, Path=ActualWidth}"
-							Height="{Binding ElementName=mediaPlayerElement, Path=ActualHeight}"
-		
-						   />
-					-->
-
-					
 				</Grid>
 				
 			</Viewbox>
-
-			<!--<Rectangle Grid.Row="1" AllowDrop="True" Drop="SelectedVideo_Drop" DragOver="SelectedVideo_DragOver" IsHitTestVisible="False" Fill="Transparent" Opacity="0.3"/>-->
-
-
-
 
 			<Grid Grid.Column="1" Padding="32" Grid.Row="2">
 				<Grid.ColumnDefinitions>
@@ -209,15 +176,6 @@
 							<StackPanel Orientation="Horizontal">
 								<CheckBox x:Name="forceFovCheckbox" HorizontalAlignment="Left" Content="Force fov" Checked="forceFovCheckbox_Checked" Unchecked="forceFovCheckbox_Unchecked"/>
 								<TextBox x:Name="forcedFovTextBox" HorizontalAlignment="Center" Visibility="{Binding ElementName=forceFovCheckbox, Path=IsChecked, Converter={StaticResource ResourceKey=checkboxConverter}}"/>
-								<!--<Button x:Name="resetFovButton" Visibility="{Binding ElementName=forceFovCheckbox, Path=IsChecked, Converter={StaticResource ResourceKey=checkboxConverter}}"
-									Background="Transparent"
-									HorizontalAlignment="Left" Margin="10,0,0,0" 
-									Height="{Binding ElementName=forcedFovTextBox, Path=Height}"
-                                    Width="35" Click="resetFov_Click">
-									<StackPanel Orientation="Horizontal">
-										<TextBlock Text="&#xE149;" FontFamily="Segoe MDL2 Assets" VerticalAlignment="Center"/>
-									</StackPanel>
-								</Button>-->
 							</StackPanel>
 
 							<StackPanel Orientation="Horizontal" Visibility="Visible">
