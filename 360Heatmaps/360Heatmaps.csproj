@@ -113,6 +113,7 @@
       <SubType>Designer</SubType>
     </AppxManifest>
     <Content Include="Assets\horizon3840x2160.png" />
+    <Content Include="Assets\Square44x44Logo.scale-100.png" />
     <Content Include="Sessions\sessions-okrutna.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
