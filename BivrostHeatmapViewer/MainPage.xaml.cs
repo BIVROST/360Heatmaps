@@ -171,11 +171,13 @@ namespace BivrostHeatmapViewer
 		private async void addVideoButton_Click(object sender, RoutedEventArgs e)
 		{
 			StorageFile file;
+			IReadOnlyList<StorageFile> files;
 
-			file = await loadFile(".mp4");
+			files = await loadFile("single", ".mp4");
 
-			if (file != null)
+			if (files.Count != 0)
 			{
+				file = files[0];
 				if (file.ContentType == "video/mp4")
 				{
 					videoFile = file;
@@ -285,9 +287,10 @@ namespace BivrostHeatmapViewer
 			}
 		}
 
-		private async Task<StorageFile> loadFile (params string[] fileTypes)
+		private async Task<IReadOnlyList<StorageFile>> loadFile (string openType, params string[] fileTypes)
 		{
 			FileOpenPicker openPicker = new FileOpenPicker();
+			IReadOnlyList<StorageFile> files = new List<StorageFile>(1);
 			StorageFile file;
 
 			openPicker.ViewMode = PickerViewMode.Thumbnail;
@@ -298,9 +301,21 @@ namespace BivrostHeatmapViewer
 				openPicker.FileTypeFilter.Add(s);
 			}
 
-			file = await openPicker.PickSingleFileAsync();
+			if (openType.Equals("single"))
+			{
+				file = await openPicker.PickSingleFileAsync();
+				files = new List<StorageFile>
+				{
+					file
+				};
+			}
+			else if (openType.Equals("multiple"))
+			{
+				files = await openPicker.PickMultipleFilesAsync();
+			}
 
-			return file;
+
+			return files;
 
 		}
 
@@ -308,23 +323,27 @@ namespace BivrostHeatmapViewer
 		{
 			string json;
 			SessionCollection sessionCollection;
-			StorageFile file;
+			//StorageFile file;
+			IReadOnlyList<StorageFile> files;
 
 			ShowHeatmapLoading();
 
-			file = await loadFile(".bvr", ".js", ".txt");
+			files = await loadFile("multiple", ".bvr", ".js", ".txt");
 			
 			
-			if (file != null)
+			if (files.Count != 0)
 			{
-				json = await Windows.Storage.FileIO.ReadTextAsync(file);
-				sessionCollection = JsonConvert.DeserializeObject<SessionCollection>(json);
-
-				foreach (Session s in sessionCollection.sessions)
+				foreach (StorageFile file in files)
 				{
-					Items.Add(s);
+					json = await Windows.Storage.FileIO.ReadTextAsync(file);
+					sessionCollection = JsonConvert.DeserializeObject<SessionCollection>(json);
+
+					foreach (Session s in sessionCollection.sessions)
+					{
+						Items.Add(s);
+					}
 				}
-				
+
 			}
 			HideHeatmapLoading();
 			
@@ -769,19 +788,24 @@ namespace BivrostHeatmapViewer
             {
                 for (int j = 0; j < sessions.sessions.Count; j++)
                 {
-                    try
-                    {
-                        pitch.Add(test[j][i].pitch);
-                        yaw.Add(test[j][i].yaw);
-                        fov.Add(test[j][i].fov);
-                    }
-                    catch (ArgumentOutOfRangeException)
-                    {
-                        pitch.Add(0);
-                        yaw.Add(0);
-                        fov.Add(0);
-                    }
-                    //fov.Insert
+	                try
+	                {
+		                pitch.Add(test[j][i].pitch);
+		                yaw.Add(test[j][i].yaw);
+		                fov.Add(test[j][i].fov);
+	                }
+	                catch (ArgumentOutOfRangeException)
+	                {
+		                pitch.Add(0);
+		                yaw.Add(0);
+		                fov.Add(0);
+	                }
+	                catch (Exception)
+	                {
+						;
+	                }
+
+	                //fov.Insert
                 }
 
             }
@@ -812,15 +836,18 @@ namespace BivrostHeatmapViewer
 
 			int coordsLength;
 			List<Heatmap.Coord> coords = Heatmap.CoordsDeserialize(session.history);
-			coordsLength = coords.Count;
+
 
 			float inOutProportion = (float)session.Length.Ticks / videoDuration.Ticks;
 			if (inOutProportion > 1)
 			{
+				List<Heatmap.Coord> temp = coords.GetRange(0,
+					(int) (videoDuration.Ticks / TimeSpan.TicksPerSecond) * session.sample_rate); 
 				inOutProportion = 1;
+				coords = temp;
 			}
 
-
+			coordsLength = coords.Count;
 			int lastFramePosition = (int)(inOutProportion * (framesCount-1)); //represenst the value last position of last coord in new interpolated array
 
 			float origTransformationStep = (float)lastFramePosition / (coordsLength-1); //represents the value of the transformation step coords[x*k] -> inteprpolated[x + origTransformationStep*k] [-2 because first and last position are set manually below]

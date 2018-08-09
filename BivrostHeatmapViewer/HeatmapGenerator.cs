@@ -13,6 +13,7 @@ using Windows.Media.Editing;
 using Windows.Media.MediaProperties;
 using Windows.Media.Transcoding;
 using Windows.Storage;
+using Windows.System;
 using Windows.UI.Core;
 using Windows.UI.Popups;
 using Windows.UI.Xaml;
@@ -194,7 +195,7 @@ namespace BivrostHeatmapViewer
 
 			saveOperation.Completed = new AsyncOperationWithProgressCompletedHandler<TranscodeFailureReason, double>(async (info, status) =>
 				{
-					await window.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, new DispatchedHandler(() =>
+					await window.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, new DispatchedHandler(async () =>
 					{
 						if (saveOperation.Status != AsyncStatus.Canceled)
 						{
@@ -208,12 +209,16 @@ namespace BivrostHeatmapViewer
 								else
 								{
 									//ShowErrorMessage("Trimmed clip saved to file");
+									IStorageFolder folder =
+										await StorageFolder.GetFolderFromPathAsync(Path.GetDirectoryName(file.Path));
+									await Launcher.LaunchFolderAsync(folder);
 								}
 							}
 							catch (Exception e)
 							{
 								Debug.WriteLine("Saving exception: " + e.Message);
                                 ShowErrorMessage(100.0);
+
 							}
 							finally
 							{
@@ -222,6 +227,7 @@ namespace BivrostHeatmapViewer
 						}
 					}));
 				});
+			
 		}
 		
 		public async void CheckHistoryErrors (SessionCollection sessions)

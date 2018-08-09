@@ -37,7 +37,7 @@
 
 				<TextBlock Margin="4">Selected video</TextBlock>
 				<StackPanel Orientation="Horizontal" AllowDrop="True" DragOver="SelectedVideo_DragOver" Drop="SelectedVideo_Drop">
-					<Button x:Name="addVideoButton" Width="40" Height="40" Margin="8" Style="{ThemeResource ButtonRevealStyle}" Click="addVideoButton_Click">
+					<Button x:Name="addVideoButton" Width="40" Height="40" Margin="8" Style="{ThemeResource ButtonRevealStyle}" Click="addVideoButton_Click" ToolTipService.ToolTip="Add video">
 						<SymbolIcon Symbol="Add" />
 					</Button>
 					<TextBlock FontSize="24" VerticalAlignment="Center" x:Name="selectedVideoFileTextBlock">(...)</TextBlock>
@@ -47,22 +47,22 @@
 
 				<StackPanel Orientation="Horizontal" Background="{ThemeResource ButtonBackgroundThemeBrush}">
 
-					<Button Style="{ThemeResource ButtonRevealStyle}" x:Name="addHeatmaps" Click="addHeatmaps_Click">
+					<Button Style="{ThemeResource ButtonRevealStyle}" x:Name="addHeatmaps" Click="addHeatmaps_Click" ToolTipService.ToolTip="Add sessions">
 						<SymbolIcon Symbol="Add"/>
 					</Button>
 
-					<Button Style="{ThemeResource ButtonRevealStyle}" x:Name="selectionModeHeatmaps" Click="selectionModeHeatmaps_Click">
+					<Button Style="{ThemeResource ButtonRevealStyle}" x:Name="selectionModeHeatmaps" Click="selectionModeHeatmaps_Click" ToolTipService.ToolTip="Expand options">
 						<SymbolIcon Symbol="List"/>
 					</Button>
 
-					<Button Style="{ThemeResource ButtonRevealStyle}" x:Name="selectAllHeatmaps" Click="selectAllHeatmaps_Click" Visibility="Collapsed">
+					<Button Style="{ThemeResource ButtonRevealStyle}" x:Name="selectAllHeatmaps" Click="selectAllHeatmaps_Click" Visibility="Collapsed" ToolTipService.ToolTip="Select all sessions">
 						<SymbolIcon Symbol="SelectAll"/>
 					</Button>
-					<Button Style="{ThemeResource ButtonRevealStyle}" x:Name="deselectAllHeatmaps" Click="deselectAllHeatmaps_Click" Visibility="Collapsed">
+					<Button Style="{ThemeResource ButtonRevealStyle}" x:Name="deselectAllHeatmaps" Click="deselectAllHeatmaps_Click" Visibility="Collapsed" ToolTipService.ToolTip="Deselect all sessions">
 						<SymbolIcon Symbol="ClearSelection"/>
 					</Button>
 
-					<Button Style="{ThemeResource ButtonRevealStyle}" x:Name="deleteSelectedHeatmaps" Click="deleteSelectedHeatmaps_Click">
+					<Button Style="{ThemeResource ButtonRevealStyle}" x:Name="deleteSelectedHeatmaps" Click="deleteSelectedHeatmaps_Click" ToolTipService.ToolTip="Remove sessions">
 						<SymbolIcon Symbol="Delete"/>
 					</Button>
 				</StackPanel>
@@ -87,13 +87,16 @@
 			</Grid>
 
 
-			<Button x:Name="generateVideoButton" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="12" Width="200" Height="40" Style="{ThemeResource ButtonRevealStyle}" Grid.Row="2" Click="VideoGenTest2">Generate video</Button>
+			<Button x:Name="generateVideoButton" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="12" Width="200" Height="40" Style="{ThemeResource ButtonRevealStyle}" Grid.Row="2"
+			        Click="VideoGenTest2">Generate video</Button>
 
 			<StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center">
-				<Button x:Name="saveCompositionButton" VerticalAlignment="Bottom" Margin="6" Width="50" Height="40" Style="{ThemeResource ButtonRevealStyle}" Grid.Row="3" Click="SaveVideo_Click">
+				<Button x:Name="saveCompositionButton" VerticalAlignment="Bottom" Margin="6" Width="50" Height="40" Style="{ThemeResource ButtonRevealStyle}" Grid.Row="3" 
+				        Click="SaveVideo_Click" ToolTipService.ToolTip="Save video to file">
 					<SymbolIcon Symbol="Save"/>
 				</Button>
-				<ComboBox x:Name="saveResolutionSelector" PlaceholderText="Pick resolution" MinWidth="160" Margin="6" VerticalAlignment="Center" Height="40" Background="DarkGray" IsHitTestVisible="True">
+				<ComboBox x:Name="saveResolutionSelector" PlaceholderText="Pick resolution" MinWidth="160" Margin="6" VerticalAlignment="Center" Height="40" Background="DarkGray" 
+				          IsHitTestVisible="True">
 					<x:String>Generate video first</x:String>
 				</ComboBox>
 			</StackPanel>
@@ -264,7 +267,7 @@
 		</Rectangle>
 
 		<StackPanel Grid.ColumnSpan="2" VerticalAlignment="Center">
-			<TextBlock HorizontalAlignment="Center" Margin="5,5,5,20" Visibility="{Binding ElementName=videoLoading, Path=Visibility}">Saving progress</TextBlock>
+			<TextBlock HorizontalAlignment="Center" Margin="5,5,5,20" Visibility="{Binding ElementName=videoLoading, Path=Visibility}">Video saving</TextBlock>
 			<ProgressBar x:Name="videoLoading" HorizontalAlignment="Center" Width="500" Value="0" Visibility="Collapsed" />
 			<Button x:Name="buttonLoadingStop" HorizontalAlignment="Center" Style="{ThemeResource ButtonRevealStyle}" Width="auto" Height="auto" Visibility="{Binding ElementName=videoLoading, Path=Visibility}" Click="ButtonLoadingStop_Click" Margin="5,15,5,5">
 				<StackPanel Orientation="Horizontal">
