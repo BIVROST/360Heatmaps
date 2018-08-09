@@ -131,7 +131,7 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ClassLibrary1\HiSLib.csproj">
+    <ProjectReference Include="..\HiSLib\HiSLib.csproj">
       <Project>{b3018112-c760-4cd2-873d-6fd548d4f079}</Project>
       <Name>HiSLib</Name>
     </ProjectReference>

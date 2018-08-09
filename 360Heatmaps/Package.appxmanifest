@@ -3,8 +3,8 @@
   <Identity Name="de0fc3ad-4011-4cc2-be34-95b6fbfbf653" Publisher="CN=gawson" Version="1.0.0.0" />
   <mp:PhoneIdentity PhoneProductId="de0fc3ad-4011-4cc2-be34-95b6fbfbf653" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
   <Properties>
-    <DisplayName>BivrostHeatmapViewer</DisplayName>
-    <PublisherDisplayName>gawson</PublisherDisplayName>
+    <DisplayName>360Heatmaps</DisplayName>
+    <PublisherDisplayName>BIVROST</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
   <Dependencies>
