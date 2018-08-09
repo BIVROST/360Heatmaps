@@ -131,9 +131,11 @@ namespace BivrostHeatmapViewer
 
 			var clip = MediaClip.CreateFromSurface(canvasBitmap, new TimeSpan(0, 0, 0, 0, 1));
 
-			MediaOverlay mediaOverlay = new MediaOverlay(clip);
-			mediaOverlay.Position = overlayPosition;
-			mediaOverlay.Opacity = heatmapOpacity;
+			MediaOverlay mediaOverlay = new MediaOverlay(clip)
+			{
+				Position = overlayPosition,
+				Opacity = heatmapOpacity
+			};
 
 			mediaOverlayLayer.Overlays.Add(mediaOverlay);
 
@@ -142,9 +144,12 @@ namespace BivrostHeatmapViewer
 			{
 				CanvasBitmap cb = await CanvasBitmap.LoadAsync(CanvasDevice.GetSharedDevice(), new Uri("ms-appx:///Assets/horizon3840x2160.png"));
 
-				MediaOverlay horizonOverlay = new MediaOverlay(MediaClip.CreateFromSurface(cb, new TimeSpan(0, 0, 0, 0, 1))); 
-				horizonOverlay.Position = overlayPosition;
-				horizonOverlay.Opacity = 1;
+				MediaOverlay horizonOverlay =
+					new MediaOverlay(MediaClip.CreateFromSurface(cb, new TimeSpan(0, 0, 0, 0, 1)))
+					{
+						Position = overlayPosition,
+						Opacity = 1
+					};
 
 
 				mediaOverlayLayer.Overlays.Add(horizonOverlay);
@@ -169,64 +174,60 @@ namespace BivrostHeatmapViewer
 
 		}
 
-		public void RenderCompositionToFile(StorageFile file, MediaComposition composition, saveProgressCallback ShowErrorMessage, Window window, MediaEncodingProfile encodingProfile, CancellationToken token, object selectedResolution)
+		public void RenderCompositionToFile(StorageFile file, MediaComposition composition, saveProgressCallback showErrorMessage, Window window, MediaEncodingProfile encodingProfile, CancellationToken token, object selectedResolution)
 		{
 
 			var saveOperation = composition.RenderToFileAsync(file, MediaTrimmingPreference.Precise, encodingProfile);
 
-			saveOperation.Progress = new AsyncOperationProgressHandler<TranscodeFailureReason, double>(async (info, progress) =>
+			saveOperation.Progress = async (info, progress) =>
 			{
-				await window.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, new DispatchedHandler(() =>
+				await window.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
 				{
-					ShowErrorMessage(progress);
+					showErrorMessage(progress);
 					try
 					{
 						if (token.IsCancellationRequested)
 						{
 							saveOperation.Cancel();
-							ShowErrorMessage(100.0);
+							showErrorMessage(100.0);
 						}
 					}
 					catch (OperationCanceledException)
 					{
 					}
-				}));
-			});
+				});
+			};
 
-			saveOperation.Completed = new AsyncOperationWithProgressCompletedHandler<TranscodeFailureReason, double>(async (info, status) =>
+			saveOperation.Completed = async (info, status) =>
+			{
+				await window.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, async () =>
 				{
-					await window.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, new DispatchedHandler(async () =>
+					if (saveOperation.Status != AsyncStatus.Canceled)
 					{
-						if (saveOperation.Status != AsyncStatus.Canceled)
+						try
 						{
-							try
+							var results = info.GetResults();
+							if (results != TranscodeFailureReason.None || status != AsyncStatus.Completed)
 							{
-								var results = info.GetResults();
-								if (results != TranscodeFailureReason.None || status != AsyncStatus.Completed)
-								{
-									//ShowErrorMessage("Saving was unsuccessful");
-								}
-								else
-								{
-									//ShowErrorMessage("Trimmed clip saved to file");
-									IStorageFolder folder =
-										await StorageFolder.GetFolderFromPathAsync(Path.GetDirectoryName(file.Path));
-									await Launcher.LaunchFolderAsync(folder);
-								}
+								//ShowErrorMessage("Saving was unsuccessful");
 							}
-							catch (Exception e)
+							else
 							{
-								Debug.WriteLine("Saving exception: " + e.Message);
-                                ShowErrorMessage(100.0);
-
-							}
-							finally
-							{
-								// Update UI whether the operation succeeded or not
+								//ShowErrorMessage("Trimmed clip saved to file");
+								IStorageFolder folder =
+									await StorageFolder.GetFolderFromPathAsync(Path.GetDirectoryName(file.Path));
+								await Launcher.LaunchFolderAsync(folder);
 							}
 						}
-					}));
+						catch (Exception e)
+						{
+							Debug.WriteLine("Saving exception: " + e.Message);
+							showErrorMessage(100.0);
+
+						}
+					}
 				});
+			};
 			
 		}
 		
@@ -249,8 +250,11 @@ namespace BivrostHeatmapViewer
 
 			if (flag)
 			{
-				var dialog = new MessageDialog("Sessions contains time errors. Added empty heatmaps to repair it.");
-				dialog.Title = "Warning";
+				var dialog =
+					new MessageDialog("Sessions contains time errors. Added empty heatmaps to repair it.")
+					{
+						Title = "Warning"
+					};
 				dialog.Commands.Add(new UICommand { Label = "OK", Id = 0 });
 				await dialog.ShowAsync();
 			}
@@ -258,10 +262,8 @@ namespace BivrostHeatmapViewer
 
 		private int scaleFov (int inputFov, int scaleInPercent)
 		{
-			int outputFov;
-
 			double scale = (double)scaleInPercent / 100;
-			outputFov = (int)Math.Round((double)inputFov * scale, 0);
+			var outputFov = (int)Math.Round((double)inputFov * scale, 0);
 
 			if (outputFov > 180)
 			{
