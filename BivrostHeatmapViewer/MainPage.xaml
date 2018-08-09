@@ -202,9 +202,9 @@
 					<TextBlock/>
 					<TextBlock HorizontalAlignment="Center">Time range selector</TextBlock>
 					<StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-						<TextBlock x:Name="timeRangeStart" Text="0" Margin="0,0,10,0"/>
+						<TextBlock x:Name="timeRangeStart" Text="0:00:000" Margin="0,0,10,0"/>
 						<controls:RangeSelector x:Name="rangeSelector" StepFrequency="1" Width="300" PointerMoved="rangeSelector_PointerMoved" ValueChanged="rangeSelector_ValueChanged" />
-						<TextBlock x:Name="timeRangeStop" Text="1" Margin="10,0,0,0"/>
+						<TextBlock x:Name="timeRangeStop" Text="0:00:000" Margin="10,0,0,0"/>
 					</StackPanel>
 					<TextBlock/>
 					<StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
