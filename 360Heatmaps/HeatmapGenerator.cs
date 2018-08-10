@@ -46,7 +46,7 @@ namespace BivrostHeatmapViewer
 			{
 				foreach (Heatmap.Coord h in inputList)
 				{
-					h.fov = scaleFov(h.fov, scaleInPercentage);
+					h.fov = ScaleFov(h.fov, scaleInPercentage);
 				}
 			}
 
@@ -174,9 +174,9 @@ namespace BivrostHeatmapViewer
 
 		}
 
-		public void RenderCompositionToFile(StorageFile file, MediaComposition composition, saveProgressCallback showErrorMessage, Window window, MediaEncodingProfile encodingProfile, CancellationToken token, object selectedResolution)
+		public void RenderCompositionToFile(StorageFile file, MediaComposition composition, SaveProgressCallback showErrorMessage, Window window, MediaEncodingProfile encodingProfile, CancellationToken token, object selectedResolution)
 		{
-
+			
 			var saveOperation = composition.RenderToFileAsync(file, MediaTrimmingPreference.Precise, encodingProfile);
 
 			saveOperation.Progress = async (info, progress) =>
@@ -214,14 +214,16 @@ namespace BivrostHeatmapViewer
 							else
 							{
 								//ShowErrorMessage("Trimmed clip saved to file");
-								IStorageFolder folder =
-									await StorageFolder.GetFolderFromPathAsync(Path.GetDirectoryName(file.Path));
-								await Launcher.LaunchFolderAsync(folder);
+								await Launcher.LaunchFileAsync(file);
 							}
 						}
 						catch (Exception e)
 						{
 							Debug.WriteLine("Saving exception: " + e.Message);
+							var dialog = new MessageDialog("Saving exception: " + e.Message);
+							dialog.Title = "Error";
+							dialog.Commands.Add(new UICommand { Label = "OK", Id = 0 });
+							await dialog.ShowAsync();
 							showErrorMessage(100.0);
 
 						}
@@ -260,7 +262,7 @@ namespace BivrostHeatmapViewer
 			}
 		}
 
-		private int scaleFov (int inputFov, int scaleInPercent)
+		private int ScaleFov (int inputFov, int scaleInPercent)
 		{
 			double scale = (double)scaleInPercent / 100;
 			var outputFov = (int)Math.Round((double)inputFov * scale, 0);

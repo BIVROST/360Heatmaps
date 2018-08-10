@@ -30,15 +30,9 @@
     </Application>
   </Applications>
   <Capabilities>
-    <Capability Name="internetClient" />
-    <Capability Name="internetClientServer" />
-    <Capability Name="privateNetworkClientServer" />
     <uap:Capability Name="removableStorage" />
     <iot:Capability Name="lowLevelDevices" />
-    <uap:Capability Name="voipCall" />
     <rescap:Capability Name="inputInjection" />
     <rescap:Capability Name="runFullTrust" />
-    <DeviceCapability Name="microphone" />
-    <DeviceCapability Name="webcam" />
   </Capabilities>
 </Package>

@@ -77,11 +77,11 @@ namespace BivrostHeatmapViewer
 				// Ensure the current window is active
 				Window.Current.Activate();
 
-				extendAcrylicIntoTitleBar();
+				ExtendAcrylicIntoTitleBar();
             }
         }
 
-		private void extendAcrylicIntoTitleBar()
+		private void ExtendAcrylicIntoTitleBar()
 		{
 			CoreApplication.GetCurrentView().TitleBar.ExtendViewIntoTitleBar = true;
 			ApplicationViewTitleBar titleBar = ApplicationView.GetForCurrentView().TitleBar;

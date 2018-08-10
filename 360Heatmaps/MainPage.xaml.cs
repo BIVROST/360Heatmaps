@@ -42,35 +42,32 @@ namespace BivrostHeatmapViewer
 	/// An empty page that can be used on its own or navigated to within a Frame.
 	/// </summary>
 	/// 
-	public delegate void saveProgressCallback(double message);
+	public delegate void SaveProgressCallback(double message);
 	public sealed partial class MainPage : Page
 	{
-		public PropertySet valuePairs = new PropertySet();
-		StorageFile videoFile;
+		public PropertySet ValuePairs = new PropertySet();
+		StorageFile _videoFile;
 		//StorageFile horizonFile;
-		private MediaComposition composition;
-		private MediaPlayer mediaPlayer;
-		private Rect rect = new Rect(0, 0, 4096, 2048);
-		MediaClip video;
-        public CancellationTokenSource tokenSource = new CancellationTokenSource();
-		public CancellationToken token;
+		private MediaComposition _composition;
+		private MediaPlayer _mediaPlayer;
+		private Rect _rect = new Rect(0, 0, 4096, 2048);
+		MediaClip _video;
+        public CancellationTokenSource TokenSource = new CancellationTokenSource();
+		public CancellationToken Token;
 
-		bool dotsFlag = false;
-		bool horizonFlag = false;
-		bool forceFovFlag = false;
-		bool grayscaleVideoFlag = false;
-		bool scaleFovFlag = false;
+		bool _dotsFlag = false;
+		bool _horizonFlag = false;
+		bool _forceFovFlag = false;
+		bool _grayscaleVideoFlag = false;
+		bool _scaleFovFlag = false;
 
-		int forcedFov = 0;
-		int scaleFovInPercentage = 0;
-		public SavingResolutionsCollection resolutions;
+		int _forcedFov = 0;
+		int _scaleFovInPercentage = 0;
+		public SavingResolutionsCollection Resolutions;
 
 		private ObservableCollection<Session> _items = new ObservableCollection<Session>();
 
-		public ObservableCollection<Session> Items
-		{
-			get { return this._items; }
-		}
+		public ObservableCollection<Session> Items => this._items;
 
 		public MainPage()
 		{
@@ -89,7 +86,7 @@ namespace BivrostHeatmapViewer
 			previewButton.IsEnabled = heatmapSessionsListView.SelectedItems.Count > 0;
 			
 			
-			token = tokenSource.Token;
+			Token = TokenSource.Token;
 		}
 
 		private void ShowHeatmapGenerating ()
@@ -173,21 +170,21 @@ namespace BivrostHeatmapViewer
 			StorageFile file;
 			IReadOnlyList<StorageFile> files;
 
-			files = await loadFile("single", ".mp4");
+			files = await LoadFile("single", ".mp4");
 
 			if (files.Count != 0)
 			{
 				file = files[0];
 				if (file.ContentType == "video/mp4")
 				{
-					videoFile = file;
-					selectedVideoFileTextBlock.Text = videoFile.DisplayName;
-					video = await MediaClip.CreateFromFileAsync(videoFile);
-					SetTimeSliders(video.OriginalDuration);
+					_videoFile = file;
+					selectedVideoFileTextBlock.Text = _videoFile.DisplayName;
+					_video = await MediaClip.CreateFromFileAsync(_videoFile);
+					SetTimeSliders(_video.OriginalDuration);
 					GenerateButtonEnable();
-					var enc = video.GetVideoEncodingProperties();
-					resolutions = new SavingResolutionsCollection(enc);
-					saveResolutionSelector.ItemsSource = resolutions;
+					var enc = _video.GetVideoEncodingProperties();
+					Resolutions = new SavingResolutionsCollection(enc);
+					saveResolutionSelector.ItemsSource = Resolutions;
 					saveResolutionSelector.SelectedIndex = 0;
 
 					AllowToWatchVideoBeforeGenerating(true);
@@ -210,14 +207,14 @@ namespace BivrostHeatmapViewer
 					var file = items[0] as StorageFile;
 					if (file.ContentType == "video/mp4" || file.ContentType == "video/x-matroska")
 					{
-						videoFile = file;
-						selectedVideoFileTextBlock.Text = videoFile.DisplayName;
-						video = await MediaClip.CreateFromFileAsync(videoFile);
-						SetTimeSliders(video.OriginalDuration);
+						_videoFile = file;
+						selectedVideoFileTextBlock.Text = _videoFile.DisplayName;
+						_video = await MediaClip.CreateFromFileAsync(_videoFile);
+						SetTimeSliders(_video.OriginalDuration);
 						GenerateButtonEnable();
-						var enc = video.GetVideoEncodingProperties();
-						resolutions = new SavingResolutionsCollection(enc);
-						saveResolutionSelector.ItemsSource = resolutions;
+						var enc = _video.GetVideoEncodingProperties();
+						Resolutions = new SavingResolutionsCollection(enc);
+						saveResolutionSelector.ItemsSource = Resolutions;
 						saveResolutionSelector.SelectedIndex = 0;
 
 						AllowToWatchVideoBeforeGenerating(true);
@@ -230,21 +227,21 @@ namespace BivrostHeatmapViewer
 		private void AllowToWatchVideoBeforeGenerating (bool allowFlag)
 		{
 			MediaComposition comp = new MediaComposition();
-			comp.Clips.Add(video);
+			comp.Clips.Add(_video);
 
 			mediaPlayerElement.Source = null;
 			mediaPlayerElement.AreTransportControlsEnabled = true;
 			var ep = SetVideoPlayer();
 
-			if (mediaPlayer == null)
+			if (_mediaPlayer == null)
 			{
-				mediaPlayer = new MediaPlayer();
+				_mediaPlayer = new MediaPlayer();
 			}
 
 			var res = comp.GenerateMediaStreamSource(ep);
 			var md = MediaSource.CreateFromMediaStreamSource(res);
 			mediaPlayerElement.Source = md;
-			mediaPlayer = mediaPlayerElement.MediaPlayer;
+			_mediaPlayer = mediaPlayerElement.MediaPlayer;
 		}
 
 		private void selectAllHeatmaps_Click(object sender, RoutedEventArgs e)
@@ -287,7 +284,7 @@ namespace BivrostHeatmapViewer
 			}
 		}
 
-		private async Task<IReadOnlyList<StorageFile>> loadFile (string openType, params string[] fileTypes)
+		private async Task<IReadOnlyList<StorageFile>> LoadFile (string openType, params string[] fileTypes)
 		{
 			FileOpenPicker openPicker = new FileOpenPicker();
 			IReadOnlyList<StorageFile> files = new List<StorageFile>(1);
@@ -328,7 +325,7 @@ namespace BivrostHeatmapViewer
 
 			ShowHeatmapLoading();
 
-			files = await loadFile("multiple", ".bvr", ".js", ".txt");
+			files = await LoadFile("multiple", ".bvr", ".js", ".txt");
 			
 			
 			if (files.Count != 0)
@@ -422,12 +419,12 @@ namespace BivrostHeatmapViewer
 
 		private void horizonEnableCheckbox_Checked(object sender, RoutedEventArgs e)
 		{
-			horizonFlag = true;
+			_horizonFlag = true;
 		}
 
 		private void horizonEnableCheckbox_Unchecked(object sender, RoutedEventArgs e)
 		{
-			horizonFlag = false;
+			_horizonFlag = false;
 		}
 
 		private async void GenerateStaticHeatmap(object sender, RoutedEventArgs e)
@@ -453,7 +450,7 @@ namespace BivrostHeatmapViewer
 				sessionCollection.sessions.Add(s);
 			}
 
-			if (forceFovFlag)
+			if (_forceFovFlag)
 			{
 				GetForcedFov();
 			}
@@ -462,27 +459,27 @@ namespace BivrostHeatmapViewer
 
 			var result = await generator.GenerateHeatmap
 						  (
-						  scaleFovFlag,
-						  scaleFovInPercentage,
-						  forceFovFlag,
-						  forcedFov,
-						  horizonFlag,
+						  _scaleFovFlag,
+						  _scaleFovInPercentage,
+						  _forceFovFlag,
+						  _forcedFov,
+						  _horizonFlag,
 						  sessionCollection,
-						  rect,
+						  _rect,
 						  videoBackgroundPicker.Color,
 						  heatmapOpacity.Value / 100,
 						  rangeSelector.RangeMin,
 						  rangeSelector.RangeMax,
-						  video
+						  _video
 						  );
 			
 		
 
-			if (mediaPlayer == null)
+			if (_mediaPlayer == null)
 			{
-				mediaPlayer = new MediaPlayer();
+				_mediaPlayer = new MediaPlayer();
 			}
-			mediaPlayer = mediaPlayerElement.MediaPlayer;
+			_mediaPlayer = mediaPlayerElement.MediaPlayer;
 
 			mediaPlayerElement.Source = MediaSource.CreateFromMediaStreamSource(result);
 			HideHeatmapGenerating();
@@ -494,7 +491,7 @@ namespace BivrostHeatmapViewer
             var ep = SetVideoPlayer();
 
 			saveCompositionButton.IsEnabled = false;
-			composition = new MediaComposition();
+			_composition = new MediaComposition();
 			mediaPlayerElement.Source = null;
 			SessionCollection sessionCollection = new SessionCollection();
 			sessionCollection.sessions = new List<Session>();
@@ -513,41 +510,41 @@ namespace BivrostHeatmapViewer
             FillEffectPropertySet(sessionCollection);
 
 
-            if (mediaPlayer == null)
+            if (_mediaPlayer == null)
 			{
-				mediaPlayer = new MediaPlayer();
+				_mediaPlayer = new MediaPlayer();
 			}
 
-			var video = await MediaClip.CreateFromFileAsync(videoFile);
+			var video = await MediaClip.CreateFromFileAsync(_videoFile);
 
 			MediaOverlayLayer videoOverlayLayer = new MediaOverlayLayer();
 			TrimVideo(ref video);
-			valuePairs.Add("offset", video.TrimTimeFromStart.Ticks);
+			ValuePairs.Add("offset", video.TrimTimeFromStart.Ticks);
 			var enc = video.GetVideoEncodingProperties();
 
-			valuePairs.Add("frameLength", (1 / ((double)enc.FrameRate.Numerator / enc.FrameRate.Denominator)) * 1000);
+			ValuePairs.Add("frameLength", (1 / ((double)enc.FrameRate.Numerator / enc.FrameRate.Denominator)) * 1000);
 
-			composition.Clips.Add(video);
+			_composition.Clips.Add(video);
 
-			if (horizonFlag)
+			if (_horizonFlag)
 			{
-				composition.OverlayLayers.Add(await GenerateHorizonLayer((int)video.TrimmedDuration.TotalSeconds, ep.Video.Height, ep.Video.Width));			
+				_composition.OverlayLayers.Add(await GenerateHorizonLayer((int)video.TrimmedDuration.TotalSeconds, ep.Video.Height, ep.Video.Width));			
 			}
 
-			var videoEffectDefinition = new VideoEffectDefinition("VideoEffectComponent.HeatmapAddVideoEffect", valuePairs);
+			var videoEffectDefinition = new VideoEffectDefinition("VideoEffectComponent.HeatmapAddVideoEffect", ValuePairs);
 			video.VideoEffectDefinitions.Add(videoEffectDefinition);
 
 			MediaStreamSource res;
 			try
 			{
 
-				valuePairs.Remove("height");
-				valuePairs.Remove("width");
+				ValuePairs.Remove("height");
+				ValuePairs.Remove("width");
 
-				valuePairs.Add("height", ep.Video.Height);
-				valuePairs.Add("width", ep.Video.Width);
+				ValuePairs.Add("height", ep.Video.Height);
+				ValuePairs.Add("width", ep.Video.Width);
 
-				res = composition.GenerateMediaStreamSource(ep);
+				res = _composition.GenerateMediaStreamSource(ep);
 				var md = MediaSource.CreateFromMediaStreamSource(res);
 				mediaPlayerElement.Source = md;
 			}
@@ -556,7 +553,7 @@ namespace BivrostHeatmapViewer
 				Debug.WriteLine(f.Message);
 			}
 
-			mediaPlayer = mediaPlayerElement.MediaPlayer;
+			_mediaPlayer = mediaPlayerElement.MediaPlayer;
 			mediaPlayerElement.AreTransportControlsEnabled = true;
 			saveCompositionButton.IsEnabled = true;
 
@@ -581,11 +578,11 @@ namespace BivrostHeatmapViewer
                 height = height - 1;
             }
 
-            var enc = video.GetVideoEncodingProperties();
+            var enc = _video.GetVideoEncodingProperties();
 
             if (width/height == enc.Width/enc.Height)
             {
-                result = GetMediaEncoding(new Resolutions(new SavingResolutions { height = height, width = width }, false), enc);
+                result = GetMediaEncoding(new Resolutions(new SavingResolutions { Height = height, Width = width }, false), enc);
                 mediaPlayerElement.Width = width;
                 mediaPlayerElement.Height = height;
             }
@@ -599,7 +596,7 @@ namespace BivrostHeatmapViewer
                     newHeight = newHeight - 1;
                 }
 
-                result = GetMediaEncoding(new Resolutions(new SavingResolutions { width = width, height = newHeight }, false), enc);
+                result = GetMediaEncoding(new Resolutions(new SavingResolutions { Width = width, Height = newHeight }, false), enc);
                 mediaPlayerElement.Width = width;
                 mediaPlayerElement.Height = newHeight;
             }
@@ -615,12 +612,12 @@ namespace BivrostHeatmapViewer
 		private async void SaveVideo_Click(object sender, RoutedEventArgs e)
 		{
 
-			tokenSource.Dispose();
-			tokenSource = new CancellationTokenSource();
-			token = tokenSource.Token;
+			TokenSource.Dispose();
+			TokenSource = new CancellationTokenSource();
+			Token = TokenSource.Token;
 
             var temp = saveResolutionSelector.SelectedItem as Resolutions;
-            var enc = video.GetVideoEncodingProperties();
+            var enc = _video.GetVideoEncodingProperties();
 
             MediaEncodingProfile mediaEncoding = GetMediaEncoding(temp, enc);
     
@@ -632,28 +629,28 @@ namespace BivrostHeatmapViewer
 			picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.VideosLibrary;
 			picker.FileTypeChoices.Add("MP4 files", new List<string>() { ".mp4" });
 			picker.SuggestedFileName = "RenderedVideo.mp4";
-			saveProgressCallback saveProgress = ShowErrorMessage;
+			SaveProgressCallback saveProgress = ShowErrorMessage;
 
 			Windows.Storage.StorageFile file = await picker.PickSaveFileAsync();
 			if (file != null)
 			{
-				mediaPlayer.Pause();
+				_mediaPlayer.Pause();
 
-				valuePairs.Remove("height");
-				valuePairs.Remove("width");
+				ValuePairs.Remove("height");
+				ValuePairs.Remove("width");
 
-				valuePairs.Add("height", temp.Resolution.height);
-				valuePairs.Add("width", temp.Resolution.width);
+				ValuePairs.Add("height", temp.Resolution.Height);
+				ValuePairs.Add("width", temp.Resolution.Width);
 
-				if (dotsFlag)
+				if (_dotsFlag)
 				{
-					valuePairs.Remove("dotsRadius");
-					valuePairs.Add("dotsRadius", (float)temp.Resolution.width / 4096 *20);
+					ValuePairs.Remove("dotsRadius");
+					ValuePairs.Add("dotsRadius", (float)temp.Resolution.Width / 4096 *20);
 				}
 
-				if (horizonFlag)
+				if (_horizonFlag)
 				{
-					composition.OverlayLayers[0] = await GenerateHorizonLayer((int)video.TrimmedDuration.TotalSeconds, temp.Resolution.height, temp.Resolution.width);
+					_composition.OverlayLayers[0] = await GenerateHorizonLayer((int)_video.TrimmedDuration.TotalSeconds, temp.Resolution.Height, temp.Resolution.Width);
 				}
 
 				//buttonLoadingStop.Visibility = Visibility.Visible;
@@ -662,7 +659,7 @@ namespace BivrostHeatmapViewer
 
 				HeatmapGenerator generator = new HeatmapGenerator();
 
-				generator.RenderCompositionToFile(file, composition, saveProgress, Window.Current, mediaEncoding, token, saveResolutionSelector.SelectedItem);
+				generator.RenderCompositionToFile(file, _composition, saveProgress, Window.Current, mediaEncoding, Token, saveResolutionSelector.SelectedItem);
 
 			}
 		}
@@ -681,13 +678,14 @@ namespace BivrostHeatmapViewer
 				videoLoading.Maximum = 100.0;
 				loadingScreen.Visibility = Visibility.Visible;
 				videoLoading.Visibility = Visibility.Visible;
+				buttonLoadingStop.Visibility = Visibility.Visible;
 				videoLoading.Value = v;
 			}
 		}
 
 		private void GenerateButtonEnable ()
 		{
-			if (videoFile != null && heatmapSessionsListView.SelectedItems.Count > 0)
+			if (_videoFile != null && heatmapSessionsListView.SelectedItems.Count > 0)
 			{
 				generateVideoButton.IsEnabled = true;
 			}
@@ -717,7 +715,7 @@ namespace BivrostHeatmapViewer
 			timeRangeStart.Text = "00:00:00";
 			timeRangeStop.Text = stopTime.ToString(@"m\:ss\:fff");
 
-			var enc = video.GetVideoEncodingProperties();
+			var enc = _video.GetVideoEncodingProperties();
 
 			rangeSelector.StepFrequency = 1 / ((double)enc.FrameRate.Numerator / enc.FrameRate.Denominator) *1000;
 
@@ -744,23 +742,15 @@ namespace BivrostHeatmapViewer
         {
 			buttonLoadingStop.Visibility = Visibility.Collapsed;
 			ShowErrorMessage(100.0);
-			tokenSource.Cancel();
+			TokenSource.Cancel();
         }
-
-		private void Page_Unloaded(object sender, RoutedEventArgs e)
-		{
-			if (mediaPlayer != null)
-			{
-				mediaPlayer.Dispose();
-			}
-		}
 
 		private void FillEffectPropertySet (SessionCollection sessions)
 		{
-            valuePairs.Clear();
+            ValuePairs.Clear();
 		
 
-			var enc = video.GetVideoEncodingProperties();
+			var enc = _video.GetVideoEncodingProperties();
 
 
 			var pitch = new List<int>();
@@ -768,7 +758,7 @@ namespace BivrostHeatmapViewer
 			var fov = new List<int>();
 
 
-			if (forceFovFlag)
+			if (_forceFovFlag)
 			{
 				GetForcedFov();
 			}
@@ -777,9 +767,9 @@ namespace BivrostHeatmapViewer
 
 			foreach (Session s in sessions.sessions)
 			{
-				test.Add(interpolateSession(s, enc.FrameRate.Numerator, enc.FrameRate.Denominator, video.OriginalDuration));
+				test.Add(InterpolateSession(s, enc.FrameRate.Numerator, enc.FrameRate.Denominator, _video.OriginalDuration));
 			}
-			long framesCount = enc.FrameRate.Numerator * video.OriginalDuration.Ticks / TimeSpan.TicksPerSecond / enc.FrameRate.Denominator;
+			long framesCount = enc.FrameRate.Numerator * _video.OriginalDuration.Ticks / TimeSpan.TicksPerSecond / enc.FrameRate.Denominator;
 
 
 
@@ -813,23 +803,23 @@ namespace BivrostHeatmapViewer
 
             float dotsRadius = (float)mediaPlayerElement.ActualWidth / 4096 * 20;
 
-			valuePairs.Add("grayscaleVideoFlag", grayscaleVideoFlag);
-            valuePairs.Add("backgroundColor", videoBackgroundPicker.Color);
-			valuePairs.Add("backgroundOpacity", (float)(1 - videoOpacity.Value / 100));
-			valuePairs.Add("dotsRadius", dotsRadius);
-            valuePairs.Add("count", sessions.sessions.Count);
-			valuePairs.Add("pitch", pitch);
-			valuePairs.Add("yaw", yaw);
-			valuePairs.Add("fov", fov);
-			valuePairs.Add("generateDots", dotsFlag);
-			valuePairs.Add("heatmapOpacity", (float)(heatmapOpacity.Value / 100));
+			ValuePairs.Add("grayscaleVideoFlag", _grayscaleVideoFlag);
+            ValuePairs.Add("backgroundColor", videoBackgroundPicker.Color);
+			ValuePairs.Add("backgroundOpacity", (float)(1 - videoOpacity.Value / 100));
+			ValuePairs.Add("dotsRadius", dotsRadius);
+            ValuePairs.Add("count", sessions.sessions.Count);
+			ValuePairs.Add("pitch", pitch);
+			ValuePairs.Add("yaw", yaw);
+			ValuePairs.Add("fov", fov);
+			ValuePairs.Add("generateDots", _dotsFlag);
+			ValuePairs.Add("heatmapOpacity", (float)(heatmapOpacity.Value / 100));
 			
 
-			valuePairs.Add("height", enc.Height);
-			valuePairs.Add("width", enc.Width);
+			ValuePairs.Add("height", enc.Height);
+			ValuePairs.Add("width", enc.Width);
 		}
 		
-		private Heatmap.Coord[] interpolateSession (Session session, uint videoFrameNumerator, uint videoFrameDenominator, TimeSpan videoDuration)
+		private Heatmap.Coord[] InterpolateSession (Session session, uint videoFrameNumerator, uint videoFrameDenominator, TimeSpan videoDuration)
 		{
 			long framesCount = videoFrameNumerator * videoDuration.Ticks / TimeSpan.TicksPerSecond / videoFrameDenominator;
 			Heatmap.Coord[] interpolated = new Heatmap.Coord[framesCount];
@@ -861,11 +851,11 @@ namespace BivrostHeatmapViewer
 
 				interpolated[newPosition] = coords[i];
 
-                if (forceFovFlag)
+                if (_forceFovFlag)
                 {
                     if (interpolated[newPosition].fov != 0)
                     {
-                        interpolated[newPosition].fov = forcedFov;
+                        interpolated[newPosition].fov = _forcedFov;
                     }
                 }
             }
@@ -927,12 +917,12 @@ namespace BivrostHeatmapViewer
 		
 		private void dotsEnableCheckbox_Checked(object sender, RoutedEventArgs e)
 		{
-			dotsFlag = true;
+			_dotsFlag = true;
 		}
 
 		private void dotsEnableCheckbox_Unchecked(object sender, RoutedEventArgs e)
 		{
-			dotsFlag = false;
+			_dotsFlag = false;
 		}
 
 		private async Task<MediaOverlayLayer> GenerateHorizonLayer(int timeInSeconds, uint height, uint width)
@@ -959,11 +949,11 @@ namespace BivrostHeatmapViewer
         {
             MediaEncodingProfile mediaEncoding;
 
-            if (resolution.Resolution.width >= 2560)
+            if (resolution.Resolution.Width >= 2560)
             {
                 mediaEncoding = MediaEncodingProfile.CreateMp4(VideoEncodingQuality.Uhd2160p);
             }
-            else if (resolution.Resolution.width <= 1280)
+            else if (resolution.Resolution.Width <= 1280)
             {
                 mediaEncoding = MediaEncodingProfile.CreateMp4(VideoEncodingQuality.HD720p);
             }
@@ -976,11 +966,11 @@ namespace BivrostHeatmapViewer
             mediaEncoding.Video.FrameRate.Numerator = videoEncoding.FrameRate.Numerator;
 
 
-            mediaEncoding.Video.Width = resolution.Resolution.width;
-            mediaEncoding.Video.Height = resolution.Resolution.height;
+            mediaEncoding.Video.Width = resolution.Resolution.Width;
+            mediaEncoding.Video.Height = resolution.Resolution.Height;
 
             long inputVideo = videoEncoding.Width * videoEncoding.Height;
-            long outputVideo = resolution.Resolution.width * resolution.Resolution.height;
+            long outputVideo = resolution.Resolution.Width * resolution.Resolution.Height;
 
             mediaEncoding.Video.Bitrate = (uint)(videoEncoding.Bitrate * outputVideo / inputVideo);
 
@@ -991,31 +981,31 @@ namespace BivrostHeatmapViewer
 		{
 			scaleFovCheckbox.IsChecked = false;
 			scaleFovCheckbox.IsEnabled = false;
-			forceFovFlag = true;
-			scaleFovFlag = false;
+			_forceFovFlag = true;
+			_scaleFovFlag = false;
 		}
 
 		private void forceFovCheckbox_Unchecked(object sender, RoutedEventArgs e)
 		{
 			scaleFovCheckbox.IsEnabled = true;
-			forceFovFlag = false;
+			_forceFovFlag = false;
 		}
 
 		private async void GetForcedFov ()
 		{
 
-			if (int.TryParse(forcedFovTextBox.Text, out forcedFov))
+			if (int.TryParse(forcedFovTextBox.Text, out _forcedFov))
 			{
-				if (forcedFov > -1 && forcedFov < 181)
+				if (_forcedFov > -1 && _forcedFov < 181)
 				{
-					var dialog = new MessageDialog("Forced fov set correctly to " + forcedFov);
+					var dialog = new MessageDialog("Forced fov set correctly to " + _forcedFov);
 					dialog.Title = "Ok";
 					dialog.Commands.Add(new UICommand { Label = "OK", Id = 0 });
 					await dialog.ShowAsync();
 				}
 				else
 				{
-					forcedFov = 90;
+					_forcedFov = 90;
 					var dialog = new MessageDialog("Value should be in 0-180 range.");
 					dialog.Title = "Warning";
 					dialog.Commands.Add(new UICommand { Label = "OK", Id = 0 });
@@ -1024,7 +1014,7 @@ namespace BivrostHeatmapViewer
 			}
 			else
 			{
-				forcedFov = 90;
+				_forcedFov = 90;
 				var dialog = new MessageDialog("Please set the value in 0-180 range.");
 				dialog.Title = "Warning";
 				dialog.Commands.Add(new UICommand { Label = "OK", Id = 0 });
@@ -1091,11 +1081,6 @@ namespace BivrostHeatmapViewer
 			timeRangeStop.Text = stopTime.ToString(format);
 		}
 
-        private void resetFov_Click(object sender, RoutedEventArgs e)
-        {
-            forcedFovTextBox.Text = "90";
-        }
-
 		private void resetScaleFov_Click(object sender, RoutedEventArgs e)
 		{
 			scaleFovSlider.Value = 100;
@@ -1103,36 +1088,31 @@ namespace BivrostHeatmapViewer
 
 		private void grayscaleVideo_Checked(object sender, RoutedEventArgs e)
 		{
-			grayscaleVideoFlag = true;
+			_grayscaleVideoFlag = true;
 		}
 
 		private void grayscaleVideo_Unchecked(object sender, RoutedEventArgs e)
 		{
-			grayscaleVideoFlag = false;
+			_grayscaleVideoFlag = false;
 		}
 
 		private void scaleFovCheckbox_Checked(object sender, RoutedEventArgs e)
 		{
 			forceFovCheckbox.IsChecked = false;
 			forceFovCheckbox.IsEnabled = false;
-			scaleFovFlag = true;
-			forceFovFlag = false;
+			_scaleFovFlag = true;
+			_forceFovFlag = false;
 		}
 
 		private void scaleFovCheckbox_Unchecked(object sender, RoutedEventArgs e)
 		{
 			forceFovCheckbox.IsEnabled = true;
-			scaleFovFlag = false;
-		}
-
-		private void scaleFovSlider_PointerMoved(object sender, Windows.UI.Xaml.Input.PointerRoutedEventArgs e)
-		{
-			scaleFovInPercentage = (int)(sender as Slider).Value;
+			_scaleFovFlag = false;
 		}
 
 		private void scaleFovSlider_ValueChanged(object sender, Windows.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
 		{
-			scaleFovInPercentage = (int)(sender as Slider).Value;
+			_scaleFovInPercentage = (int)(sender as Slider).Value;
 		}
 	}
 
