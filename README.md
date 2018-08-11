@@ -1,5 +1,5 @@
-
-# 360Heatmaps
+360Heatmaps
+===========
 
 Gathered user sessions data can be used to create heatmaps in BIVROST 360Heatmaps tool. This tool is available as a desktop app for Windows 10.
 
@@ -12,17 +12,17 @@ Main features:
 
 Data sources:
 
-* 360Player for Windows - desktop appliaction for Windows with a built-in VR session recorder from headsets and flat screen usage
-* 360WebPlayer - data from a web version of a 360 player, this data can be sent to a server endpoint
-* 360Player Builder - data gathered from mobile devices or mobile VR headsets in the form of a session file or uploaded to a preconfigured server endpoint, available as a part of the Player Builder
-* other - 3rd party applications providing session information in a compatible data format (see Data Format)
+* 360Player for Windows - desktop appliaction for Windows with a built-in VR session recorder from headsets and flat screen usage.
+* 360WebPlayer - data from a web version of a 360 player, this data can be sent to a server endpoint.
+* 360Player for Unity - the player builder for GearVR, iOS and Android. Data gathered from mobile devices or mobile VR headsets in the form of a session file or uploaded to a preconfigured server endpoint, available as a part of the Player.
+* other - 3rd party applications providing session information in a compatible data format (see Data Format).
 
 ## Usage and details
 Tool provides two kinds of options that visualize the behaviour of users.
 
-##### Creating heatmap from a signle session.
+### Creating heatmap from a single session.
 
-Single session mode presents a heataps from a single session of a single user. The result is a static image with a color gradient representing  the avarage time of users focus on different areas of the video.
+Single session mode presents a heatmaps from a single session of a single user. The result is a static image with a color gradient representing  the avarage time of users focus on different areas of the video.
 
 For more accurate and useful information, heatmap generation can be done from the whole session or just from a part of it (defined by `Time range selector slider`). In most cases FOV information should be provided in session files. In case when this kind information is not present or wrong there is an option to override the FOV value or scale it depending on needs.
 
@@ -32,7 +32,7 @@ For more accurate and useful information, heatmap generation can be done from th
 
 
 
-##### Creating an animated multi-session view
+### Creating an animated multi-session view
 
 Multi-session view creates an animated heatmap from multiple sessions (single user or multiple users) with a vertical data collection. An animated heatmap can be overlayed on the top of a corresponding video with several options like blending opacity or dots representating the exact position the user is looking.
 
@@ -57,7 +57,7 @@ Visualisation preview works in real time. Any parameter change must be confirmed
 
 
 360Heatmaps provides several useful tools for changing data presentation. In case of usage, options may have different meaning:
-1. Creating heatmap from signle session:  
+1. Creating heatmap from single session:  
 
     `Time range selector` - after loading a corresponding video, allows to generate heatmap in a specified range of time  
     `Heatmap opacity` - allows to change heatmap opacity  
