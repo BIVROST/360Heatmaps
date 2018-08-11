@@ -20,10 +20,10 @@ namespace BivrostHeatmapViewer
 		public Resolutions (SavingResolutions resolution, bool orig)
 		{
 			Resolution = resolution;
-			IsOrigResulution = orig;
+			IsOrigResolution = orig;
 		}
 
-		public bool IsOrigResulution
+		public bool IsOrigResolution
 		{
 			get;
 		}
@@ -35,7 +35,7 @@ namespace BivrostHeatmapViewer
 			stringBuilder.Append("x");
 			stringBuilder.Append(Resolution.Height);
 
-			if (IsOrigResulution)
+			if (IsOrigResolution)
 			{
 				stringBuilder.Append(" (orig)");
 			}

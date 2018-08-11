@@ -253,7 +253,7 @@ namespace BivrostHeatmapViewer
 			if (flag)
 			{
 				var dialog =
-					new MessageDialog("Sessions contains time errors. Added empty heatmaps to repair it.")
+					new MessageDialog("Session contains time errors. Added empty heatmaps to repair it.")
 					{
 						Title = "Warning"
 					};
