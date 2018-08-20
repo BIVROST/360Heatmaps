@@ -1,4 +1,4 @@
-## BIVROST 360Player privacy policy
+## BIVROST 360Heatmaps privacy policy
 #### Personal information
 This application does not collect or transmit any user's personally identifiable information. No personal information is used, stored, secured or disclosed by services this application works with. 
 #### Technical information
