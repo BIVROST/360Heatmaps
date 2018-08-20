@@ -8,10 +8,10 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("Bivrost Heatmap Viewer")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("BIVROST Sp. z o.o.")]
 [assembly: AssemblyProduct("BivrostHeatmapViewer")]
 [assembly: AssemblyCopyright("Copyright ©  2018")]
-[assembly: AssemblyTrademark("")]
+[assembly: AssemblyTrademark("BIVROST®")]
 [assembly: AssemblyCulture("")]
 
 // Version information for an assembly consists of the following four values:

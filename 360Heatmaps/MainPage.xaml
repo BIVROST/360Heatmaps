@@ -170,7 +170,7 @@
 				<StackPanel Grid.Column="0" HorizontalAlignment="Center">
 					<TextBlock x:Name="fpsLabel"></TextBlock>
 
-					<StackPanel Width="500">
+					<StackPanel Width="320">
 						<StackPanel Width="300">
 							<TextBlock>heatmap opacity</TextBlock>
 							<Slider x:Name="heatmapOpacity" Minimum="0" Maximum="100" Value="30" TickPlacement="Inline" TickFrequency="5"/>
