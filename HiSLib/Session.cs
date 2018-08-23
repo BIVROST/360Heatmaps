@@ -1,6 +1,5 @@
 ﻿using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 
 namespace BivrostHeatmapViewer
 {
@@ -33,11 +32,5 @@ namespace BivrostHeatmapViewer
 			return uri.Substring(uri.LastIndexOf('\\') + 1).ToString();
 		}
 
-	}
-
-public struct SessionCollection
-	{
-		public string vid;
-		public List<Session> sessions;
 	}
 }

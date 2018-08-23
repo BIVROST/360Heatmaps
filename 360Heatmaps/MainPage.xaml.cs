@@ -318,32 +318,39 @@ namespace BivrostHeatmapViewer
 
 		private async void addHeatmaps_Click(object sender, RoutedEventArgs e)
 		{
-			string json;
-			SessionCollection sessionCollection;
 			//StorageFile file;
 			IReadOnlyList<StorageFile> files;
 
 			ShowHeatmapLoading();
 
-			files = await LoadFile("multiple", ".bvr", ".js", ".txt");
+			files = await LoadFile("multiple", SessionCollection.SupportedExtensions);	
 			
 			
 			if (files.Count != 0)
 			{
 				foreach (StorageFile file in files)
 				{
-					json = await Windows.Storage.FileIO.ReadTextAsync(file);
-					sessionCollection = JsonConvert.DeserializeObject<SessionCollection>(json);
-
-					foreach (Session s in sessionCollection.sessions)
-					{
-						Items.Add(s);
-					}
+					await AddItemsFromFileAsync(file);
 				}
-
 			}
+
 			HideHeatmapLoading();
 			
+		}
+
+		private async Task AddItemsFromFileAsync(StorageFile file)
+		{
+			SessionCollection sc = await SessionCollection.FromFileAsync(file);
+			if (sc == null)
+			{
+				await new MessageDialog("Could not load file " + file.Name).ShowAsync();
+				return;
+			}
+
+			foreach (Session s in sc.sessions)
+			{
+				Items.Add(s);
+			}
 		}
 
 		private void ShowHeatmapLoading()
@@ -370,22 +377,9 @@ namespace BivrostHeatmapViewer
 					foreach(var item in items)
 					{
 						var file = item as StorageFile;
-						if (file.FileType == ".bvr" || file.FileType == ".txt" || file.FileType == ".js" || file.FileType == ".json")
+						if (SessionCollection.IsSupportedFileExtension(file.FileType))
 						{
-                            try
-                            {
-                                var json = await FileIO.ReadTextAsync(file);
-                                var sessionCollection = JsonConvert.DeserializeObject<SessionCollection>(json);
-                                foreach (Session s in sessionCollection.sessions)
-                                {
-                                    Items.Add(s);
-
-								}
-                            }
-                            catch (Exception exc)
-                            {
-								Debug.WriteLine(exc.Message);
-                            };
+							await AddItemsFromFileAsync(file);
 						}
 					}
 				}

@@ -17,8 +17,7 @@ namespace BivrostHeatmapViewer
 
 		public override int GetHashCode(Heatmap.Coord obj)
 		{
-			int hCode = obj.yaw ^ obj.pitch ^ obj.fov;
-			return hCode.GetHashCode();
+			return obj.yaw << 16 ^ obj.pitch << 8 ^ obj.fov;
 		}
 	}
 
