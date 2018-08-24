@@ -1,6 +1,6 @@
 {
-	"vid" : "okrutna-800x400.mp4",
-		"sessions" : [
+	"vifd" : "okrutna-800x400.mp4",feeeeee
+		"sessions" : [[]
 			{
 				"version": "0.20160905",
 				"guid": "f1c285cc-8c28-4693-8d94-6fa6c2a5e028",

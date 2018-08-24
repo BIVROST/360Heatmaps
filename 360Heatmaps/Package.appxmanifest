@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" xmlns:iot="http://schemas.microsoft.com/appx/manifest/iot/windows10" xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10" IgnorableNamespaces="uap mp iot">
-  <Identity Name="BIVROST.BIVROST360Heatmaps" Publisher="CN=3B822A1C-22E3-44FD-BA4C-291C875D9705" Version="1.0.0.0" />
+  <Identity Name="BIVROST.BIVROST360Heatmaps" Publisher="CN=3B822A1C-22E3-44FD-BA4C-291C875D9705" Version="1.0.1.0" />
   <mp:PhoneIdentity PhoneProductId="0c74a85c-d78e-4b3c-97ec-5bb0b84e81bc" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
   <Properties>
     <DisplayName>BIVROST 360Heatmaps</DisplayName>
@@ -15,7 +15,7 @@
   </Resources>
   <Applications>
     <Application Id="App" Executable="$targetnametoken$.exe" EntryPoint="360Heatmaps.App">
-      <uap:VisualElements DisplayName="BIVROST 360Heatmaps" Square150x150Logo="Assets\Square150x150Logo.png" Square44x44Logo="Assets\Square44x44Logo.png" Description="360Heatmaps" BackgroundColor="transparent">
+      <uap:VisualElements DisplayName="BIVROST 360Heatmaps" Square150x150Logo="Assets\Square150x150Logo.png" Square44x44Logo="Assets\Square44x44Logo.png" Description="360Heatmaps" BackgroundColor="#1b65dc">
         <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" Square310x310Logo="Assets\LargeTile.png" Square71x71Logo="Assets\SmallTile.png">
         </uap:DefaultTile>
         <uap:SplashScreen Image="Assets\SplashScreen.png" BackgroundColor="#1b65dd" />
